@@ -11,28 +11,23 @@
             --text-color: #000000;
             --glitch-color: #de7029;
             --highlight-color: #de7029;
-            --tooltip-bg: rgba(10, 10, 10, 0.95);
+            --tooltip-bg: rgba(10, 10, 10, 0.98);
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: transparent; 
             color: var(--text-color);
             font-family: 'WDXL Lubrifont JP N', sans-serif;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             overflow-x: hidden;
         }
 
         .grid-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('web-background.png') no-repeat center center;
-            background-size: cover;
-            z-index: -1;
+            background-size: cover; z-index: -1;
         }
 
         /* --- UI ELEMENTS --- */
@@ -69,13 +64,18 @@
             position: relative; cursor: pointer;
         }
 
-        .lore-glitch { display: inline-block; position: relative; color: inherit; text-decoration: none; }
+        .lore-glitch { 
+            display: inline-block; position: relative; color: inherit; text-decoration: none;
+            font-family: 'WDXL Lubrifont JP N', sans-serif;
+        }
+        
         .nav-link:hover, .nav-link.glitch-active, .lore-glitch:hover, .lore-glitch.glitch-active { color: transparent; }
         
         .nav-link:hover::after, .nav-link.glitch-active::after,
         .lore-glitch:hover::after, .lore-glitch.glitch-active::after {
             content: attr(data-glitch); position: absolute; left: 0; width: 100%;
             text-align: center; color: var(--glitch-color); animation: link-glitch 0.3s steps(2) infinite;
+            font-family: 'WDXL Lubrifont JP N', sans-serif;
         }
 
         .stationary-glitch:hover::after, .stationary-glitch.glitch-active::after {
@@ -106,23 +106,27 @@
 
         /* --- THE DICTIONARY TOOLTIP --- */
         #lore-tooltip {
-            position: absolute;
-            display: none;
-            width: 220px;
-            background: var(--tooltip-bg);
-            color: #fff;
-            padding: 12px;
-            border: 1px solid var(--glitch-color);
-            font-family: monospace;
-            font-size: 0.75rem;
-            z-index: 1000;
-            pointer-events: none;
-            text-align: left;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: absolute; display: none; width: 240px;
+            background: var(--tooltip-bg); color: #fff; padding: 15px;
+            border: 1px solid var(--glitch-color); font-family: monospace;
+            font-size: 0.75rem; z-index: 1000; pointer-events: none;
+            text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        #lore-tooltip .word { font-weight: bold; color: var(--glitch-color); border-bottom: 1px solid #333; margin-bottom: 5px; padding-bottom: 2px; }
-        #lore-tooltip .def { opacity: 0.8; line-height: 1.4; margin-bottom: 10px; }
+        #lore-tooltip .word-head { font-size: 1rem; color: var(--glitch-color); margin-bottom: 2px; font-family: 'WDXL Lubrifont JP N', sans-serif; }
+        #lore-tooltip .reading { font-size: 0.65rem; opacity: 0.6; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        #lore-tooltip .jp-def { font-size: 0.8rem; margin-bottom: 5px; color: #eee; font-family: 'WDXL Lubrifont JP N', sans-serif; }
+        #lore-tooltip .en-def { font-size: 0.7rem; opacity: 0.5; font-style: italic; margin-bottom: 12px; }
+
+        /* --- FOOTER SPACING --- */
+        .footer-log {
+            margin-top: 70px;
+            font-size: 0.65rem;
+            opacity: 0.5;
+            letter-spacing: 1px;
+            line-height: 1.6;
+            text-transform: uppercase;
+        }
 
         #about-sector {
             display: none; margin-top: 20px; margin-bottom: 40px; padding: 20px;
@@ -252,24 +256,28 @@
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
-        // --- THE TOOLTIP LOGIC ---
+        // --- THE DICTIONARY TOOLTIP LOGIC ---
         const tooltip = document.getElementById('lore-tooltip');
-        const trigger = document.querySelector('.dictionary-trigger');
-
         const loreData = {
             en: `
-                <div class="word">双極 (Sōkyoku)</div>
-                <div class="def">Two opposing poles; the duality of sound and silence. [ 相反する二つの極 ]</div>
-                <div class="word">螺旋 (Rasen)</div>
-                <div class="def">A winding path; the infinite spiral of creation. [ 終わりなき螺旋 ]</div>
-                <div class="word" style="border:none; color:#999;">[ CORE_DUALISM ]</div>
+                <div class="word-head">双極</div><div class="reading">【 そうきょく 】</div>
+                <div class="jp-def">相反する二つの力。静寂と騒音の二元性。</div>
+                <div class="en-def">Two opposing poles; the duality of sound and silence.</div>
+                
+                <div class="word-head">螺旋</div><div class="reading">【 らせん 】</div>
+                <div class="jp-def">終わりなき創造の軌跡。</div>
+                <div class="en-def">The infinite spiral of creation and decay.</div>
+                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ CORE_DUALISM_V1 ]</div>
             `,
             de: `
-                <div class="word">双極 (Sōkyoku)</div>
-                <div class="def">Zwei gegensätzliche Pole; Dualität von Rauschen und Melodie. [ 二元性の極 ]</div>
-                <div class="word">螺旋 (Rasen)</div>
-                <div class="def">Ein gewundener Pfad; die endlose Spirale der Rekonstruktion. [ 再構築の螺旋 ]</div>
-                <div class="word" style="border:none; color:#999;">[ KERN_DUALISMUS ]</div>
+                <div class="word-head">双極</div><div class="reading">【 そうきょく 】</div>
+                <div class="jp-def">相反する二つの力。ノイズと旋律の二元性。</div>
+                <div class="en-def">Zwei gegensätzliche Pole; die Dualität von Rauschen und Melodie.</div>
+                
+                <div class="word-head">螺旋</div><div class="reading">【 らせん 】</div>
+                <div class="jp-def">終わりなき再構築の道。</div>
+                <div class="en-def">Die endlose Spirale der Rekonstruktion.</div>
+                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ KERN_DUALISMUS_V1 ]</div>
             `
         };
 
@@ -288,14 +296,13 @@
 
         function hideTooltip() { tooltip.style.display = 'none'; }
 
-        // Events for PC (Hover) and Mobile (Tap)
         document.querySelectorAll('.dictionary-trigger').forEach(el => {
             el.addEventListener('mouseenter', showTooltip);
             el.addEventListener('mousemove', updateTooltipPos);
             el.addEventListener('mouseleave', hideTooltip);
             el.addEventListener('touchstart', (e) => {
                 showTooltip(e.touches[0]);
-                setTimeout(hideTooltip, 4000); // Hide after 4s on mobile
+                setTimeout(hideTooltip, 3000);
             });
         });
 
