@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+JP+N&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #ffffff;
+            --bg-color: transparent;
             --text-color: #000000;
             --glitch-color: #de7029;
         }
@@ -15,7 +15,7 @@
         body, html {
             margin: 0;
             padding: 0;
-            background-color: transparent;
+            background-color: transparent; 
             color: var(--text-color);
             font-family: 'WDXL Lubrifont JP N', "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", "Segoe UI", sans-serif;
             min-height: 100vh;
@@ -24,7 +24,6 @@
             align-items: center;
         }
 
-        /* Background using your uploaded PNG */
         .grid-bg {
             position: fixed;
             top: 0;
@@ -36,13 +35,12 @@
             z-index: -1;
         }
 
-        /* THE NEW CLASS NAME KILLS THE CACHE */
         .main-terminal {
             width: 100%;
             max-width: 400px;
             text-align: center;
             padding: 40px 20px;
-            background: transparent !important; /* Force transparency */
+            background: transparent !important;
         }
 
         .main-logo {
@@ -58,11 +56,30 @@
             width: 100%;
             max-width: 200px;
             height: auto;
-            margin-top: 5px;
-            margin-bottom: 0;
+            margin-top: 10px;
+            margin-bottom: 5px;
             display: block;
             margin-left: auto;
             margin-right: auto;
+        }
+
+        /* --- SUBLIMINAL GLITCH LOGOS --- */
+        .originals-logo {
+            animation: glitchUrsprung 12s infinite;
+        }
+
+        @keyframes glitchUrsprung {
+            0%, 96%, 99%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); }
+            97%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); }
+        }
+
+        .reimagined-logo {
+            animation: glitchKonstruiert 7s infinite;
+        }
+
+        @keyframes glitchKonstruiert {
+            0%, 93%, 97%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); }
+            94%, 96% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); }
         }
 
         .sector {
@@ -70,11 +87,10 @@
             margin-top: 0;
         }
 
-        /* Link Styling */
         .nav-link {
             display: block;
-            margin: 15px 0;
-            font-size: 1.2rem;
+            margin: 12px 0;
+            font-size: 1.1rem;
             color: var(--text-color);
             text-decoration: none;
             text-transform: lowercase;
@@ -83,7 +99,6 @@
             transition: color 0.1s;
         }
 
-        /* Phantom Glitch (Invisible Base Text) */
         .nav-link:hover, .nav-link.glitch-active {
             color: transparent;
         }
@@ -94,7 +109,6 @@
             left: 0;
             width: 100%;
             text-align: center;
-            background: transparent;
             color: var(--glitch-color);
             animation: glitch 0.3s steps(2) infinite;
         }
@@ -114,6 +128,7 @@
             opacity: 0.5;
             letter-spacing: 1px;
             line-height: 1.5;
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -125,31 +140,31 @@
         
         <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
 
-        <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header">
+        <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
         <div class="sector">
-            <a href="https://open.spotify.com/artist/3hvsLZ6fWjtB6y6eRcYUat" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
-            <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ アップルと同期：音声 ]">/apple-music</a>
+            <a href="http://googleusercontent.com/spotify.com/5" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
+            <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
             <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">/soundcloud</a>
             <a href="https://twysted.bandcamp.com" class="nav-link" data-glitch="[ 深層書庫 ]">/bandcamp</a>
+        </div>
+
+        <img src="Twisted_Duality_Reimagined_subtext.png" alt="REKONSTRUIERT" class="subtext-header reimagined-logo">
+        <div class="sector">
+            <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
             <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
             <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
         </div>
 
-        <img src="Twisted_Duality_Reimagined_subtext.png" alt="REIMAGINED" class="subtext-header">
-        <div class="sector">
-            <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
-        </div>
-
         <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
-            <div style="font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 10px;">NEW TRANSMISSION</div>
+            <div style="font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 10px;">NEUE ÜBERTRAGUNG</div>
             <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on spotify</a>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on apple-music</a>
+            <a href="http://googleusercontent.com/spotify.com/6" class="nav-link" data-glitch="[ KERN: ECHOES ]">/jetzt_anhören auf spotify</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ KERN: ECHOES ]">/jetzt_anhören auf apple-music</a>
         </div>
 
         <div class="footer-log">
-            [AU証: 核心] -> 接続 STATUS: ONLINE<br>
-            "TWO FREQUENCIES. ONE VESSEL."
+            [AU証: 核心] -> STATUS: BEREIT<br>
+            "ZWEI FREQUENZEN. EIN GEFÄSS."
         </div>
 
     </div>
@@ -157,40 +172,33 @@
     <script>
         const links = document.querySelectorAll('.nav-link');
 
-        // Mobile Tap-Routing Logic
+        // Tap-Routing Logic
         links.forEach(link => {
             link.addEventListener('click', function(e) {
-                // If it's a dead link (like #), don't route
-                if (this.getAttribute('href') === '#') {
-                    e.preventDefault();
-                    this.classList.add('glitch-active');
-                    setTimeout(() => { this.classList.remove('glitch-active'); }, 400);
-                    return;
-                }
+                if (this.getAttribute('href').startsWith('#')) return;
                 
                 e.preventDefault(); 
                 this.classList.add('glitch-active'); 
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 400); 
+                setTimeout(() => { window.location.href = this.href; }, 450); 
             });
         });
 
-        // Random Background Glitch Logic
+        // MULTI-GLITCH RHYTHM (1-2 lines at once)
         function triggerRandomGlitch() {
-            if (links.length === 0) return;
-            const randomLink = links[Math.floor(Math.random() * links.length)];
-            randomLink.classList.add('glitch-active');
+            const batchSize = Math.floor(Math.random() * 2) + 1;
             
-            setTimeout(() => {
-                randomLink.classList.remove('glitch-active');
-            }, 300);
+            for(let i = 0; i < batchSize; i++) {
+                const target = links[Math.floor(Math.random() * links.length)];
+                if (!target.classList.contains('glitch-active')) {
+                    target.classList.add('glitch-active');
+                    setTimeout(() => { target.classList.remove('glitch-active'); }, Math.random() * 400 + 200);
+                }
+            }
 
-            const nextGlitchTime = Math.random() * 4000 + 2000;
-            setTimeout(triggerRandomGlitch, nextGlitchTime);
+            setTimeout(triggerRandomGlitch, Math.random() * 2500 + 800);
         }
 
-        setTimeout(triggerRandomGlitch, 2000);
+        setTimeout(triggerRandomGlitch, 1500);
     </script>
 </body>
 </html>
