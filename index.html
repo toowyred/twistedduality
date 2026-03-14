@@ -1,1 +1,135 @@
-Loading...
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Archive | afest.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Exa:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --glitch-color: #de7029; /* Hazard Orange */
+            --font-main: 'Lexend Exa', sans-serif; /* Fallback for Lubrifont style */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Perspective Grid Background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            perspective: 1000px;
+            transform: rotateX(60deg);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px; /* 4:5 Active Zone */
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header-logo {
+            font-weight: 700;
+            letter-spacing: 0.5em;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+        }
+
+        .sector {
+            margin-bottom: 40px;
+        }
+
+        .sector-title {
+            font-size: 0.8em;
+            letter-spacing: 0.3em;
+            opacity: 0.5;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .nav-link {
+            display: block;
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.1em;
+            margin: 15px 0;
+            padding: 10px;
+            position: relative;
+            transition: 0.2s;
+            text-transform: lowercase;
+        }
+
+        /* Glitch Effect on Hover/Tap */
+        .nav-link:hover, .nav-link:active {
+            color: var(--glitch-color);
+        }
+
+        .nav-link:hover::after {
+            content: attr(data-glitch);
+            position: absolute;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            background: var(--bg-color);
+            animation: glitch 0.3s steps(2) infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(2px, -2px); clip-path: inset(10% 0 30% 0); }
+            50% { transform: translate(-2px, 2px); clip-path: inset(40% 0 10% 0); }
+            100% { transform: translate(0); }
+        }
+
+        .footer-log {
+            font-size: 0.6em;
+            margin-top: 60px;
+            opacity: 0.3;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="container">
+        <div class="header-logo">[ 領コア / TWISTED DUALITY ]</div>
+
+        <div class="sector">
+            <div class="sector-title">ORIGINALS</div>
+            <a href="https://open.spotify.com/artist/yourid" class="nav-link" data-glitch="[ 同期：音声 ]">/spotify</a>
+            <a href="https://instagram.com/afest.io" class="nav-link" data-glitch="[ 活性知能案 ]">/instagram</a>
+            <a href="#" class="nav-link" data-glitch="[ 記憶領域 ]">/apple-music</a>
+        </div>
+
+        <div class="sector">
+            <div class="sector-title">RE/IMAGINED</div>
+            <a href="https://soundcloud.com/yourid" class="nav-link" data-glitch="[ システム異常 ]">/soundcloud</a>
+        </div>
+
+        <div class="footer-log">
+            [AU証: LO核] -> 旅行 STATUS: NOMINAL<br>
+            "THE WINDOW DEFINES THE VESSEL"
+        </div>
+    </div>
+</body>
+</html>
