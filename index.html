@@ -7,6 +7,26 @@
     <title>Twisted Duality | Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+JP+N&display=swap" rel="stylesheet">
     <style>
+        /* THE PIXEL-PERFECT ALIGNMENT FIX */
+        .close-btn-aligned {
+            display: inline-block !important; /* Forces it to respect width/height */
+            height: 30px;                     /* Standardize the box height */
+            line-height: 30px;                /* Centers text perfectly inside that height */
+            width: 160px;                     /* Give it enough room for the longest word */
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 0 !important;            /* Remove old padding that causes shifting */
+            box-sizing: border-box;
+        }
+
+        /* Ensure the glitch overlay perfectly matches the parent box */
+        .close-btn-aligned::after {
+            top: 0;
+            left: 0;
+            height: 100%;
+            line-height: 30px;                /* Match the parent's line-height */
+        }
         /* THE ORANGE ABOUT TERMINAL */
         #about-sector {
             display: none; 
@@ -271,7 +291,7 @@
                     From melodic beauty to <span class="sync-group sync-henyi">industrial decay</span>—this is the heartbeat of the vessel. 
                     Where worlds are unmade and <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REIMAGINED</span>.
                 </p>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch" data-glitch="[ 閉じる ]" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ close_file ]</a>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]" style="font-size: 0.7rem;">[ close_file ]</a>
             </div>
             <div class="lang-de-only">
                 <div class="log-header">//: LOG_START [PERSONEN_ARCHIV]</div>
@@ -281,7 +301,7 @@
                     Von der Schönheit des Lichts bis zum Zerfall der Schatten—der Herzschlag des Universums. 
                     Hier werden Welten aufgelöst und <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">NEU ERDACHT</span>.
                 </p>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch" data-glitch="[ 閉じる ]" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ datei_schließen ]</a>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]" style="font-size: 0.7rem;">[ datei_schließen ]</a>
             </div>
         </div>
     </div>
