@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="main-html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +17,12 @@
             padding: 0;
             background-color: transparent; 
             color: var(--text-color);
-            font-family: 'WDXL Lubrifont JP N', "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", "Segoe UI", sans-serif;
+            font-family: 'WDXL Lubrifont JP N', sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow-x: hidden;
         }
 
         .grid-bg {
@@ -35,12 +36,35 @@
             z-index: -1;
         }
 
+        /* --- LANGUAGE TOGGLE --- */
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.3s;
+            margin-left: 10px;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .lang-btn.active {
+            opacity: 1;
+            font-weight: bold;
+        }
+
         .main-terminal {
             width: 100%;
             max-width: 400px;
             text-align: center;
             padding: 40px 20px;
-            background: transparent !important;
         }
 
         .main-logo {
@@ -64,28 +88,19 @@
         }
 
         /* --- SUBLIMINAL GLITCH LOGOS --- */
-        .originals-logo {
-            animation: glitchUrsprung 12s infinite;
-        }
-
+        .originals-logo { animation: glitchUrsprung 12s infinite; }
         @keyframes glitchUrsprung {
             0%, 96%, 99%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); }
             97%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); }
         }
 
-        .reimagined-logo {
-            animation: glitchKonstruiert 7s infinite;
-        }
-
+        .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
         @keyframes glitchKonstruiert {
             0%, 93%, 97%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); }
             94%, 96% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); }
         }
 
-        .sector {
-            margin-bottom: 30px;
-            margin-top: 0;
-        }
+        .sector { margin-bottom: 30px; }
 
         .nav-link {
             display: block;
@@ -96,24 +111,18 @@
             text-transform: lowercase;
             letter-spacing: 2px;
             position: relative;
-            transition: color 0.1s;
         }
 
-        .nav-link:hover, .nav-link.glitch-active {
-            color: transparent;
-        }
-
+        .nav-link:hover, .nav-link.glitch-active { color: transparent; }
         .nav-link:hover::after, .nav-link.glitch-active::after {
             content: attr(data-glitch);
             position: absolute;
-            left: 0;
-            width: 100%;
-            text-align: center;
+            left: 0; width: 100%; text-align: center;
             color: var(--glitch-color);
-            animation: glitch 0.3s steps(2) infinite;
+            animation: link-glitch 0.3s steps(2) infinite;
         }
 
-        @keyframes glitch {
+        @keyframes link-glitch {
             0% { transform: translate(0); }
             20% { transform: translate(-2px, 2px); }
             40% { transform: translate(-2px, -2px); }
@@ -121,6 +130,10 @@
             80% { transform: translate(2px, -2px); }
             100% { transform: translate(0); }
         }
+
+        /* --- HIDE/SHOW LOGIC --- */
+        .lang-content { display: none; }
+        .lang-content.active { display: block; }
 
         .footer-log {
             margin-top: 40px;
@@ -136,68 +149,89 @@
 
     <div class="grid-bg"></div>
 
+    <div class="lang-switch">
+        <span class="lang-btn active" onclick="setLanguage('en')">EN日本</span>
+        <span class="lang-btn" onclick="setLanguage('de')">DE日本</span>
+    </div>
+
     <div class="main-terminal">
-        
         <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
 
-        <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
-        <div class="sector">
-            <a href="http://googleusercontent.com/spotify.com/5" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
-            <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
-            <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">/soundcloud</a>
-            <a href="https://twysted.bandcamp.com" class="nav-link" data-glitch="[ 深層書庫 ]">/bandcamp</a>
+        <div id="content-en" class="lang-content active">
+            <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
+            <div class="sector">
+                <a href="https://open.spotify.com/artist/..." class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
+                <a href="https://music.apple.com/us/artist/..." class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
+                <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">/soundcloud</a>
+            </div>
+
+            <img src="Twisted_Duality_Reimagined_subtext.png" alt="REIMAGINED" class="subtext-header reimagined-logo">
+            <div class="sector">
+                <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
+                <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
+            </div>
+
+            <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
+                <div style="font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 10px;">NEW TRANSMISSION</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
+                <a href="#" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now</a>
+            </div>
+
+            <div class="footer-log">
+                [AU証: 核心] -> STATUS: ONLINE<br>
+                "TWO FREQUENCIES. ONE VESSEL."
+            </div>
         </div>
 
-        <img src="Twisted_Duality_Reimagined_subtext.png" alt="REKONSTRUIERT" class="subtext-header reimagined-logo">
-        <div class="sector">
-            <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
-            <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
-            <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
-        </div>
+        <div id="content-de" class="lang-content">
+            <img src="Twisted_Duality_Originals_subtext.png" alt="URSPRUNG" class="subtext-header originals-logo">
+            <div class="sector">
+                <a href="https://open.spotify.com/artist/..." class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
+                <a href="https://music.apple.com/us/artist/..." class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
+                <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">/soundcloud</a>
+            </div>
 
-        <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
-            <div style="font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 10px;">NEUE ÜBERTRAGUNG</div>
-            <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
-            <a href="http://googleusercontent.com/spotify.com/6" class="nav-link" data-glitch="[ KERN: ECHOES ]">/jetzt_anhören auf spotify</a>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ KERN: ECHOES ]">/jetzt_anhören auf apple-music</a>
-        </div>
+            <img src="Twisted_Duality_Reimagined_subtext.png" alt="REKONSTRUIERT" class="subtext-header reimagined-logo">
+            <div class="sector">
+                <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
+                <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
+            </div>
 
-        <div class="footer-log">
-            [AU証: 核心] -> STATUS: BEREIT<br>
-            "ZWEI FREQUENZEN. EIN GEFÄSS."
-        </div>
+            <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
+                <div style="font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 10px;">NEUE ÜBERTRAGUNG</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
+                <a href="#" class="nav-link" data-glitch="[ KERN: ECHOES ]">/jetzt_anhören</a>
+            </div>
 
+            <div class="footer-log">
+                [AU証: 核心] -> STATUS: BEREIT<br>
+                "ZWEI FREQUENZEN. EIN GEFÄSS."
+            </div>
+        </div>
     </div>
 
     <script>
+        function setLanguage(lang) {
+            document.getElementById('main-html').setAttribute('lang', lang);
+            document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('content-' + lang).classList.add('active');
+            event.target.classList.add('active');
+        }
+
         const links = document.querySelectorAll('.nav-link');
-
-        // Tap-Routing Logic
-        links.forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (this.getAttribute('href').startsWith('#')) return;
-                
-                e.preventDefault(); 
-                this.classList.add('glitch-active'); 
-                setTimeout(() => { window.location.href = this.href; }, 450); 
-            });
-        });
-
-        // MULTI-GLITCH RHYTHM (1-2 lines at once)
         function triggerRandomGlitch() {
             const batchSize = Math.floor(Math.random() * 2) + 1;
-            
             for(let i = 0; i < batchSize; i++) {
                 const target = links[Math.floor(Math.random() * links.length)];
-                if (!target.classList.contains('glitch-active')) {
+                if (target && !target.classList.contains('glitch-active')) {
                     target.classList.add('glitch-active');
                     setTimeout(() => { target.classList.remove('glitch-active'); }, Math.random() * 400 + 200);
                 }
             }
-
             setTimeout(triggerRandomGlitch, Math.random() * 2500 + 800);
         }
-
         setTimeout(triggerRandomGlitch, 1500);
     </script>
 </body>
