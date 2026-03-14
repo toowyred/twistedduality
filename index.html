@@ -93,25 +93,17 @@
         }
 
         /* --- SUBLIMINAL GLITCH LOGOS --- */
-.originals-logo { 
-    animation: glitchUrsprung 12s infinite; 
-}
+        .originals-logo { animation: glitchUrsprung 12s infinite; }
+        @keyframes glitchUrsprung {
+            0%, 85%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); }
+            87%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); }
+        }
 
-@keyframes glitchUrsprung {
-    0%, 85%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); }
-    /* Window expanded to 11% (approx 1.3s) for a heavy haunting effect */
-    87%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); }
-}
-
-.reimagined-logo { 
-    animation: glitchKonstruiert 7s infinite; 
-}
-
-@keyframes glitchKonstruiert {
-    0%, 80%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); }
-    /* Window expanded to 15% (approx 1.05s) */
-    82%, 97% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); }
-}
+        .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
+        @keyframes glitchKonstruiert {
+            0%, 80%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); }
+            82%, 97% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); }
+        }
 
         .sector { margin-bottom: 35px; }
 
@@ -124,6 +116,7 @@
             text-transform: lowercase;
             letter-spacing: 2px;
             position: relative;
+            cursor: pointer;
         }
 
         .nav-link:hover, .nav-link.glitch-active { color: transparent; }
@@ -155,13 +148,27 @@
             line-height: 1.5;
             text-transform: uppercase;
         }
+
+        #about-sector {
+            display: none;
+            margin-top: 20px;
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.02);
+            text-align: left;
+            border-left: 3px solid rgba(0,0,0,0.3);
+        }
+
+        /* Language-specific visibility within the shared About box */
+        [lang="en"] .lang-de-only { display: none; }
+        [lang="de"] .lang-en-only { display: none; }
     </style>
 </head>
 <body>
 
     <div class="grid-bg"></div>
 
-    <!--/* LANGUAGE BUTTONS */-->
     <div class="lang-switch">
         <span class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN日本</span>
         <span style="opacity: 0.2">|</span>
@@ -171,12 +178,10 @@
     <div class="main-terminal">
         <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
 
-        <!--/* LINK SECTION ENGLISH */-->
         <div id="content-en" class="lang-content active">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <!--/* LINK to About Me ENGLISH */-->
-        <a href="#" class="nav-link" onclick="toggleAbout()" data-glitch="[ 記憶: MEMORY ]">/about_me</a>
-    </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ 記憶: MEMORY ]">/about_me</a>
+            </div>
 
             <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
             <div class="sector">
@@ -193,59 +198,30 @@
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
             </div>
 
-            <!--/* TRANSMISSION SECTION ENGLISH */-->
             <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
-    <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">CURRENT TRANSMISSION</div>
-    <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
-    <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on apple-music</a>
-    <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on spotify</a>
-</div>
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">CURRENT TRANSMISSION</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
+                <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on apple-music</a>
+                <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHOES ]">/listen_now on spotify</a>
+            </div>
 
-<div class="sector" style="margin-top: 30px; opacity: 0.6;">
-        <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">UPCOMING TRANSMISSION</div>
-        <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ from_領コア ]</div>
-        <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNAL STRENGTH: WEAK</div>
-    </div>
+            <div class="sector" style="margin-top: 30px; opacity: 0.6;">
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">UPCOMING TRANSMISSION</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ from_領コア ]</div>
+                <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNAL STRENGTH: WEAK</div>
+            </div>
+
+            <div class="footer-log">
+                [AU証: 核心] -> STATUS: ONLINE<br>
+                "TWO FREQUENCIES. ONE VESSEL."
+            </div>
+        </div>
+
+        <div id="content-de" class="lang-content">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ SPEICHER: 記憶 ]">/über_mich</a>
+            </div>
             
-
-    <!--/* ABOUT ME SECTION BOTH LANGUAGES */-->        
-    <div id="about-sector" style="display: none; margin-top: 20px; margin-bottom: 40px; padding: 20px; border: 1px solid rgba(0,0,0,0.2); background: rgba(255,255,255,0.02); text-align: left; border-left: 3px solid rgba(0,0,0,0.3);">
-    
-    <div class="lang-en-only">
-        <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONA_ARCHIVE]</div>
-        <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-            <span style="font-weight: bold;">TWYSTED</span> // 創作 to 変異<br><br>
-            We re/de/construct [SOUND] + [EMOTION] into immersive landscapes with extreme sonic manipulation. 
-            From the melodic beauty of the light to the industrial decay of the shadows—this is the heartbeat of the Twisted Duality universe. 
-            Where existing worlds are unmade and <span style="letter-spacing: 2px;">REIMAGINED</span>.
-        </p>
-    </div>
-
-    <div class="lang-de-only">
-        <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONEN_ARCHIV]</div>
-        <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-            <span style="font-weight: bold;">TWYSTED</span> // 創作 to 変異<br><br>
-            Wir re/de/konstruieren [KLANG] + [EMOTION] durch extreme manipulative Komposition. 
-            Von der melodischen Schönheit des Lichts bis zum industriellen Zerfall der Schatten—das ist der Herzschlag des Twisted Duality Universums. 
-            Hier werden bestehende Welten aufgelöst und <span style="letter-spacing: 2px;">NEU ERDACHT</span>.
-        </p>
-    </div>
-
-    <a href="#" onclick="toggleAbout()" class="nav-link" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ CLOSE_FILE ]</a>
-</div>
-
-    <!--/* FOOTER SECTION ENGLISH */-->       
-    <div class="footer-log">
-        [AU証: 核心] -> STATUS: ONLINE<br>
-        "TWO FREQUENCIES. ONE VESSEL."
-    </div>
-            
-<!--/* LINK SECTION GERMAN */-->
-<div id="content-de" class="lang-content">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <!--/* LINK to About Me GERMAN */-->
-        <a href="#" class="nav-link" onclick="toggleAbout()" data-glitch="[ SPEICHER: 記憶 ]">/über_mich</a>
-    </div>
             <img src="Twisted_Duality_Originals_subtext.png" alt="URSPRUNG" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
@@ -261,68 +237,68 @@
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">/soundcloud</a>
             </div>
 
-            <!--/* TRANSMISSION SECTION GERMAN */-->
             <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
-    <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">AKTUELLE ÜBERTRAGUNG</div>
-    <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
-    <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ KERN：残響 ]">/jetzt_anhören on apple-music</a>
-    <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ KERN：残響 ]">/jetzt_anhören on spotify</a>
-</div>
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">AKTUELLE ÜBERTRAGUNG</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ ECHOES BEHIND ]</div>
+                <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ KERN：残響 ]">/jetzt_anhören on apple-music</a>
+                <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ KERN：残響 ]">/jetzt_anhören on spotify</a>
+            </div>
 
-<div class="sector" style="margin-top: 30px; opacity: 0.6;">
-    <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">KOMMENDE ÜBERTRAGUNG</div>
-    <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ aus_領コア ]</div>
-    <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNALSTÄRKE: SCHWACH</div>
-</div>
+            <div class="sector" style="margin-top: 30px; opacity: 0.6;">
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">KOMMENDE ÜBERTRAGUNG</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ aus_領コア ]</div>
+                <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNALSTÄRKE: SCHWACH</div>
+            </div>
 
-            <!--/* FOOTER SECTION GERMAN */-->
             <div class="footer-log">
                 [BE証: KERN] -> STATUS: BEREIT<br>
                 "ZWEI FREQUENZEN. EIN GEFÄSS."
             </div>
+        </div>
+
+        <div id="about-sector">
+            <div class="lang-en-only">
+                <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONA_ARCHIVE]</div>
+                <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
+                    <span style="font-weight: bold;">TWYSTED</span> // 創作 to 変異<br><br>
+                    Re/de/constructing [SOUND] + [EMOTION] into immersive landscapes through extreme sonic manipulation. 
+                    From the melodic beauty of light to the industrial decay of shadows—this is the heartbeat of the Twisted Duality universe. 
+                    Where existing worlds are unmade and <span style="letter-spacing: 2px;">REIMAGINED</span>.
+                </p>
+            </div>
+            <div class="lang-de-only">
+                <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONEN_ARCHIV]</div>
+                <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
+                    <span style="font-weight: bold;">TWYSTED</span> // 創作 to 変異<br><br>
+                    Re/de/konstruieren von [KLANG] + [EMOTION] durch extreme manipulative Komposition. 
+                    Von der melodischen Schönheit des Lichts bis zum industriellen Zerfall der Schatten—das ist der Herzschlag des Twisted Duality Universums. 
+                    Hier werden bestehende Welten aufgelöst und <span style="letter-spacing: 2px;">NEU ERDACHT</span>.
+                </p>
+            </div>
+            <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ CLOSE_FILE ]</a>
         </div>
     </div>
 
     <script>
         function setLanguage(lang) {
             document.getElementById('main-html').setAttribute('lang', lang);
-            
-            // Toggle Content
             document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
             document.getElementById('content-' + lang).classList.add('active');
-            
-            // Toggle Buttons
             document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
         const links = document.querySelectorAll('.nav-link');
         function triggerRandomGlitch() {
-    const target = links[Math.floor(Math.random() * links.length)];
-    if (target) {
-        // Store original glitch text
-        const originalGlitch = target.getAttribute('data-glitch');
-        const altGlitch = target.getAttribute('data-glitch-alt');
-
-        // 50% chance to swap to the hybrid version during the glitch
-        if (altGlitch && Math.random() > 0.5) {
-            target.setAttribute('data-glitch', altGlitch);
+            const target = links[Math.floor(Math.random() * links.length)];
+            if (target && !target.closest('#about-sector')) {
+                target.classList.add('glitch-active');
+                setTimeout(() => target.classList.remove('glitch-active'), 300);
+            }
+            setTimeout(triggerRandomGlitch, Math.random() * 4000 + 2000);
         }
-
-        target.classList.add('glitch-active');
-        
-        setTimeout(() => {
-            target.classList.remove('glitch-active');
-            // Reset back to original so it doesn't get stuck
-            target.setAttribute('data-glitch', originalGlitch);
-        }, 300);
-    }
-    setTimeout(triggerRandomGlitch, Math.random() * 4000 + 2000);
-}
         setTimeout(triggerRandomGlitch, 1500);
-    setTimeout(triggerRandomGlitch, 1500);
 
-        // --- THE ABOUT TOGGLE BRAIN ---
         function toggleAbout() {
             const about = document.getElementById('about-sector');
             if (about.style.display === 'none' || about.style.display === '') {
