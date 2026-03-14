@@ -10,6 +10,7 @@
             --bg-color: transparent;
             --text-color: #000000;
             --glitch-color: #de7029;
+            --highlight-color: #de7029; /* Color for the sync-hover */
         }
 
         body, html {
@@ -145,7 +146,6 @@
             animation: stationary-flicker 0.3s steps(2) infinite !important;
         }
 
-        /* Standard Jitter Animation */
         @keyframes link-glitch {
             0% { transform: translate(0); }
             20% { transform: translate(-2px, 2px); }
@@ -155,13 +155,18 @@
             100% { transform: translate(0); }
         }
 
-        /* Stationary Flicker (No movement) */
         @keyframes stationary-flicker {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; color: var(--glitch-color); }
         }
 
-        /* Constant RE/DE Toggle */
+        /* --- HOVER SYNC LOGIC --- */
+        .sync-group { transition: color 0.2s ease; cursor: crosshair; }
+        
+        /* When any member of the group is hovered, highlight all members of that group */
+        #about-sector:has(.sync-sokuji:hover) .sync-sokuji { color: var(--highlight-color); }
+        #about-sector:has(.sync-henyi:hover) .sync-henyi { color: var(--highlight-color); }
+
         .rede-toggle::after {
             content: "re";
             animation: redeCycle 1s infinite;
@@ -216,7 +221,7 @@
                 <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ 記憶: MEMORY ]">/about_me</a>
             </div>
 
-            <img src="Twisted_Duality_Original_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
+            <img src="Twisted_Duality_Originals_subtext.png" alt="ORIGINALS" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
                 <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -246,13 +251,13 @@
 
             <div class="footer-log">
                 [AU証: 核心] -> STATUS: ONLINE<br>
-                "TWO FREQUENZEN. EIN GEFÄSS."
+                "TWO FREQUENCIES. ONE VESSEL."
             </div>
         </div>
 
         <div id="content-de" class="lang-content">
             <div style="text-align: center; margin-bottom: 20px;">
-                <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ SPEICHER: 記憶 ]">/über_uns</a>
+                <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ SPEICHER: 記憶 ]">/über_mich</a>
             </div>
             
             <img src="Twisted_Duality_Originals_subtext.png" alt="URSPRUNG" class="subtext-header originals-logo">
@@ -293,9 +298,9 @@
             <div class="lang-en-only">
                 <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONA_ARCHIVE]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                    <span class="lore-glitch stationary-glitch" data-glitch="双極の螺旋">Twisted&nbsp;Duality</span> // 創作 to 変異<br><br>
-                    We <span class="rede-toggle"></span>/construct <span class="lore-glitch" data-glitch="[KLANG]">[SOUND]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> into immersive landscapes. 
-                    From melodic beauty to industrial decay—this is the heartbeat of the vessel. 
+                    <span class="lore-glitch stationary-glitch" data-glitch="双極の螺旋">Twisted&nbsp;Duality</span> // <span class="sync-group sync-sokuji">創作</span> to <span class="sync-group sync-henyi">変異</span><br><br>
+                    We <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construct</span> <span class="lore-glitch" data-glitch="[KLANG]">[SOUND]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> into immersive landscapes. 
+                    From melodic beauty to <span class="sync-group sync-henyi">industrial decay</span>—this is the heartbeat of the vessel. 
                     Where worlds are unmade and <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REIMAGINED</span>.
                 </p>
                 <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch" data-glitch="[ 閉じる ]" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ close_file ]</a>
@@ -303,8 +308,8 @@
             <div class="lang-de-only">
                 <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONEN_ARCHIV]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                    <span class="lore-glitch stationary-glitch" data-glitch="双極の螺旋">Twisted&nbsp;Duality</span> // 創作 to 変異<br><br>
-                    Wir <span class="rede-toggle"></span>/konstruieren <span class="lore-glitch" data-glitch="[SOUND]">[KLANG]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> durch extreme Manipulation. 
+                    <span class="lore-glitch stationary-glitch" data-glitch="双極の螺旋">Twisted&nbsp;Duality</span> // <span class="sync-group sync-sokuji">創作</span> to <span class="sync-group sync-henyi">変異</span><br><br>
+                    Wir <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruieren</span> <span class="lore-glitch" data-glitch="[SOUND]">[KLANG]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> durch <span class="sync-group sync-henyi">extreme Manipulation</span>. 
                     Von der Schönheit des Lichts bis zum Zerfall der Schatten—der Herzschlag des Universums. 
                     Hier werden Welten aufgelöst und <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">NEU ERDACHT</span>.
                 </p>
