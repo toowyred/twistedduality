@@ -7,6 +7,35 @@
     <title>Twisted Duality | Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+JP+N&display=swap" rel="stylesheet">
     <style>
+        /* THE ORANGE ABOUT TERMINAL */
+        #about-sector {
+            display: none; 
+            margin-top: 20px; 
+            margin-bottom: 40px; 
+            padding: 30px;
+            background: #de7029; /* YOUR BRAND ORANGE */
+            color: #000000;      /* BLACK TEXT FOR READABILITY */
+            text-align: left; 
+            border: 2px solid #000000;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.2); /* SONY-ESQUE SHADOW */
+        }
+
+        /* OVERRIDE GLITCH COLOR INSIDE ORANGE BOX */
+        #about-sector .nav-link:hover::after, 
+        #about-sector .nav-link.glitch-active::after,
+        #about-sector .lore-glitch:hover::after, 
+        #about-sector .lore-glitch.glitch-active::after {
+            color: #ffffff !important; /* GLITCH TURNS WHITE OVER ORANGE */
+        }
+
+        /* TIGHTEN UP LOG START TEXT */
+        #about-sector .log-header {
+            font-size: 0.7rem; 
+            letter-spacing: 2px; 
+            margin-bottom: 15px; 
+            color: rgba(0,0,0,0.6); 
+            font-weight: bold;
+        }
         :root {
             --bg-color: transparent;
             --text-color: #000000;
@@ -240,7 +269,7 @@
 
         <div id="about-sector">
             <div class="lang-en-only">
-                <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONA_ARCHIVE]</div>
+                <div class="log-header">//: LOG_START [PERSONA_ARCHIVE]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
                     <span class="lore-glitch stationary-glitch dictionary-trigger" data-glitch="双極の螺旋">Twisted Duality</span> // <span class="sync-group sync-sokuji">創作</span> to <span class="sync-group sync-henyi">変異</span><br><br>
                     We <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construct</span> <span class="lore-glitch" data-glitch="[KLANG]">[SOUND]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> into immersive landscapes. 
@@ -250,7 +279,7 @@
                 <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch" data-glitch="[ 閉じる ]" style="font-size: 0.7rem; display: inline; border: 1px solid rgba(0,0,0,0.1); padding: 5px 10px;">[ close_file ]</a>
             </div>
             <div class="lang-de-only">
-                <div style="font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: #666;">//: LOG_START [PERSONEN_ARCHIV]</div>
+                <div class="log-header">//: LOG_START [PERSONEN_ARCHIV]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
                     <span class="lore-glitch stationary-glitch dictionary-trigger" data-glitch="双極の螺旋">Twisted Duality</span> // <span class="sync-group sync-sokuji">創作</span> to <span class="sync-group sync-henyi">変異</span><br><br>
                     Wir <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruieren</span> <span class="lore-glitch" data-glitch="[SOUND]">[KLANG]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> durch <span class="sync-group sync-henyi">extreme Manipulation</span>. 
