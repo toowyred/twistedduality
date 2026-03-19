@@ -17,15 +17,18 @@
         }
 
         body, html {
-            margin: 0; padding: 0;
-            background-color: transparent; 
-            color: var(--text-color);
-            font-family: 'WDXL Lubrifont JP N', sans-serif;
-            min-height: 100vh;
-            display: flex; justify-content: center; align-items: flex-start;
-            padding-top: 10vh;
-            overflow-x: hidden;
-        }
+    margin: 0; padding: 0;
+    background-color: transparent; 
+    color: var(--text-color);
+    font-family: 'WDXL Lubrifont JP N', sans-serif;
+    min-height: 100vh;
+    display: flex; justify-content: center; align-items: flex-start;
+    
+    /* PUSH CONTENT DOWN TO MAKE ROOM FOR THE -210px LOGO */
+    padding-top: 250px; 
+    
+    overflow-x: hidden;
+}
 
         /* --- THE GRID ANCHOR --- */
         .grid-bg {
