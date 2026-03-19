@@ -8,6 +8,7 @@
     
     <title><span class="notranslate">Twisted Duality</span> | Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+JP+N&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet">
     <style>
         /* --- GLOBAL VARIABLES & RESET --- */
         :root {
@@ -137,16 +138,25 @@
         #status-footer .online-status { cursor: pointer; text-decoration: underline; transition: color 0.2s ease; }
         #status-footer .online-status:hover { color: var(--glitch-color); }
 
-        /* Hide all footer blocks by default */
-        .lang-en-only, .lang-de-only, .lang-es-only, .lang-fr-only { display: none; }
+        /* 1. Hide all footer blocks by default */
+        .lang-en-only, .lang-de-only, .lang-es-only, 
+        .lang-fr-only, .lang-nl-only, .lang-vi-only { 
+        display: none; 
+        }
 
-        /* Only show the one that matches the current HTML lang attribute */
+        /* 2. Show the one that matches the active language */
         [lang="en"] .lang-en-only { display: block; }
         [lang="de"] .lang-de-only { display: block; }
         [lang="es"] .lang-es-only { display: block; }
         [lang="fr"] .lang-fr-only { display: block; }
         [lang="nl"] .lang-nl-only { display: block; }
         [lang="vi"] .lang-vi-only { display: block; }
+
+        /* 3. Vietnamese font override for missing characters */
+        .vi-font {
+        font-family: 'Unica One', cursive, sans-serif !important;
+        letter-spacing: 1px;
+        }
         
         /* 4. BACK TO TOP BUTTON */
         #back-to-top {
@@ -373,8 +383,9 @@
         <div class="lang-es-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">CENTRO</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LA_RED</span><br>"DOS FRECUENCIAS. UN RECIPIENTE."</div>
         <div class="lang-fr-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">CŒUR</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LIGNE</span><br>"DEUX FRÉQUENCES. UN SEUL NAVIRE."</div>
         <div class="lang-nl-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">KERN</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"(SIGNAL MISSING)"</div>
-        <div class="lang-vi-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">CỐTLÕI</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">TRỰC_TUYẾN</span><br>"HAI TẦN SỐ. MỘT QUỸ ĐẠO"</div>
+        <div class="lang-vi-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">CỐTLÕI</span>] -> STATUS: <span class="online-status" onclick="checkPassword()"><span class="vi-font">TRỰC_TUYẾN</span></span><br><span class="vi-font">"HAI TẦN SỐ. MỘT QUỸ ĐẠO"</span></div>
     </div>
+
 
     <script>
         const langState = { current: 'en' };
@@ -403,7 +414,7 @@
         expandBtn.style.display = 'block';
         }
         }
-        
+
         const tooltip = document.getElementById('lore-tooltip');
         const loreData = {
             en: `
