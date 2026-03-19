@@ -25,7 +25,7 @@
     display: flex; justify-content: center; align-items: flex-start;
     
     /* PUSH CONTENT DOWN TO MAKE ROOM FOR THE -210px LOGO */
-    padding-top: 40px; 
+    padding-top: 450px; 
     
     overflow-x: hidden;
 }
@@ -45,8 +45,8 @@
         }
 
         /* --- UI ELEMENTS & LAYOUT --- */
-        .main-terminal { width: 100%; max-width: 400px; text-align: center; padding: 40px 20px; }
-        .main-logo { width: 100%; max-width: 280px; margin-bottom: 10px; display: block; margin: 0 auto; }
+        .main-terminal { width: 100%; max-width: 400px; text-align: center; padding: 40px 20px; position: relative; }
+        .main-logo { width: 100%; max-width: 350px; position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; }
         .subtext-header { width: 100%; max-width: 200px; margin: 15px auto 5px auto; display: block; }
         .sector { margin-top: 0; margin-bottom: 30px; }
 
@@ -227,7 +227,7 @@
     </div>
 
     <div class="main-terminal">
-        <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo" style="margin-top: -240px;">
+        <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo" style="top: -420px;">
 
         <div id="content-en" class="lang-content active">
             <div style="text-align: center; margin-bottom: 20px;">
