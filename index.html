@@ -4,7 +4,9 @@
     <link rel="icon" type="image/png" href="favicon64.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twisted Duality | Archive</title>
+    <meta name="google" content="notranslate" />
+    
+    <title><span class="notranslate">Twisted Duality</span> | Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+JP+N&display=swap" rel="stylesheet">
     <style>
         /* --- GLOBAL VARIABLES & RESET --- */
@@ -23,8 +25,8 @@
             font-family: 'WDXL Lubrifont JP N', sans-serif;
             min-height: 100vh;
             display: flex; justify-content: center; align-items: flex-start;
-            
             overflow-x: hidden;
+            overscroll-behavior-y: contain; /* Helps with pull-to-refresh feel */
         }
 
         /* --- THE GRID ANCHOR --- */
@@ -47,15 +49,18 @@
         .subtext-header { width: 100%; max-width: 200px; margin: 15px auto 5px auto; display: block; }
         .sector { margin-top: 0; margin-bottom: 30px; }
 
+        /* 2. VERTICAL GLASS LANG SWITCH */
         .lang-switch {
             position: fixed; 
             top: 25px; 
-            right: 30px;
-            font-size: 0.85rem; 
+            right: 10px; /* Hugs the right edge */
+            font-size: 0.65rem; /* Smaller font */
             letter-spacing: 1px; 
             z-index: 100;
             display: flex; 
-            gap: 15px; 
+            flex-direction: column; /* Vertical stack */
+            gap: 12px; 
+            text-align: right;
     
             /* LIQUID GLASS EFFECT */
             background: rgba(255, 255, 255, 0.1); 
@@ -63,15 +68,13 @@
             -webkit-backdrop-filter: blur(15px); 
             border: 1px solid rgba(255, 255, 255, 0.1);
     
-            padding: 10px 18px; 
+            padding: 12px 15px; 
             border-radius: 4px;
         }
 
         .lang-btn { cursor: pointer; opacity: 0.4; transition: opacity 0.3s; color: var(--text-color); }
         .lang-btn.active { opacity: 1; font-weight: bold; border-bottom: 1px solid var(--text-color); }
 
-        /* FADE-OUT CSS KEPT FOR LOGIC BUT DISABLED BY JS REMOVAL */
-        .fade-out { opacity: 0 !important; pointer-events: none; }
         .lang-content { display: none; }
         .lang-content.active { display: block; }
 
@@ -86,176 +89,81 @@
             text-align: left; 
             border: 2px solid #000000;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
-            
-            /* LOCAL VARIABLE OVERRIDE */
             --glitch-color: #ffffff;
             --highlight-color: #ffffff;
         }
 
-        /* ORANGE TERMINAL: FONTS & CLEAN HOVERS */
-        #about-sector .sync-group,
-        #about-sector .lore-glitch,
-        #about-sector .close-btn-aligned,
-        #about-sector span {
-            font-family: 'WDXL Lubrifont JP N', sans-serif !important;
-            transition: color 0.2s ease;
-        }
-
-        #about-sector .sync-group:hover {
-            color: #ffffff !important;
-        }
-
-        #about-sector .lore-glitch:hover,
-        #about-sector .nav-link:hover,
-        #about-sector .close-btn-aligned:hover {
-            color: transparent !important;
-        }
-
-        #about-sector .lore-glitch:hover::after,
-        #about-sector .nav-link:hover::after,
-        #about-sector .close-btn-aligned:hover::after {
-            color: #ffffff !important;
-        }
-
-        #about-sector .log-header {
-            font-size: 0.7rem; 
-            letter-spacing: 2px; 
-            margin-bottom: 15px; 
-            color: rgba(0,0,0,0.6); 
-            font-weight: bold;
-        }
+        #about-sector .sync-group, #about-sector .lore-glitch, #about-sector .close-btn-aligned, #about-sector span { font-family: 'WDXL Lubrifont JP N', sans-serif !important; transition: color 0.2s ease; }
+        #about-sector .sync-group:hover { color: #ffffff !important; }
+        #about-sector .lore-glitch:hover, #about-sector .nav-link:hover, #about-sector .close-btn-aligned:hover { color: transparent !important; }
+        #about-sector .lore-glitch:hover::after, #about-sector .nav-link:hover::after, #about-sector .close-btn-aligned:hover::after { color: #ffffff !important; }
+        #about-sector .log-header { font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: rgba(0,0,0,0.6); font-weight: bold; }
 
         .close-btn-aligned {
-            display: inline-block !important;
-            height: 30px;
-            line-height: 30px;
-            width: 200px; 
-            text-align: center;
-            vertical-align: middle;
-            border: 1px solid rgba(0,0,0,0.1);
-            padding: 0 !important;
-            box-sizing: border-box;
+            display: inline-block !important; height: 30px; line-height: 30px; width: 200px; 
+            text-align: center; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1);
+            padding: 0 !important; box-sizing: border-box;
         }
-        .close-btn-aligned::after {
-            top: 0; left: 0; height: 100%; line-height: 30px; width: 100%;
-        }
+        .close-btn-aligned::after { top: 0; left: 0; height: 100%; line-height: 30px; width: 100%; }
 
         /* --- GLITCH LOGIC --- */
         .originals-logo { animation: glitchUrsprung 12s infinite; }
-        @keyframes glitchUrsprung {
-            0%, 85%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); }
-            87%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); }
-        }
-
+        @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); } 87%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); } }
         .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
-        @keyframes glitchKonstruiert {
-            0%, 80%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); }
-            82%, 97% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); }
-        }
+        @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); } 82%, 97% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); } }
 
-        .nav-link {
-            display: block; margin: 14px 0; font-size: 1.15rem; color: var(--text-color);
-            text-decoration: none; text-transform: lowercase; letter-spacing: 2px;
-            position: relative; cursor: pointer;
-        }
-
-        .lore-glitch { 
-            display: inline-block; position: relative; color: inherit; text-decoration: none;
-            font-family: 'WDXL Lubrifont JP N', sans-serif;
-        }
-        
+        .nav-link { display: block; margin: 14px 0; font-size: 1.15rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
+        .lore-glitch { display: inline-block; position: relative; color: inherit; text-decoration: none; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         .nav-link:hover, .nav-link.glitch-active, .lore-glitch:hover, .lore-glitch.glitch-active { color: transparent; }
-        
-        .nav-link:hover::after, .nav-link.glitch-active::after,
-        .lore-glitch:hover::after, .lore-glitch.glitch-active::after {
-            content: attr(data-glitch); position: absolute; left: 0; width: 100%;
-            text-align: center; color: var(--glitch-color); animation: link-glitch 0.3s steps(2) infinite;
-            font-family: 'WDXL Lubrifont JP N', sans-serif;
-        }
+        .nav-link:hover::after, .nav-link.glitch-active::after, .lore-glitch:hover::after, .lore-glitch.glitch-active::after { content: attr(data-glitch); position: absolute; left: 0; width: 100%; text-align: center; color: var(--glitch-color); animation: link-glitch 0.3s steps(2) infinite; font-family: 'WDXL Lubrifont JP N', sans-serif; }
+        .stationary-glitch:hover::after, .stationary-glitch.glitch-active::after { animation: stationary-flicker 0.3s steps(2) infinite !important; }
 
-        .stationary-glitch:hover::after, .stationary-glitch.glitch-active::after {
-            animation: stationary-flicker 0.3s steps(2) infinite !important;
-        }
-
-        @keyframes link-glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
-        }
-
+        @keyframes link-glitch { 0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } 100% { transform: translate(0); } }
         @keyframes stationary-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-        /* --- HOVER SYNC --- */
         .sync-group { transition: color 0.2s ease; cursor: help; }
         #about-sector:has(.sync-sokuji:hover) .sync-sokuji { color: var(--highlight-color); }
         #about-sector:has(.sync-henyi:hover) .sync-henyi { color: var(--highlight-color); }
-
         .rede-toggle::after { content: "re"; animation: redeCycle 1s infinite; }
         @keyframes redeCycle { 0%, 49% { content: "re"; } 50%, 100% { content: "de"; } }
 
-        /* --- THE DICTIONARY TOOLTIP --- */
-        #lore-tooltip {
-            position: absolute; display: none; width: 240px;
-            background: var(--tooltip-bg); color: #fff; padding: 15px;
-            border: 1px solid var(--glitch-color); font-family: monospace;
-            font-size: 0.75rem; z-index: 1000; pointer-events: none;
-            text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-
+        #lore-tooltip { position: absolute; display: none; width: 240px; background: var(--tooltip-bg); color: #fff; padding: 15px; border: 1px solid var(--glitch-color); font-family: monospace; font-size: 0.75rem; z-index: 1000; pointer-events: none; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         #lore-tooltip .word-head { font-size: 1rem; color: var(--glitch-color); margin-bottom: 2px; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         #lore-tooltip .reading { font-size: 0.65rem; opacity: 0.6; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
         #lore-tooltip .jp-def { font-size: 0.8rem; margin-bottom: 5px; color: #eee; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         #lore-tooltip .en-def { font-size: 0.7rem; opacity: 0.5; font-style: italic; margin-bottom: 12px; }
 
-        /* --- FOOTER SPACING --- */
-        .footer-log {
-            margin-top: 70px;
-            font-size: 0.65rem;
-            opacity: 0.5;
-            letter-spacing: 1px;
-            line-height: 1.6;
-            text-transform: uppercase;
-        }
-
-        /* --- FIXED STATUS FOOTER --- */
-        #status-footer {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.65rem;
-            letter-spacing: 1px;
-            z-index: 100;
-            line-height: 1.6;
-            text-transform: uppercase;
-            
-            /* LIQUID GLASS EFFECT */
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            
-            padding: 12px 20px;
-            border-radius: 4px;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        #status-footer .online-status {
-            cursor: pointer;
-            text-decoration: underline;
-            transition: color 0.2s ease;
-        }
-
-        #status-footer .online-status:hover {
-            color: var(--glitch-color);
-        }
+        #status-footer { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; letter-spacing: 1px; z-index: 100; line-height: 1.6; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 4px; text-align: center; white-space: nowrap; }
+        #status-footer .online-status { cursor: pointer; text-decoration: underline; transition: color 0.2s ease; }
+        #status-footer .online-status:hover { color: var(--glitch-color); }
 
         [lang="en"] .lang-de-only { display: none; }
         [lang="de"] .lang-en-only { display: none; }
+        
+        /* 4. BACK TO TOP BUTTON */
+        #back-to-top {
+            position: fixed; bottom: 85px; right: 25px;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(0,0,0,0.2); color: var(--text-color);
+            width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+            z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            display: flex; justify-content: center; align-items: center; font-family: monospace;
+        }
+        #back-to-top.visible { opacity: 1; pointer-events: auto; }
+
+        /* 5. RELEASE TO REFRESH */
+        #pull-refresh {
+            position: fixed; top: -70px; left: 0; width: 100%; text-align: center;
+            font-size: 0.7rem; letter-spacing: 2px; z-index: 1000;
+            transition: transform 0.2s ease-out; pointer-events: none;
+            color: var(--text-color); font-weight: bold; font-family: monospace;
+        }
+        .ptr-arrow {
+            display: block; font-size: 1.5rem; margin-bottom: 5px;
+            transition: transform 0.3s;
+        }
+        #pull-refresh.ready .ptr-arrow { transform: rotate(180deg); color: var(--highlight-color); }
+        
     </style>
 </head>
 <body>
@@ -263,11 +171,19 @@
     <div class="grid-bg"></div>
     <div id="lore-tooltip"></div>
 
+    <div id="pull-refresh">
+        <span class="ptr-arrow">↓</span>
+        RELEASE TO REFRESH
+    </div>
+
     <div class="lang-switch" id="lang-container">
         <span class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN日本</span>
-        <span style="opacity: 0.2">|</span>
         <span class="lang-btn" id="btn-de" onclick="setLanguage('de')">DE日本</span>
+        <span class="lang-btn" id="btn-es" onclick="setLanguage('es')">ES日本</span>
+        <span class="lang-btn" id="btn-fr" onclick="setLanguage('fr')">FR日本</span>
     </div>
+
+    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
 
     <div class="main-terminal">
         <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
@@ -294,16 +210,18 @@
 
             <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">CURRENT TRANSMISSION</div>
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ ECHOES BEHIND ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
                 <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ 核心：ECHOES ]">apple-music/listen_now</a>
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHOES ]">spotify/listen_now </a>
             </div>
 
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">UPCOMING TRANSMISSION</div>
-                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ from_領コア ]</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ from_<span class="notranslate">領コア</span> ]</div>
                 <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNAL STRENGTH: recalibrating</div>
             </div>
+            
+            <div style="height: 20vh; width: 100%;"></div>
         </div>
 
         <div id="content-de" class="lang-content">
@@ -328,23 +246,53 @@
 
             <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">AKTUELLE ÜBERTRAGUNG</div>
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ ECHOES BEHIND ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
                 <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link" data-glitch="[ KERN：残響 ]">apple-music/jetzt_anhören</a>
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ KERN：残響 ]">spotify/jetzt_anhören</a>
             </div>
 
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">KOMMENDE ÜBERTRAGUNG</div>
-                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ aus_領コア ]</div>
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ aus_<span class="notranslate">領コア</span> ]</div>
                 <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNALSTÄRKE: rekalibrierung</div>
             </div>
+            
+            <div style="height: 20vh; width: 100%;"></div>
+        </div>
+        
+        <div id="content-es" class="lang-content">
+            <div style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ MEMORIA ]">/sobre_nosotros</a></div>
+            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <div class="sector">
+                <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
+                <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
+            </div>
+            <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">TRANSMISIÓN ACTUAL</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
+            </div>
+            <div style="height: 20vh; width: 100%;"></div>
+        </div>
+
+        <div id="content-fr" class="lang-content">
+            <div style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ MÉMOIRE ]">/à_propos</a></div>
+            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <div class="sector">
+                <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
+                <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
+            </div>
+            <div class="sector" style="margin-top: 50px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
+                <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">TRANSMISSION ACTUELLE</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
+            </div>
+            <div style="height: 20vh; width: 100%;"></div>
         </div>
 
         <div id="about-sector">
             <div class="lang-en-only">
                 <div class="log-header">//: LOG_START [PERSONA_ARCHIVE]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                    <span class="lore-glitch stationary-glitch dictionary-trigger" data-glitch="双極の螺旋">Twisted Duality</span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                    <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
                     We <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construct</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[SOUND]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> into immersive landscapes. 
                     From melodic beauty to <span class="sync-group sync-henyi">industrial decay</span>. This is the heartbeat of the vessel. 
                     Where worlds are unmade and <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REIMAGINED</span>.
@@ -355,7 +303,7 @@
             <div class="lang-de-only">
                 <div class="log-header">//: LOG_START [PERSONEN_ARCHIV]</div>
                 <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                    <span class="lore-glitch stationary-glitch dictionary-trigger" data-glitch="双極の螺旋">Twisted Duality</span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                    <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
                     Wir <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruieren</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[KLANG]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> durch <span class="sync-group sync-henyi">extreme Manipulation</span>.<br> 
                     Von der Schönheit des Lichts bis zum Zerfall der Schatten—der Herzschlag des Universums. 
                     Hier werden Welten aufgelöst und <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">NEU ERDACHT</span>.
@@ -365,164 +313,131 @@
         </div>
     </div>
 
-    <!-- FIXED STATUS FOOTER -->
     <div id="status-footer">
         <div class="lang-en-only">[AU証: 核心] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"TWO FREQUENCIES. ONE VESSEL."</div>
         <div class="lang-de-only">[BE証: KERN] -> STATUS: <span class="online-status" onclick="checkPassword()">BEREIT</span><br>"ZWEI FREQUENZEN. EIN GEFÄSS."</div>
     </div>
 
     <script>
-        // --- MULTILINGUAL LOGIC ---
         const langState = { current: 'en' };
         
         function setLanguage(lang) {
             langState.current = lang;
             document.getElementById('main-html').setAttribute('lang', lang);
             document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('content-' + lang).classList.add('active');
+            
+            // Failsafe in case content block is missing
+            const targetContent = document.getElementById('content-' + lang);
+            if(targetContent) targetContent.classList.add('active');
+            
             document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
-        // --- THE DICTIONARY TOOLTIP LOGIC ---
         const tooltip = document.getElementById('lore-tooltip');
         const loreData = {
             en: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】 SŌKYOKU</div>
+                <div class="word-head"><span class="notranslate">双極</span></div><div class="reading">【 そうきょく 】 SŌKYOKU</div>
                 <div class="jp-def">相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
                 <div class="en-def">Two opposing forces; the [ duality ] woven by the [ bipolarity ] of resonance and impact.</div>
                 
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】 RASEN</div>
+                <div class="word-head"><span class="notranslate">螺旋</span></div><div class="reading">【 らせん 】 RASEN</div>
                 <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
                 <div class="en-def">A trajectory of creation and "decay" overlapping and continuously ascending in a [ spiral ].</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_DUALISM_V1 ]</div>
             `,
             de: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】 SSO-KJOH-KU</div>
+                <div class="word-head"><span class="notranslate">双極</span></div><div class="reading">【 そうきょく 】 SSO-KJOH-KU</div>
                 <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
                 <div class="en-def">Zwei gegensätzliche Kräfte; die durch die [ Bipolarität ] von Resonanz und Einschlag gewobene [ Dualität ].</div>
                 
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】 LA-SSEN</div>
+                <div class="word-head"><span class="notranslate">螺旋</span></div><div class="reading">【 らせん 】 LA-SSEN</div>
                 <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
                 <div class="en-def">Eine schöpferische Flugbahn der „Decay“, die sich überlagert und als [ Spirale ] kontinuierlich aufsteigt.</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_DUALISMUS_V1 ]</div>
-            `,
-            zh: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】ㄙㄛ ㄑㄧㄡ ㄎㄨ</div>
-                <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
-                <div class="zh-def">相反相成的两种力量。残响与冲击，由「双极」交织而成的「二元性」。</div>
-                
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】ㄌㄚ ㄙㄣ</div>
-                <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
-                <div class="zh-def">重叠交错、在不断的变异中持续攀升的「螺旋」轨迹。</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ CORE_二元論_V1 ]</div>
-            `,
-            vi: `
-                <div class="word-head">双極</div><div class="reading">【 song&#xA0cực 】SÔ-KYÔ-KƯ</div>
-                <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
-                <div class="vi-def">Hai luồng lực đối nghịch [song&nbsp;hành] giữa âm&nbsp;điệu và xung&nbsp;kích, tạo nên một [song&#xA0cực] đầy kịch&nbsp;tính.</div>
-                
-                <div class="word-head">螺旋</div><div class="reading">【 loa triền 】LÀ-SEN</div>
-                <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
-                <div class="vi-def">Một quỹ&nbsp;đạo sáng&nbsp;tạo và "biến&nbsp;dị", chồng lấp và không ngừng vươn&nbsp;cao như một [vòng&nbsp;xoáy] vô&nbsp;tận.</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_NHỊNGUYÊN_V1 ]</div>
-            `,
-            fr: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】SŌ-KYO-KU</div>
-                <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
-                <div class="fr-def">Deux forces opposées ; la [ dualité ] tissée par la [ bipolarité ] entre résonance et impact.</div>
-                
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】RA-SE-N</div>
-                <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
-                <div class="fr-def">Une trajectoire de création et de « decay », une [ spirale ] ascendante où les couches se superposent.</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_DUALISME_V1 ]</div>
-            `,
-            nl: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】SSO-KYOH-KU</div>
-                <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
-                <div class="nl-def">Twee tegengestelde krachten; de [ dualiteit ] verweven door de [ bipolariteit ] van resonantie en impact.</div>
-                
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】LAH-SEN</div>
-                <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
-                <div class="nl-def">Een scheppingstraject van "decay", overlappend en voortdurend stijgend als een [ spiraal ].</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_DUALISME_V1 ]</div>
             `,
             es: `
-                <div class="word-head">双極</div><div class="reading">【 そうきょく 】SŌKYOKU</div>
-                <div class="jp-def">>相反する二つの力。残響と衝撃、その「双極」が織りなす「二元性」。</div>
+                <div class="word-head"><span class="notranslate">双極</span></div><div class="reading">【 そうきょく 】 SŌKYOKU</div>
                 <div class="es-def">Dos fuerzas opuestas; la [ dualidad ] tejida por la [ bipolaridad ] entre la resonancia y el impacto.</div>
-                
-                <div class="word-head">螺旋</div><div class="reading">【 らせん 】RASEN</div>
-                <div class="jp-def">重なり合い、変異を繰り返しながら、高まり続ける「螺旋」の軌跡。</div>
+                <div class="word-head"><span class="notranslate">螺旋</span></div><div class="reading">【 らせん 】 RASEN</div>
                 <div class="es-def">Una trayectoria de creación y "decay", una [ espiral ] ascendente donde las capas se sobreponen.</div>
-                <div style="font-size:0.55rem; opacity:0.3; margin-top:5px; text-align:right;">[ 核心_DUALISMO_V1 ]</div>
             `,
+            fr: `
+                <div class="word-head"><span class="notranslate">双極</span></div><div class="reading">【 そうきょく 】 SŌ-KYO-KU</div>
+                <div class="fr-def">Deux forces opposées ; la [ dualité ] tissée par la [ bipolarité ] entre résonance et impact.</div>
+                <div class="word-head"><span class="notranslate">螺旋</span></div><div class="reading">【 らせん 】 RA-SE-N</div>
+                <div class="fr-def">Une trajectoire de création et de « decay », une [ spirale ] ascendante où les couches se superposent.</div>
+            `
         };
 
-        function showTooltip(e) {
-            tooltip.innerHTML = loreData[langState.current];
-            tooltip.style.display = 'block';
-            updateTooltipPos(e);
-        }
-
-        function updateTooltipPos(e) {
-            const x = e.pageX + 15;
-            const y = e.pageY + 15;
-            tooltip.style.left = x + 'px';
-            tooltip.style.top = y + 'px';
-        }
-
+        function showTooltip(e) { tooltip.innerHTML = loreData[langState.current] || loreData['en']; tooltip.style.display = 'block'; updateTooltipPos(e); }
+        function updateTooltipPos(e) { const x = e.pageX + 15; const y = e.pageY + 15; tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px'; }
         function hideTooltip() { tooltip.style.display = 'none'; }
 
         document.querySelectorAll('.dictionary-trigger').forEach(el => {
-            el.addEventListener('mouseenter', showTooltip);
-            el.addEventListener('mousemove', updateTooltipPos);
+            el.addEventListener('mouseenter', showTooltip); el.addEventListener('mousemove', updateTooltipPos);
             el.addEventListener('mouseleave', hideTooltip);
-            el.addEventListener('touchstart', (e) => {
-                showTooltip(e.touches[0]);
-                setTimeout(hideTooltip, 3000);
-            });
+            el.addEventListener('touchstart', (e) => { showTooltip(e.touches[0]); setTimeout(hideTooltip, 3000); });
         });
 
-        // --- THE GLITCH BRAIN ---
         const allGlitches = document.querySelectorAll('.nav-link, .lore-glitch');
         function triggerRandomGlitch() {
             const target = allGlitches[Math.floor(Math.random() * allGlitches.length)];
             if (target) {
                 if (target.classList.contains('glitch-rare') && Math.random() > 0.5) { setTimeout(triggerRandomGlitch, 100); return; }
-                target.classList.add('glitch-active');
-                setTimeout(() => target.classList.remove('glitch-active'), 350);
+                target.classList.add('glitch-active'); setTimeout(() => target.classList.remove('glitch-active'), 350);
             }
             setTimeout(triggerRandomGlitch, Math.random() * 3000 + 1500);
         }
         setTimeout(triggerRandomGlitch, 1500);
 
-        // --- ABOUT SECTOR TOGGLE ---
         function toggleAbout() {
             const about = document.getElementById('about-sector');
             about.style.display = (about.style.display === 'none' || about.style.display === '') ? 'block' : 'none';
             if (about.style.display === 'block') about.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // --- STATUS PASSWORD EASTER EGG ---
         function checkPassword() {
             const password = prompt('[ ENTER TRANSMISSION CODE ]');
             if (password && password.toUpperCase() === 'DUAL') {
-                const statusElements = document.querySelectorAll('.online-status');
-                statusElements.forEach(el => {
-                    if (langState.current === 'en') {
-                        el.textContent = 'RESONATING';
-                    } else {
-                        el.textContent = 'RESONIEREN';
-                    }
-                    el.style.color = 'var(--glitch-color)';
-                    el.classList.add('glitch-active');
+                document.querySelectorAll('.online-status').forEach(el => {
+                    el.textContent = langState.current === 'de' ? 'RESONIEREN' : 'RESONATING';
+                    el.style.color = 'var(--glitch-color)'; el.classList.add('glitch-active');
                     setTimeout(() => el.classList.remove('glitch-active'), 1000);
                 });
-            } else if (password) {
-                alert('[ TRANSMISSION CODE INVALID ]');
-            }
+            } else if (password) { alert('[ TRANSMISSION CODE INVALID ]'); }
         }
+
+        // --- BACK TO TOP LISTENER ---
+        window.addEventListener('scroll', () => {
+            const btt = document.getElementById('back-to-top');
+            if (window.scrollY > 300) btt.classList.add('visible');
+            else btt.classList.remove('visible');
+        });
+
+        // --- PULL TO REFRESH LISTENER ---
+        let touchStartY = 0;
+        const pTr = document.getElementById('pull-refresh');
+        
+        window.addEventListener('touchstart', e => { 
+            if(window.scrollY === 0) touchStartY = e.touches[0].clientY; 
+        }, {passive: true});
+        
+        window.addEventListener('touchmove', e => {
+            if(window.scrollY === 0 && touchStartY > 0) {
+                let pullDistance = e.touches[0].clientY - touchStartY;
+                if(pullDistance > 30) {
+                    pTr.style.transform = `translateY(${Math.min(pullDistance, 120)}px)`;
+                    if(pullDistance > 80) pTr.classList.add('ready');
+                    else pTr.classList.remove('ready');
+                }
+            }
+        }, {passive: true});
+        
+        window.addEventListener('touchend', e => {
+            if(pTr.classList.contains('ready')) { location.reload(); }
+            pTr.style.transform = 'translateY(0)';
+            pTr.classList.remove('ready');
+            touchStartY = 0;
+        });
     </script>
 </body>
 </html>
