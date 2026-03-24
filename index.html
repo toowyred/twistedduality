@@ -31,7 +31,7 @@
 
         body, html {
             margin: 0; padding: 0;
-            background: linear-gradient(90deg, #f0d6cc 0%, #ffffff 20%, #ffffff 80%, #ccd6f0 100%);
+            background-color: transparent; 
             color: var(--text-color);
             font-family: 'WDXL Lubrifont JP N', sans-serif;
             min-height: 100vh;
@@ -45,24 +45,12 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: transparent no-repeat center center;
+            width: 100vw;  
+            height: 100vh; 
+            background: #fff url('elements/web-background.png') no-repeat center center;
             background-size: contain;
             z-index: -1;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-        }
-        .grid-bg-fill {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: transparent no-repeat center center;
-            background-size: auto 100%;
-            z-index: -2;
-            transform: translateZ(0);
+            transform: translateZ(0); 
             -webkit-transform: translateZ(0);
         }
 
@@ -266,53 +254,42 @@
 
     </style>
     <script>
-        // Background rotation (lightmode only, mobile vs desktop)
+        // Background rotation with dark mode support
         (function() {
-            const isMobile = window.innerWidth <= 768;
-
-            const bgs = ['web-background-main-lightmode.png', 'web-background-1-hole.png', 'web-background-2-hole.png'];
-            const fallbacks = {
+            const lightBgs = ['web-background-main-lightmode.png', 'web-background-2-hole.png'];
+            const darkBg = 'web-background-darkmode.png';
+            const solidFallbacks = {
                 'web-background-main-lightmode.png': 'web-background.png',
-                'web-background-1-hole.png': 'web-background-1-solid.png',
-                'web-background-2-hole.png': 'web-background-2-solid.png'
+                'web-background-2-hole.png': 'web-background-2-solid.png',
+                'web-background-darkmode.png': 'web-background-darkmode.png'
             };
 
             function loadBackground() {
-                const bgFile = bgs[Math.floor(Math.random() * bgs.length)];
-                const fallback = fallbacks[bgFile];
-                const grid = document.querySelector('.grid-bg');
-                if (!grid) return;
-
-                // Desktop: pair the fill behind the main BG
-                const fillMap = {
-                    'web-background-main-lightmode.png': 'web-background-main-lightmode-fill.png',
-                    'web-background-1-hole.png': 'web-background-1-hole-fill.png',
-                    'web-background-2-hole.png': 'web-background-2-hole-fill.png'
-                };
+                const isDarkMode = localStorage.getItem('Light Out') === 'true';
+                const bgFile = isDarkMode ? darkBg : lightBgs[Math.floor(Math.random() * lightBgs.length)];
+                const fallback = solidFallbacks[bgFile];
 
                 const img = new Image();
                 img.onload = () => {
-                    grid.style.backgroundImage = `url(elements/${bgFile})`;
-                    // Desktop: load fill on separate layer behind main BG
-                    if (!isMobile && fillMap[bgFile]) {
-                        const fillEl = document.querySelector('.grid-bg-fill');
-                        if (fillEl) fillEl.style.backgroundImage = `url(elements/${fillMap[bgFile]})`;
-                    }
+                    document.body.style.backgroundImage = `url(elements/${bgFile})`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundAttachment = 'fixed';
                 };
                 img.onerror = () => {
-                    grid.style.backgroundImage = `url(elements/${fallback})`;
+                    document.body.style.backgroundImage = `url(elements/${fallback})`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundAttachment = 'fixed';
                 };
                 img.src = `elements/${bgFile}`;
             }
 
-            document.addEventListener('DOMContentLoaded', loadBackground);
+            loadBackground();
         })();
     </script>
 </head>
 <body>
 
     <div class="grid-bg"></div>
-    <div class="grid-bg-fill"></div>
 
     <!-- ON AIR INDICATOR — status driven by Gist fetch below -->
     <div id="onair-indicator">
