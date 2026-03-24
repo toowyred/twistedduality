@@ -189,7 +189,10 @@
         .admin-row:last-child { border-bottom: none; }
         .admin-count { color: var(--glitch-color); font-weight: bold; }
 
-        .reimagined-tag { display: inline-block; font-size: 0.6rem; letter-spacing: 0.8rem; text-transform: uppercase; opacity: 0.6; cursor: help; border-bottom: 1px dashed currentColor; padding-bottom: 1px; }
+        .reimagined-tag { display: inline-block; font-size: 0.75rem; letter-spacing: 0.8rem; text-transform: uppercase; opacity: 0.6; cursor: help; border-bottom: 1px dashed currentColor; padding-bottom: 1px; }
+        @media (max-width: 768px) { .reimagined-tag { font-size: 0.6rem; } }
+        .signal-status { font-size: 0.75rem; letter-spacing: 1px; }
+        @media (max-width: 768px) { .signal-status { font-size: 0.8rem; } }
 
         /* 1. Hide all footer blocks by default */
         .lang-en-only, .lang-de-only, .lang-es-only, 
@@ -326,7 +329,7 @@
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">UPCOMING TRANSMISSION</div>
                 <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ from_<span class="notranslate">領コア</span> ]</div>
-                <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNAL STRENGTH：recalibrating</div>
+                <div class="signal-status">SIGNAL STRENGTH：recalibrating</div>
             </div>
             
             <div style="height: 20vh; width: 100%;"></div>
@@ -367,7 +370,7 @@
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">KOMMENDE ÜBERTRAGUNG</div>
                 <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ aus_<span class="notranslate">領コア</span> ]</div>
-                <div style="font-size: 0.8rem; letter-spacing: 1px;">SIGNALSTÄRKE：rekalibrierung</div>
+                <div class="signal-status">SIGNALSTÄRKE：rekalibrierung</div>
             </div>
             
             <div style="height: 20vh; width: 100%;"></div>
@@ -405,7 +408,7 @@
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">PRÓXIMA TRASPASO</div>
                 <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ desde_<span class="notranslate">領コア</span> ]</div>
-                <div style="font-size: 0.8rem; letter-spacing: 1px;">INTENSIDAD DE LA SEÑAL：recalibrando</div>
+                <div class="signal-status">INTENSIDAD DE LA SEÑAL：<br>recalibrando</div>
             </div>
             
             <div style="height: 20vh; width: 100%;"></div>
@@ -443,7 +446,7 @@
             <div class="sector" style="margin-top: 30px; opacity: 0.6;">
                 <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">PROCHAIN TRANSFERT</div>
                 <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">[ depuis_<span class="lore-glitch notranslate" data-glitch="LYOKO">領コア</span> ]</div>
-                <div style="font-size: 0.8rem; letter-spacing: 1px;">FORCE DU SIGNAL：<span class="lore-glitch" data-glitch="Jérémie B enquête">en cours de recalibrage</span></div>
+                <div class="signal-status">FORCE DU SIGNAL：<br><span class="lore-glitch" data-glitch="Jérémie B enquête">en cours de recalibrage</span></div>
             </div>
             
             <div style="height: 20vh; width: 100%;"></div>
