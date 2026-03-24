@@ -218,12 +218,38 @@
             transition: transform 0.3s;
         }
         #pull-refresh.ready .ptr-arrow { transform: rotate(180deg); color: var(--highlight-color); }
-        
+
+        /* --- ON AIR INDICATOR --- */
+        #onair-indicator {
+            position: fixed; top: 25px; left: 10px;
+            display: none; /* hidden by default, shown by JS when live */
+            align-items: center; gap: 6px;
+            font-size: 0.6rem; letter-spacing: 2px;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+            padding: 8px 12px; z-index: 100;
+        }
+        #onair-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--glitch-color);
+            animation: onair-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes onair-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--glitch-color); }
+            50%       { opacity: 0.3; box-shadow: none; }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="grid-bg"></div>
+
+    <!-- ON AIR INDICATOR — status driven by Gist fetch below -->
+    <div id="onair-indicator">
+        <div id="onair-dot"></div>
+        <span>ON AIR</span>
+    </div>
     <div id="lore-tooltip"></div>
 
     <div id="pull-refresh">
@@ -543,7 +569,9 @@
             new Audio('sounds/aboutus-random1.mp3'),
             new Audio('sounds/aboutus-random2.mp3')
         ];
+        aboutOpenSounds.forEach(s => s.volume = 0.5);
         const aboutCloseSound = new Audio('sounds/closefile-button.mp3');
+        aboutCloseSound.volume = 0.5;
 
         function toggleAbout() {
             const about = document.getElementById('about-sector');
@@ -619,6 +647,24 @@
                 setTimeout(hideTooltip, 3000);
             }, { passive: true });
         });
+        // --- ON AIR STATUS ---
+        // Replace the URL below with your Gist raw URL after setup
+        const ONAIR_GIST_URL = 'https://gist.githubusercontent.com/toowyred/d5eed9405232e7d36e77a2aed4bbdf51/raw/status.json';
+
+        function checkOnAir() {
+            if (!ONAIR_GIST_URL || ONAIR_GIST_URL === 'YOUR_GIST_RAW_URL') return;
+            fetch(ONAIR_GIST_URL + '?t=' + Date.now()) // cache-bust
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('onair-indicator');
+                    el.style.display = data.onair ? 'flex' : 'none';
+                })
+                .catch(() => {}); // silently fail — never breaks the page
+        }
+
+        checkOnAir();
+        setInterval(checkOnAir, 60000); // poll every 60s
+
     </script>
 </body>
 </html>
