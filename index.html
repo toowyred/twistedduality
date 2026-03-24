@@ -61,28 +61,28 @@
         .sector { margin-top: 0; margin-bottom: 30px; }
 
         /* --- TICKER / RUNNING LINE --- */
-        .ticker-wrap {
+        .intro-wrap {
             width: 100%;
             max-width: 200px;
             overflow: hidden;
             margin: 6px auto 14px auto;
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 2px;
             padding: 2px 0;
         }
-        .ticker-track {
+        .intro-track {
             display: inline-block;
             white-space: nowrap;
-            animation: ticker-scroll 72s linear infinite;
+            animation: intro-scroll 72s linear infinite;
             font-size: 0.62rem;
             letter-spacing: 2.5px;
             opacity: 0.85;
         }
-        .ticker-key { color: var(--glitch-color); }
-        @keyframes ticker-scroll {
+        .intro-key { color: var(--glitch-color); }
+        @keyframes intro-scroll {
             from { transform: translateX(200px); }
             to   { transform: translateX(-100%); }
         }
@@ -282,8 +282,8 @@
     <div class="main-terminal">
         <img src="elements/Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
 
-        <div class="ticker-wrap">
-            <span class="ticker-track">Where worlds are <span class="ticker-key">Unmade</span> and <span class="ticker-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten <span class="ticker-key">Aufgelöst</span> und <span class="ticker-key">Neu Erdacht</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="ticker-key">壊され</span>、<span class="ticker-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Donde los mundos son <span class="ticker-key">Deshechos</span> y <span class="ticker-key">Reimaginados</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are <span class="ticker-key">Unmade</span> and <span class="ticker-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Là où les mondes se <span class="ticker-key">Défont</span> et se <span class="ticker-key">Réimaginent</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="ticker-key">壊され</span>、<span class="ticker-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Waar werelden worden <span class="ticker-key">Ontmaakt</span> en <span class="ticker-key">Opnieuw Verbeeld</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten <span class="ticker-key">Aufgelöst</span> und <span class="ticker-key">Neu Erdacht</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="ticker-key">壊され</span>、<span class="ticker-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are <span class="ticker-key">Unmade</span> and <span class="ticker-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Nơi thế giới và ký ức <span class="ticker-key">Tan&nbsp;Vỡ</span> và <span class="ticker-key">Tái&nbsp;Tạo</span> lại</span>
+        <div class="intro-wrap">
+            <span class="intro-track">Where worlds are <span class="intro-key">Unmade</span> and <span class="intro-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten <span class="intro-key">Aufgelöst</span> und <span class="intro-key">Neu Erdacht</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="intro-key">壊され</span>、<span class="intro-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Donde los mundos son <span class="intro-key">Deshechos</span> y <span class="intro-key">Reimaginados</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are <span class="intro-key">Unmade</span> and <span class="intro-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Là où les mondes se <span class="intro-key">Défont</span> et se <span class="intro-key">Réimaginent</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="intro-key">壊され</span>、<span class="intro-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Waar werelden worden <span class="intro-key">Ontmaakt</span> en <span class="intro-key">Opnieuw Verbeeld</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten <span class="intro-key">Aufgelöst</span> und <span class="intro-key">Neu Erdacht</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が<span class="intro-key">壊され</span>、<span class="intro-key">再び織られる</span>場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are <span class="intro-key">Unmade</span> and <span class="intro-key">Reimagined</span> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Nơi thế giới và ký ức <span class="intro-key">Tan&nbsp;Vỡ</span> và <span class="intro-key">Tái&nbsp;Tạo</span> lại</span>
         </div>
 
         <div id="content-en" class="lang-content active">
