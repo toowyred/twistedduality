@@ -58,7 +58,8 @@
         .main-terminal { width: 100%; max-width: 400px; text-align: center; padding: 5px 20px 40px 20px; }
         .main-logo { width: 100%; max-width: 210px; margin: 0 auto 10px auto; display: block; }
         @media (max-width: 768px) { .main-logo { max-width: 280px; } }
-        .subtext-header { width: 100%; max-width: 200px; margin: 15px auto 5px auto; display: block; }
+        .subtext-header { width: 100%; max-width: 170px; margin: 15px auto 5px auto; display: block; }
+        @media (max-width: 768px) { .subtext-header { max-width: 200px; } }
         .sector { margin-top: 0; margin-bottom: 30px; }
 
         /* --- TICKER / RUNNING LINE --- */
@@ -153,7 +154,8 @@
         .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
         @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('elements/Twisted_Duality_Reimagined_subtext.png'); } 82%, 97% { content: url('elements/Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); } }
 
-        .nav-link { display: block; margin: 14px 0; font-size: 1.15rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
+        .nav-link { display: block; margin: 14px 0; font-size: 0.75rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
+        @media (max-width: 768px) { .nav-link { font-size: 1.15rem; } }
         .lore-glitch { display: inline-block; position: relative; color: inherit; text-decoration: none; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         .nav-link:hover, .nav-link.glitch-active, .lore-glitch:hover, .lore-glitch.glitch-active { color: transparent; }
         .nav-link:hover::after, .nav-link.glitch-active::after, .lore-glitch:hover::after, .lore-glitch.glitch-active::after { content: attr(data-glitch); position: absolute; left: 0; width: 100%; text-align: center; color: var(--glitch-color); animation: link-glitch 0.3s steps(2) infinite; font-family: 'WDXL Lubrifont JP N', sans-serif; }
