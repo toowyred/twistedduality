@@ -47,7 +47,7 @@
             left: 0;
             width: 100vw;  
             height: 100vh; 
-            background: #fff url('elements/web-background.png') no-repeat center center;
+            background: #fff no-repeat center center;
             background-size: contain;
             z-index: -1;
             transform: translateZ(0); 
@@ -269,19 +269,17 @@
 
                 const img = new Image();
                 img.onload = () => {
-                    document.body.style.backgroundImage = `url(elements/${bgFile})`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundAttachment = 'fixed';
+                    const grid = document.querySelector('.grid-bg');
+                    if (grid) grid.style.backgroundImage = `url(elements/${bgFile})`;
                 };
                 img.onerror = () => {
-                    document.body.style.backgroundImage = `url(elements/${fallback})`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundAttachment = 'fixed';
+                    const grid = document.querySelector('.grid-bg');
+                    if (grid) grid.style.backgroundImage = `url(elements/${fallback})`;
                 };
                 img.src = `elements/${bgFile}`;
             }
 
-            loadBackground();
+            document.addEventListener('DOMContentLoaded', loadBackground);
         })();
     </script>
 </head>
