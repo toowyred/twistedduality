@@ -58,14 +58,15 @@
         #matrix-video {
             position: fixed;
             top: 0;
-            left: 0;
-            width: 100vw;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(56.25vh, 100vw);
             height: 100vh;
             z-index: -2;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.8s ease;
-            object-fit: cover;
+            object-fit: fill;
         }
 
         #matrix-video.active {
