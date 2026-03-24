@@ -178,6 +178,11 @@
         #credit-footer { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 0.52rem; letter-spacing: 1.5px; z-index: 100; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-bottom: none; padding: 7px 20px; border-radius: 4px 4px 0 0; text-align: center; white-space: nowrap; color: rgba(0,0,0,0.5); text-transform: none; }
         #credit-footer a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; transition: opacity 0.2s; }
         #credit-footer a:hover { opacity: 1; }
+        #admin-panel { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        #admin-panel-inner { background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 24px 32px; min-width: 280px; max-width: 360px; font-size: 0.68rem; letter-spacing: 1.5px; color: var(--text-color); }
+        .admin-row { display: flex; justify-content: space-between; gap: 24px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.08); }
+        .admin-row:last-child { border-bottom: none; }
+        .admin-count { color: var(--glitch-color); font-weight: bold; }
 
         .reimagined-tag { display: inline-block; font-size: 0.6rem; letter-spacing: 0.8rem; text-transform: uppercase; opacity: 0.6; cursor: help; border-bottom: 1px dashed currentColor; padding-bottom: 1px; }
 
@@ -473,10 +478,31 @@
         <div class="lang-vi-only">[AU証：<span class="lore-glitch notranslate" data-glitch="核心">CỐTLÕI</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">TRỰC_TUYẾN</span><br>"HAI TẦN SỐ. MỘT QUỸ ĐẠO"</div>
     </div>
 
-    <div id="credit-footer">&copy; 2024&ndash;2025 Twisted Duality&trade; &amp; Reimagined&trade; &mdash; conceived &amp; built by <a href="https://instagram.com/wyred.on" target="_blank">@wyred.on</a></div>
+    <div id="credit-footer"><span onclick="openAdminPanel()" style="cursor:default;user-select:none;">&copy;</span> 2024&ndash;2025 Twisted Duality&trade; &amp; Reimagined&trade; &mdash; conceived &amp; built by <a href="https://instagram.com/wyred.on" target="_blank">@wyred.on</a></div>
+
+    <div id="admin-panel" style="display:none;">
+        <div id="admin-panel-inner">
+            <div style="font-size:0.65rem;letter-spacing:3px;margin-bottom:16px;opacity:0.5;">[ ARCHIVE METRICS ]</div>
+            <div id="admin-stats"><div style="text-align:center;opacity:0.4;font-size:0.65rem;">loading...</div></div>
+            <div style="margin-top:16px;text-align:center;">
+                <span onclick="closeAdminPanel()" style="font-size:0.6rem;letter-spacing:2px;cursor:pointer;opacity:0.5;">[ close_access ]</span>
+            </div>
+        </div>
+    </div>
 
 
     <script>
+        // --- ANALYTICS ---
+        const WORKER_URL = 'https://td-webanalytics.midcember.workers.dev';
+        function track(event) {
+            fetch(`${WORKER_URL}/track`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event })
+            }).catch(() => {});
+        }
+        track('visits');
+
         const langState = { current: 'en' };
         
         function setLanguage(lang) {
@@ -578,6 +604,7 @@
             const isOpening = (about.style.display === 'none' || about.style.display === '');
             about.style.display = isOpening ? 'block' : 'none';
             if (isOpening) {
+                track('about');
                 const s = aboutOpenSounds[Math.floor(Math.random() * aboutOpenSounds.length)];
                 s.currentTime = 0;
                 s.play();
@@ -664,6 +691,72 @@
 
         checkOnAir();
         setInterval(checkOnAir, 60000); // poll every 60s
+
+        // --- LINK CLICK TRACKING ---
+        document.querySelectorAll('.nav-link[href]').forEach(link => {
+            const h = link.href;
+            let ev = null;
+            if (h.includes('spotify.com/artist'))          ev = 'spotify';
+            else if (h.includes('spotify.com/track'))      ev = 'spotify-echoes';
+            else if (h.includes('music.apple.com') && h.includes('/artist')) ev = 'apple-music';
+            else if (h.includes('music.apple.com') && h.includes('/song'))   ev = 'apple-music-echoes';
+            else if (h.includes('soundcloud.com/twysted1'))                  ev = 'og-soundcloud';
+            else if (h.includes('soundcloud.com/twysted-re/goldenhour'))     ev = 're-soundcloud-goldenhour';
+            else if (h.includes('soundcloud.com/twysted-re'))                ev = 're-soundcloud';
+            else if (h.includes('bandcamp.com'))   ev = 'bandcamp';
+            else if (h.includes('instagram.com'))  ev = 'instagram';
+            else if (h.includes('tiktok.com'))     ev = 'tiktok';
+            if (ev) link.addEventListener('click', () => track(ev));
+        });
+
+        // --- ADMIN PANEL ---
+        const ADMIN_LABELS = {
+            'visits':                  'PAGE VISITS',
+            'about':                   'ABOUT / OPENED',
+            'spotify':                 'SPOTIFY',
+            'apple-music':             'APPLE MUSIC',
+            'og-soundcloud':           'OG / SOUNDCLOUD',
+            're-soundcloud':           'RE / SOUNDCLOUD',
+            'bandcamp':                'BANDCAMP',
+            'instagram':               'INSTAGRAM',
+            'tiktok':                  'TIKTOK',
+            'spotify-echoes':          'ECHOES / SPOTIFY',
+            'apple-music-echoes':      'ECHOES / APPLE MUSIC',
+            're-soundcloud-goldenhour':'GOLDEN HOUR / SC',
+        };
+        function openAdminPanel() {
+            const pw = prompt('[ ADMIN ACCESS ]');
+            if (!pw || pw.toUpperCase() !== 'DUAL') { if (pw) alert('[ ACCESS DENIED ]'); return; }
+            const panel = document.getElementById('admin-panel');
+            const statsDiv = document.getElementById('admin-stats');
+            statsDiv.innerHTML = '<div style="text-align:center;opacity:0.4;font-size:0.65rem;">loading...</div>';
+            panel.style.display = 'flex';
+            fetch(`${WORKER_URL}/stats`)
+                .then(r => r.json())
+                .then(data => {
+                    const rows = Object.entries(data).sort((a, b) => b[1] - a[1]);
+                    statsDiv.innerHTML = rows.length
+                        ? rows.map(([k, v]) => `<div class="admin-row"><span>${ADMIN_LABELS[k] || k}</span><span class="admin-count">${v.toLocaleString()}</span></div>`).join('')
+                        : '<div style="text-align:center;opacity:0.4;font-size:0.65rem;">no data yet</div>';
+                })
+                .catch(() => { statsDiv.innerHTML = '<div style="opacity:0.4;font-size:0.65rem;">failed to load</div>'; });
+        }
+        function closeAdminPanel() { document.getElementById('admin-panel').style.display = 'none'; }
+
+        // ON AIR tooltip
+        const onairEl = document.getElementById('onair-indicator');
+        const onairTip = () => `<div class="en-def" style="margin:0; font-style:normal; opacity:1; font-size:0.72rem;">This means someone is at TD Studio<br>cooking some sick beats 🎛️</div>`;
+        onairEl.addEventListener('mouseenter', e => { tooltip.innerHTML = onairTip(); tooltip.style.display = 'block'; updateTooltipPos(e); });
+        onairEl.addEventListener('mousemove', updateTooltipPos);
+        onairEl.addEventListener('mouseleave', hideTooltip);
+        onairEl.addEventListener('touchstart', e => {
+            tooltip.innerHTML = onairTip();
+            const t = e.touches[0];
+            tooltip.style.left = (t.pageX + 15) + 'px';
+            tooltip.style.top  = (t.pageY + 15) + 'px';
+            tooltip.style.display = 'block';
+            setTimeout(hideTooltip, 3000);
+        }, { passive: true });
 
     </script>
 </body>
