@@ -148,7 +148,7 @@
         #about-sector .log-header { font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: rgba(0,0,0,0.6); font-weight: bold; }
 
         .close-btn-aligned {
-            display: block; flex: 1; min-width: 0; height: 30px; line-height: 30px;
+            display: block !important; height: 30px; line-height: 30px; width: 155px;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
             padding: 0 !important; box-sizing: border-box; margin: 0 !important;
             font-size: 0.9rem !important; position: relative;
@@ -174,10 +174,10 @@
         .sync-group { transition: color 0.2s ease; cursor: help; }
         #about-sector:has(.sync-sokuji:hover) .sync-sokuji { color: var(--highlight-color); }
         #about-sector:has(.sync-henyi:hover) .sync-henyi { color: var(--highlight-color); }
-        .rede-toggle { display: inline-block; width: 1.5em; overflow: visible; }
+        .rede-toggle { display: inline-block; width: 1.0em; overflow: visible; }
         .rede-toggle::after { content: "re"; animation: redeCycle 1s infinite; }
         @keyframes redeCycle { 0%, 49% { content: "re"; } 50%, 100% { content: "de"; } }
-        .vi-toggle { display: inline-block; width: 2.6em; overflow: visible; }
+        .vi-toggle { display: inline-block; width: 1.5em; overflow: visible; }
         .vi-toggle::after { content: "giải"; animation: viCycle 1.2s infinite; }
         @keyframes viCycle { 0%, 49% { content: "giải"; } 50%, 100% { content: "tái"; } }
 
@@ -299,7 +299,7 @@
         [lang="pl"] .lang-pl-only.about-btn-row { display: flex; }
 
         .team-btn-aligned {
-            display: block; flex: 1; min-width: 0; height: 30px; line-height: 30px;
+            display: block !important; height: 30px; line-height: 30px; width: 155px;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
             padding: 0 !important; box-sizing: border-box; margin: 0 !important;
             cursor: pointer; font-size: 0.9rem !important; position: relative;
