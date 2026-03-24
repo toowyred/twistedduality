@@ -151,7 +151,8 @@
         .close-btn-aligned {
             display: block !important; height: 30px; line-height: 30px; width: 200px;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
-            padding: 0 !important; box-sizing: border-box; font-size: 0.82rem;
+            padding: 0 !important; box-sizing: border-box;
+            font-size: 0.9rem !important; position: relative;
         }
         .close-btn-aligned::after { top: 0; left: 0; height: 100%; line-height: 30px; width: 100%; }
 
@@ -204,9 +205,10 @@
         @media (max-width: 768px) { .signal-status { font-size: 0.8rem; } }
 
         /* 1. Hide all footer blocks by default */
-        .lang-en-only, .lang-de-only, .lang-es-only, 
-        .lang-fr-only, .lang-nl-only, .lang-vi-only { 
-        display: none; 
+        .lang-en-only, .lang-de-only, .lang-es-only,
+        .lang-fr-only, .lang-nl-only, .lang-vi-only,
+        .lang-pl-only {
+        display: none;
         }
 
         /* 2. Show the one that matches the active language */
@@ -216,6 +218,7 @@
         [lang="fr"] .lang-fr-only { display: block; }
         [lang="nl"] .lang-nl-only { display: block; }
         [lang="vi"] .lang-vi-only { display: block; }
+        [lang="pl"] .lang-pl-only { display: block; }
 
         /* 4. BACK TO TOP BUTTON */
         #back-to-top {
@@ -292,12 +295,13 @@
         [lang="fr"] .lang-fr-only.about-btn-row,
         [lang="nl"] .lang-nl-only.about-btn-row,
         [lang="vi"] .lang-vi-only.about-btn-row { display: flex; }
+        [lang="pl"] .lang-pl-only.about-btn-row { display: flex; }
 
         .team-btn-aligned {
             display: block !important; height: 30px; line-height: 30px; width: 200px;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
             padding: 0 !important; box-sizing: border-box; margin: 0 !important;
-            cursor: pointer; font-size: 0.82rem;
+            cursor: pointer; font-size: 0.9rem !important; position: relative;
         }
 
     </style>
@@ -446,7 +450,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHOES ]">spotify/listen_now </a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/imagined</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/imagined. Reimagined from ILLENIUM x NURKO Remix">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/listen_now</a>
                 </div>
             </div>
@@ -487,7 +491,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ KERN：残響 ]">spotify/jetzt_anhören</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/konstrukt</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/konstrukt. Neu interpretiert auf Basis des ILLENIUM x NURKO Remix">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/jetzt_anhören</a>
                 </div>
             </div>
@@ -525,7 +529,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ CENTRO：残響 ]">spotify/oye_ahora</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/creación</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/creación. Reimaginado del remix de ILLENIUM x NURKO">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/oye_ahora</a>
                 </div>
             </div>
@@ -563,7 +567,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ CŒUR：残響 ]">spotify/écoutez_ça</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/forge</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/forge. Réinterprété à partir du remix ILLENIUM x NURKO">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/écoutez_ça</a>
                 </div>
             </div>
@@ -601,7 +605,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ KERN：残響 ]">spotify/luister_nu</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/vorm</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/vorm. Opnieuw vervormd van de ILLENIUM x NURKO Remix">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/luister_nu</a>
                 </div>
             </div>
@@ -639,7 +643,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：âm_vang ]">spotify/nghe_liền</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Rèn/lại cảmxúc</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Rèn/lại cảmxúc. Tái tạo từ bản remix ILLENIUM x NURKO">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/nghe_liền</a>
                 </div>
             </div>
@@ -677,7 +681,7 @@
                 <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link" data-glitch="[ 核心：ECHA ]">spotify/słuchaj_teraz</a>
                 <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                     <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
-                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Reimagined from ILLENIUM x NURKO Remix">Re/kuźnia</span></div>
+                    <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/kuźńia. Przerobiony z remiksu ILLENIUM x NURKO">Re/imagined</span></div>
                     <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud/słuchaj_teraz</a>
                 </div>
             </div>
