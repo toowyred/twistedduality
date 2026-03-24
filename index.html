@@ -55,15 +55,17 @@
         }
 
         /* --- UI ELEMENTS & LAYOUT --- */
-        .main-terminal { width: 100%; max-width: 170px; text-align: center; padding: 5px 20px 40px 20px; }
+        .main-terminal { width: 100%; max-width: 400px; text-align: center; padding: 5px 20px 40px 20px; }
         .main-logo { width: 100%; max-width: 280px; margin: 0 auto 10px auto; display: block; }
         .subtext-header { width: 100%; max-width: 200px; margin: 15px auto 5px auto; display: block; }
         .sector { margin-top: 0; margin-bottom: 30px; }
 
         /* --- TICKER / RUNNING LINE --- */
+        :root { --intro-width: 170px; }
+        @media (max-width: 768px) { :root { --intro-width: 300px; } }
         .intro-wrap {
             width: 100%;
-            max-width: 400px;
+            max-width: var(--intro-width);
             overflow: hidden;
             margin: 6px auto 14px auto;
             background: rgba(255, 255, 255, 0.82);
@@ -83,7 +85,7 @@
         }
         .intro-key { color: var(--glitch-color); }
         @keyframes intro-scroll {
-            from { transform: translateX(170px); }
+            from { transform: translateX(var(--intro-width)); }
             to   { transform: translateX(-100%); }
         }
 
