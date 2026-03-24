@@ -45,13 +45,30 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;  
-            height: 100vh; 
+            width: 100vw;
+            height: 100vh;
             background: var(--bg-color, #fff) no-repeat center center;
             background-size: contain;
             z-index: -1;
-            transform: translateZ(0); 
+            transform: translateZ(0);
             -webkit-transform: translateZ(0);
+        }
+
+        /* --- MATRIX CANVAS (behind hole PNGs) --- */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #matrix-canvas.active {
+            opacity: 1;
         }
 
         /* --- UI ELEMENTS & LAYOUT --- */
@@ -313,6 +330,7 @@
 <body>
 
     <div class="grid-bg"></div>
+    <canvas id="matrix-canvas"></canvas>
 
     <!-- ON AIR INDICATOR — status driven by Gist fetch below -->
     <div id="onair-indicator">
@@ -609,7 +627,10 @@
                 document.documentElement.style.setProperty('--glitch-color', '#b3a272');
                 document.documentElement.style.setProperty('--bg-color', '#0e0e0e');
                 if (grid) {
-                    const darkBg = isMobile ? 'web-background-darkmode.png' : 'pc-web-background-darkmode.png';
+                    const darkBgs = isMobile
+                        ? ['web-background-darkmode-1.png', 'web-background-darkmode-2.png']
+                        : ['pc-web-background-darkmode-1.png', 'pc-web-background-darkmode-2.png'];
+                    const darkBg = darkBgs[Math.floor(Math.random() * darkBgs.length)];
                     grid.style.backgroundImage = `url(elements/${darkBg})`;
                 }
                 if (video) {
@@ -637,7 +658,60 @@
         // Apply saved preference on load
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('Light Out') === 'true') applyDarkMode(true);
+            initMatrix();
         });
+
+        /* --- MATRIX EFFECT FOR HOLE PNGs --- */
+        const holeFiles = ['web-background-1-hole.png', 'web-background-2-hole.png', 'pc-web-background-1-hole.png', 'pc-web-background-2-hole.png'];
+
+        function initMatrix() {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx = canvas.getContext('2d');
+            const grid = document.querySelector('.grid-bg');
+
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const fontSize = 12;
+            const cols = Math.floor(canvas.width / fontSize);
+            const rows = Math.floor(canvas.height / fontSize);
+            const drops = Array(cols).fill(0).map(() => Math.random() * rows);
+
+            function drawMatrix() {
+                // Check if current BG is a hole file
+                const bgStyle = grid.style.backgroundImage || '';
+                const isHole = holeFiles.some(f => bgStyle.includes(f));
+                const canvas = document.getElementById('matrix-canvas');
+                canvas.classList.toggle('active', isHole);
+
+                if (!isHole) return;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.font = `${fontSize}px monospace`;
+
+                for (let i = 0; i < cols; i++) {
+                    const char = Math.random() > 0.5 ? '0' : '1';
+                    const color = Math.random() > 0.7 ? '#de7029' : '#000000';
+                    ctx.fillStyle = color;
+                    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                    drops[i]++;
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
+                        drops[i] = 0;
+                    }
+                }
+
+                requestAnimationFrame(drawMatrix);
+            }
+            drawMatrix();
+        }
 
         function setLanguage(lang) {
             langState.current = lang;
