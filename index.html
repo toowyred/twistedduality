@@ -47,7 +47,7 @@
             left: 0;
             width: 100vw;  
             height: 100vh; 
-            background: #fff url('elements/web-background.png') no-repeat center center;
+            background: #fff no-repeat center center;
             background-size: contain;
             z-index: -1;
             transform: translateZ(0); 
@@ -254,36 +254,44 @@
 
     </style>
     <script>
-        // Background rotation with dark mode support
+        // Background rotation (mobile 9:16, desktop 1:1)
         (function() {
-            const lightBgs = ['web-background-main-lightmode.png', 'web-background-2-hole.png'];
-            const darkBg = 'web-background-darkmode.png';
-            const solidFallbacks = {
+            const isMobile = window.innerWidth <= 768;
+
+            const mobileBgs = ['web-background-main-lightmode.png', 'web-background-1-hole.png', 'web-background-2-hole.png'];
+            const desktopBgs = ['pc-web-background-main-lightmode.png', 'pc-web-background-1-hole.png', 'pc-web-background-2-hole.png'];
+
+            const mobileFallbacks = {
                 'web-background-main-lightmode.png': 'web-background.png',
-                'web-background-2-hole.png': 'web-background-2-solid.png',
-                'web-background-darkmode.png': 'web-background-darkmode.png'
+                'web-background-1-hole.png': 'web-background-1-solid.png',
+                'web-background-2-hole.png': 'web-background-2-solid.png'
+            };
+            const desktopFallbacks = {
+                'pc-web-background-main-lightmode.png': 'pc-web-background.png',
+                'pc-web-background-1-hole.png': 'pc-web-background-1-solid.png',
+                'pc-web-background-2-hole.png': 'pc-web-background-2-solid.png'
             };
 
+            const bgs = isMobile ? mobileBgs : desktopBgs;
+            const fallbacks = isMobile ? mobileFallbacks : desktopFallbacks;
+
             function loadBackground() {
-                const isDarkMode = localStorage.getItem('Light Out') === 'true';
-                const bgFile = isDarkMode ? darkBg : lightBgs[Math.floor(Math.random() * lightBgs.length)];
-                const fallback = solidFallbacks[bgFile];
+                const bgFile = bgs[Math.floor(Math.random() * bgs.length)];
+                const fallback = fallbacks[bgFile];
+                const grid = document.querySelector('.grid-bg');
+                if (!grid) return;
 
                 const img = new Image();
                 img.onload = () => {
-                    document.body.style.backgroundImage = `url(elements/${bgFile})`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundAttachment = 'fixed';
+                    grid.style.backgroundImage = `url(elements/${bgFile})`;
                 };
                 img.onerror = () => {
-                    document.body.style.backgroundImage = `url(elements/${fallback})`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundAttachment = 'fixed';
+                    grid.style.backgroundImage = `url(elements/${fallback})`;
                 };
                 img.src = `elements/${bgFile}`;
             }
 
-            loadBackground();
+            document.addEventListener('DOMContentLoaded', loadBackground);
         })();
     </script>
 </head>
