@@ -779,9 +779,28 @@
         }
 
         // Apply saved preference on load
+        // --- LOGO RANDOMIZER ---
+        const logoVariants = ['DE', 'EN', 'ES', 'FR', 'NL', 'VI', 'PL']; // add codes as you create the PNGs
+        function randomizeLogos() {
+            const pick = logoVariants[Math.floor(Math.random() * logoVariants.length)];
+            const origBase = 'elements/Twisted_Duality_Originals_subtext.png';
+            const reimBase = 'elements/Twisted_Duality_Reimagined_subtext.png';
+            const origImg = document.querySelector('.originals-logo');
+            const reimImg = document.querySelector('.reimagined-logo');
+            if (origImg) {
+                origImg.onerror = () => { origImg.onerror = null; origImg.src = origBase; };
+                origImg.src = 'elements/Twisted_Duality_Originals_subtext_glitch_for_' + pick + '.png';
+            }
+            if (reimImg) {
+                reimImg.onerror = () => { reimImg.onerror = null; reimImg.src = reimBase; };
+                reimImg.src = 'elements/Twisted_Duality_Reimagined_subtext_glitch_for_' + pick + '.png';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('Light Out') === 'true') applyDarkMode(true);
             initMatrix();
+            randomizeLogos();
         });
 
         /* --- MATRIX GIF HANDLED IN setDualLayerBg() --- */
