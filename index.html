@@ -539,10 +539,25 @@
         }
         setTimeout(triggerRandomGlitch, 1500);
 
+        const aboutOpenSounds = [
+            new Audio('sounds/aboutus-random1.mp3'),
+            new Audio('sounds/aboutus-random2.mp3')
+        ];
+        const aboutCloseSound = new Audio('sounds/closefile-button.mp3');
+
         function toggleAbout() {
             const about = document.getElementById('about-sector');
-            about.style.display = (about.style.display === 'none' || about.style.display === '') ? 'block' : 'none';
-            if (about.style.display === 'block') about.scrollIntoView({ behavior: 'smooth' });
+            const isOpening = (about.style.display === 'none' || about.style.display === '');
+            about.style.display = isOpening ? 'block' : 'none';
+            if (isOpening) {
+                const s = aboutOpenSounds[Math.floor(Math.random() * aboutOpenSounds.length)];
+                s.currentTime = 0;
+                s.play();
+                about.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                aboutCloseSound.currentTime = 0;
+                aboutCloseSound.play();
+            }
         }
 
         function checkPassword() {
