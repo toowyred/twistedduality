@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" id="main-html">
 <head>
-    <link rel="icon" type="image/png" href="favicon64.png">
+    <link rel="icon" type="image/png" href="elements/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate" />
@@ -47,7 +47,7 @@
             left: 0;
             width: 100vw;  
             height: 100vh; 
-            background: #fff url('web-background.png') no-repeat center center;
+            background: #fff url('elements/web-background.png') no-repeat center center;
             background-size: contain;
             z-index: -1;
             transform: translateZ(0); 
@@ -139,9 +139,9 @@
 
         /* --- GLITCH LOGIC --- */
         .originals-logo { animation: glitchUrsprung 12s infinite; }
-        @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('Twisted_Duality_Originals_subtext.png'); } 87%, 98% { content: url('Twisted_Duality_Originals_subtext_glitch_for_DE.png'); } }
+        @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('elements/Twisted_Duality_Originals_subtext.png'); } 87%, 98% { content: url('elements/Twisted_Duality_Originals_subtext_glitch_for_DE.png'); } }
         .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
-        @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('Twisted_Duality_Reimagined_subtext.png'); } 82%, 97% { content: url('Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); } }
+        @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('elements/Twisted_Duality_Reimagined_subtext.png'); } 82%, 97% { content: url('elements/Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); } }
 
         .nav-link { display: block; margin: 14px 0; font-size: 1.15rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
         .lore-glitch { display: inline-block; position: relative; color: inherit; text-decoration: none; font-family: 'WDXL Lubrifont JP N', sans-serif; }
@@ -168,7 +168,7 @@
         #status-footer .online-status { cursor: pointer; text-decoration: underline; transition: color 0.2s ease; }
         #status-footer .online-status:hover { color: var(--glitch-color); }
 
-        #credit-footer { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 0.52rem; letter-spacing: 1.5px; z-index: 100; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-bottom: none; padding: 7px 20px; border-radius: 4px 4px 0 0; text-align: center; white-space: nowrap; opacity: 0.5; text-transform: none; }
+        #credit-footer { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 0.52rem; letter-spacing: 1.5px; z-index: 100; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-bottom: none; padding: 7px 20px; border-radius: 4px 4px 0 0; text-align: center; white-space: nowrap; color: rgba(0,0,0,0.5); text-transform: none; }
         #credit-footer a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; transition: opacity 0.2s; }
         #credit-footer a:hover { opacity: 1; }
 
@@ -242,7 +242,7 @@
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
 
     <div class="main-terminal">
-        <img src="Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
+        <img src="elements/Twisted_Duality_nosubtext.png" alt="Twisted Duality" class="main-logo">
 
         <div class="ticker-wrap">
             <span class="ticker-track">Where worlds are Unmade and Reimagined &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten Aufgelöst und Neu Erdacht &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が壊され、再び織られる場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Donde los mundos son Deshechos y Reimaginados &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are Unmade and Reimagined &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Là où les mondes se Défont et se Réimaginent &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が壊され、再び織られる場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Waar werelden worden Ontmaakt en Opnieuw Verbeeld &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Hier werden Welten Aufgelöst und Neu Erdacht &nbsp;&nbsp;&mdash;&nbsp;&nbsp; 世界が壊され、再び織られる場所 &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Where worlds are Unmade and Reimagined &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Nơi thế giới và ký ức Tan&nbsp;Vỡ và Tái&nbsp;Tạo lại</span>
@@ -253,7 +253,7 @@
                 <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ 記憶: MEMORY ]">/about_us</a>
             </div>
 
-            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
                 <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -262,7 +262,7 @@
                 <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
             </div>
 
-            <img src="Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
+            <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
             <div class="sector">
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud</a>
                 <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
@@ -294,7 +294,7 @@
                 <a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ SPEICHER: 記憶 ]">/über_uns</a>
             </div>
             
-            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
                 <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -303,7 +303,7 @@
                 <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
             </div>
 
-            <img src="Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
+            <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
             <div class="sector">
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud</a>
                 <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
@@ -332,7 +332,7 @@
         
         <div id="content-es" class="lang-content">
             <div style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ MEMORIA ]">/sobre_nosotros</a></div>
-            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
                 <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -341,7 +341,7 @@
                 <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
             </div>
 
-            <img src="Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
+            <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
             <div class="sector">
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud</a>
                 <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
@@ -370,7 +370,7 @@
 
         <div id="content-fr" class="lang-content">
             <div style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link" onclick="toggleAbout()" data-glitch="[ MÉMOIRE ]">/à_propos</a></div>
-            <img src="Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+            <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
             <div class="sector">
                 <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
                 <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -379,7 +379,7 @@
                 <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
             </div>
 
-            <img src="Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
+            <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
             <div class="sector">
                 <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud</a>
                 <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
