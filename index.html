@@ -148,10 +148,10 @@
         #about-sector .log-header { font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; color: rgba(0,0,0,0.6); font-weight: bold; }
 
         .close-btn-aligned {
-            display: block !important; height: 30px; line-height: 30px; width: 155px;
+            display: block !important; height: 30px; line-height: 30px; width: fit-content !important;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
             padding: 0 !important; box-sizing: border-box; margin: 0 !important;
-            font-size: 0.9rem !important; position: relative;
+            font-size: 0.9rem !important; position: relative; white-space: pre;
         }
         .close-btn-aligned::after { top: 0; left: 0; height: 100%; line-height: 30px; width: 100%; }
 
@@ -299,10 +299,10 @@
         [lang="pl"] .lang-pl-only.about-btn-row { display: flex; }
 
         .team-btn-aligned {
-            display: block !important; height: 30px; line-height: 30px; width: 155px;
+            display: block !important; height: 30px; line-height: 30px; width: fit-content !important;
             text-align: center; border: 1px solid rgba(0,0,0,0.1);
             padding: 0 !important; box-sizing: border-box; margin: 0 !important;
-            cursor: pointer; font-size: 0.9rem !important; position: relative;
+            cursor: pointer; font-size: 0.9rem !important; position: relative; white-space: pre;
         }
 
     </style>
@@ -425,27 +425,27 @@
         </div>
 
         <!-- [ ABOUT LINK ] -->
-        <div class="lang-en-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ 記憶: MEMORY ]">/about_us</a></div>
-        <div class="lang-de-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ SPEICHER：記憶 ]">/über_uns</a></div>
-        <div class="lang-es-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ 記憶 : MEMORIA ]">/sobre_nosotros</a></div>
-        <div class="lang-fr-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ MÉMOIRE : 記憶 ]">/à_propos</a></div>
-        <div class="lang-nl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ GEHEUGEN : 記憶 ]">/over_ons</a></div>
-        <div class="lang-vi-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ MÔ_TẢ : 記憶 ]">/giới_thiệu</a></div>
-        <div class="lang-pl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="[ RDZEŃ : 概要 ]">/o_nas</a></div>
+        <div class="lang-en-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PREFACE">自己紹介 what_is TD about?</a></div>
+        <div class="lang-de-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> VORWORT">自己紹介 worum_geht es bei TD?</a></div>
+        <div class="lang-es-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PREFACIO">自己紹介 ¿qué_es TD?</a></div>
+        <div class="lang-fr-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PRÉFACE">自己紹介 qu_est_ce que TD?</a></div>
+        <div class="lang-nl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> VOORWOORD">自己紹介 woaar_gaat TD over?</a></div>
+        <div class="lang-vi-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> TỰA_ĐẦU">自己紹介 TD là_gì?</a></div>
+        <div class="lang-pl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PRZEDMOWA">自己紹介 czym_jest TD?</a></div>
 
         <!-- [ SHARED PLATFORM LINKS ] -->
         <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
         <div class="sector">
             <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
             <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
-            <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">og/soundcloud</a>
+            <a href="https://soundcloud.com/twysted1" class="nav-link" data-glitch="[ 起源合成 ]">TDog/soundcloud</a>
             <a href="https://twysted.bandcamp.com" class="nav-link" data-glitch="[ 深層書庫 ]">/bandcamp</a>
             <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
         </div>
 
         <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
         <div class="sector">
-            <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">re/soundcloud</a>
+            <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構造継承 ]">TDre/soundcloud</a>
             <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 断片同期 ]">/tiktok</a>
         </div>
 
@@ -453,78 +453,78 @@
         <div class="lang-en-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">CURRENT TRANSMISSION</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">apple-music/listen_now</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">spotify/listen_now</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">apple-music：listen_now</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">spotify：listen_now</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/imagined. Reimagined from ILLENIUM x NURKO Remix">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/listen_now</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：listen_now</a>
             </div>
         </div>
         <div class="lang-de-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">AKTUELLE ÜBERTRAGUNG</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music/jetzt_anhören</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify/jetzt_anhören</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music：jetzt_anhören</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify：jetzt_anhören</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/konstrukt. Neu interpretiert auf Basis des ILLENIUM x NURKO Remix">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/jetzt_anhören</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：jetzt_anhören</a>
             </div>
         </div>
         <div class="lang-es-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">TRANSMISIÓN ACTUAL</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">apple-music/oye_ahora</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">spotify/oye_ahora</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">apple-music：oye_ahora</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">spotify：oye_ahora</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/creación. Reimaginado del remix de ILLENIUM x NURKO">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/oye_ahora</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：oye_ahora</a>
             </div>
         </div>
         <div class="lang-fr-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">TRANSMISSION ACTUELLE</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">apple-music/écoutez_ça</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">spotify/écoutez_ça</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">apple-music：écoutez_ça</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">spotify：écoutez_ça</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/forge. Réinterprété à partir du remix ILLENIUM x NURKO">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/écoutez_ça</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：écoutez_ça</a>
             </div>
         </div>
         <div class="lang-nl-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">HUIDIGE TRANSMISSIE</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music/luister_nu</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify/luister_nu</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music：luister_nu</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify：luister_nu</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/vorm. Opnieuw vervormd van de ILLENIUM x NURKO Remix">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/luister_nu</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：luister_nu</a>
             </div>
         </div>
         <div class="lang-vi-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">LÀN&nbsp;SÓNG HIỆN&nbsp;TẠI</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">apple-music/nghe_liền</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">spotify/nghe_liền</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">apple-music：nghe_liền</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">spotify：nghe_liền</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Rèn/lại cảmxúc. Tái tạo từ bản remix ILLENIUM x NURKO">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/nghe_liền</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：nghe_liền</a>
             </div>
         </div>
         <div class="lang-pl-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
             <div style="font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 10px;">TRANSMISJA W TOKU</div>
             <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 14px;">[ <span class="notranslate">ECHOES BEHIND</span> ]</div>
-            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">apple-music/słuchaj_teraz</a>
-            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">spotify/słuchaj_teraz</a>
+            <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">apple-music：słuchaj_teraz</a>
+            <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">spotify：słuchaj_teraz</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
                 <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/kuźńia. Przerobiony z remiksu ILLENIUM x NURKO">Re/imagined</span></div>
-                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">re/soundcloud/słuchaj_teraz</a>
+                <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：słuchaj_teraz</a>
             </div>
         </div>
 
@@ -575,8 +575,8 @@
                         <div class="lang-en-only">
                             <div class="log-header">//: LOG_START [PERSONA_ARCHIVE]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                We <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construct</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[SOUND]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> into immersive landscapes.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                We <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construct</span><br> <span class="lore-glitch" data-glitch="W&nbsp;A&nbsp;V&nbsp;E&nbsp;S">[&nbsp;SOUND&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;EMOTION&nbsp;]</span> into immersive landscapes.
                                 From melodic beauty to <span class="sync-group sync-henyi">industrial&nbsp;decay</span>. This is the heartbeat of the vessel.
                                 Where worlds are unmade and <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REIMAGINED</span>.
                             </p>
@@ -584,8 +584,8 @@
                         <div class="lang-de-only">
                             <div class="log-header">//: LOG_START [PERSONEN_ARCHIV]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                Wir <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruieren</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[KLANG]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTION]</span> durch <span class="sync-group sync-henyi">extreme&nbsp;Manipulation</span>.<br>
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                Wir <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruieren</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;KLANG&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;EMOTION&nbsp;]</span> durch <span class="sync-group sync-henyi">extreme&nbsp;Manipulation</span>.<br>
                                 Von der Schönheit des Lichts bis zum Zerfall der Schatten—der Herzschlag des Universums.
                                 Hier werden Welten aufgelöst und <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">NEU&nbsp;ERDACHT</span>.
                             </p>
@@ -593,8 +593,8 @@
                         <div class="lang-es-only">
                             <div class="log-header">//: LOG_START [ARCHIVO_PERSONAL]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                Nosotros <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construimos</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[SONIDO]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOCIÓN]</span> en paisajes envolventes.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                Nosotros <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construimos</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;SONIDO&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;EMOCIÓN&nbsp;]</span> en paisajes envolventes.
                                 De la belleza melódica a la <span class="sync-group sync-henyi">decadencia&nbsp;industrial</span>. Este es el latido de la nave.
                                 Donde los mundos son deshechos y <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REIMAGINADOS</span>.
                             </p>
@@ -602,8 +602,8 @@
                         <div class="lang-fr-only">
                             <div class="log-header">//: LOG_START [ARCHIVE_PERSONA]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                Nous <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construisons</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[SON]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[ÉMOTION]</span> en paysages immersifs.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                Nous <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construisons</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;SON&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;ÉMOTION&nbsp;]</span> en paysages immersifs.
                                 De la beauté mélodique au <span class="sync-group sync-henyi">délitement&nbsp;industriel</span>. Voici la&nbsp;pulsation du&nbsp;vaisseau.
                                 Où les mondes sont détissés et&nbsp;<span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">REFORGÉS</span>.
                             </p>
@@ -611,8 +611,8 @@
                         <div class="lang-nl-only">
                             <div class="log-header">//: LOG_START [PERSONEN_ARCHIEF]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                Wij <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construeren</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[GELUID]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOTIE]</span> tot immersieve landschappen.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                Wij <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/construeren</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;GELUID&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;EMOTIE&nbsp;]</span> tot immersieve landschappen.
                                 Van melodische schoonheid tot <span class="sync-group sync-henyi">industrieel&nbsp;verval</span>. Dit is de hartslag van het vaartuig.
                                 Waar werelden worden ontrafeld en&nbsp;<span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">HERGESCHAPEN</span>.
                             </p>
@@ -620,8 +620,8 @@
                         <div class="lang-vi-only">
                             <div class="log-header">//: LOG_START [LƯUTRỮ_CÁNHÂN]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                Chúng&nbsp;tôi <span class="sync-group sync-sokuji"><span class="vi-toggle"></span>/cấu&nbsp;trúc</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[ÂM&nbsp;THANH]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[CẢM&nbsp;XÚC]</span> thành những cảm&nbsp;xúc đắm&nbsp;chìm.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                Chúng&nbsp;tôi <span class="sync-group sync-sokuji"><span class="vi-toggle"></span>/cấu&nbsp;trúc</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;ÂM&nbsp;THANH&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;CẢM&nbsp;XÚC&nbsp;]</span> thành những cảm&nbsp;xúc đắm&nbsp;chìm.
                                 Từ vẻ đẹp của giai&nbsp;điệu đến cực&nbsp;đỉnh <span class="sync-group sync-henyi">tan&nbsp;rã tâm&nbsp;hồn</span>. Nơi đây tạo ra nhịp&nbsp;đập của bản&nbsp;thể.
                                 Nơi thế&nbsp;giới và ký&nbsp;ức xưa được tháo gỡ và <span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">TÁI&nbsp;TẠO&nbsp;LẠI</span> cảm&nbsp;xúc mới.
                             </p>
@@ -629,8 +629,8 @@
                         <div class="lang-pl-only">
                             <div class="log-header">//: LOG_START [ARCHIWUM_OSÓB]</div>
                             <p style="font-size: 0.85rem; line-height: 1.8; margin-bottom: 15px; font-family: monospace;">
-                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
-                                My <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruujemy</span><br> <span class="lore-glitch" data-glitch="[SOUND]">[DŹWIĘK]</span> + <span class="lore-glitch glitch-rare" data-glitch="[UWU(:ON]">[EMOCJĘ]</span> w immersyjne krajobrazy.
+                                <span class="lore-glitch stationary-glitch dictionary-trigger notranslate" data-glitch="双極の螺旋"><span class="notranslate">Twisted&nbsp;Duality</span></span> // <span class="sync-group sync-sokuji">創作</span> <span style="font-family: 'WDXL Lubrifont JP N';">to</span> <span class="sync-group sync-henyi">変異</span><br><br>
+                                My <span class="sync-group sync-sokuji"><span class="rede-toggle"></span>/konstruujemy</span><br> <span class="lore-glitch" data-glitch="S&nbsp;O&nbsp;U&nbsp;N&nbsp;D">[&nbsp;DŹWIĘK&nbsp;]</span> + <span class="lore-glitch glitch-rare" data-glitch="UWU&nbsp;(:&nbsp;ON">[&nbsp;EMOCJĘ&nbsp;]</span> w immersyjne krajobrazy.
                                 Od melodyjnego piękna po <span class="sync-group sync-henyi">industrialny rozpad</span>. Oto tętno jednostki.
                                 Gdzie światy są rozplatane i&nbsp;<span class="lore-glitch stationary-glitch" data-glitch="サイコウチク">PRZEKUTE</span>.
                             </p>
@@ -648,32 +648,32 @@
 
             <!-- Per-language button rows -->
             <div class="lang-en-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ パイロット ]" data-glitch-original="[ パイロット ]" data-original-text="[ the_team ]">[ the_team ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ close_file ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="   パ イ ロ ッ ト   " data-glitch-original="[ パイロット ]" data-original-text="[  the_team  ]"> [      the_team      ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [    close_file    ] </a>
             </div>
             <div class="lang-de-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ 宇宙_pilots ]" data-glitch-original="[ 宇宙_pilots ]" data-original-text="[ die_besatzung ]">[ die_besatzung ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ datei_schließen ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  宇 宙 ＿ pilots  " data-glitch-original="[  宇宙_pilots  ]" data-original-text="[  die_besatzung ]"> [    die_besatzung    ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [   datei_schließen   ] </a>
             </div>
             <div class="lang-es-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ unidad 組 ]" data-glitch-original="[ unidad 組 ]" data-original-text="[ la_tripulación ]">[ la_tripulación ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ cerrar_archivo ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  u n i d a d ＿ 組  " data-glitch-original="[  unidad_組  ]" data-original-text="[   la_tripulación  ]"> [    la_tripulación   ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [    cerrar_archivo    ] </a>
             </div>
             <div class="lang-fr-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ unité_組 ]" data-glitch-original="[ unité_組 ]" data-original-text="[ l_equipage ]">[ l_equipage ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ fermer ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  u n i t é ＿ 組  " data-glitch-original="[  unité_組  ]" data-original-text="[ l_equipage ]"> [    l_equipage    ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [        fermer        ] </a>
             </div>
             <div class="lang-nl-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ 宇宙_piloten ]" data-glitch-original="[ 宇宙_piloten ]" data-original-text="[ de_bemanning ]">[ de_bemanning ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ afsluiten ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  宇宙 ＿ piloten  " data-glitch-original="[  宇宙_piloten  ]" data-original-text="[  de_bemanning  ]"> [     de_bemanning     ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [      afsluiten      ] </a>
             </div>
             <div class="lang-vi-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ đội_宇宙士 ]" data-glitch-original="[ đội_宇宙士 ]" data-original-text="[ ê_kíp ]">[ ê_kíp ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ đóng_hồsơ ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  đội_宇宙士  " data-glitch-original="[  đội_宇宙士  ]" data-original-text="[  ê_kíp  ]"> [    ê_kíp    ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [     đóng_hồsơ     ] </a>
             </div>
             <div class="lang-pl-only about-btn-row">
-                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="[ 乗組員：ZAŁOGA ]" data-glitch-original="[ 乗組員：ZAŁOGA ]" data-original-text="[ zespół ]">[ zespół ]</span>
-                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="[ 閉じる ]">[ zamknij_plik ]</a>
+                <span class="nav-link stationary-glitch team-btn-aligned team-btn-trigger" onclick="toggleTeam()" data-glitch="  乗組員＿ZAŁOGA  " data-glitch-original="[  乗組員：ZAŁOGA  ]" data-original-text="[     zespół     ]"> [       zespół       ] </span>
+                <a href="javascript:void(0)" onclick="toggleAbout()" class="nav-link stationary-glitch close-btn-aligned" data-glitch="   閉 じ る   "> [     zamknij_plik     ] </a>
             </div>
         </div>
     </div>
@@ -682,13 +682,13 @@
         <div class="lang-en-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="CORE">核心</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"TWO FREQUENCIES. ONE VESSEL."</div>
         <div class="lang-de-only">[BE証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">BEREIT</span><br>"ZWEI FREQUENZEN. EIN GEFÄSS."</div>
         <div class="lang-es-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CENTRO</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LA_RED</span><br>"DOS FRECUENCIAS. UN RECIPIENTE."</div>
-        <div class="lang-fr-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CŒUR</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LIGNE</span><br>"DEUX FRÉQUENCES. UN SEUL NAVIRE."</div>
+        <div class="lang-fr-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CŒUR</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LIGNE</span><br>"DEUX FRÉQUENCES. UN SEUL&nbsp;NAVIRE."</div>
         <div class="lang-nl-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"TWEE FREQUENTIES. ÉÉN VAARTUIG."</div>
-        <div class="lang-vi-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CỐTLÕI</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">TRỰC_TUYẾN</span><br>"HAI TẦN SỐ. MỘT QUỸ ĐẠO"</div>
+        <div class="lang-vi-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CỐTLÕI</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">TRỰC_TUYẾN</span><br>"HAI TẦN&nbsp;SỐ. MỘT QUỸ&nbsp;ĐẠO"</div>
         <div class="lang-pl-only">[AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">RDZEŃ</span>] -> STATUS: <span class="online-status" onclick="checkPassword()">POŁĄCZONY</span><br>"DWIE CZĘSTOTLIWOŚCI. JEDNA JEDNOSTKA."</div>
     </div>
 
-    <div id="credit-footer"><span onclick="openAdminPanel()" style="cursor:default;user-select:none;">&copy;</span> 2024&ndash;2025 Twisted Duality&trade; &amp; Reimagined&trade; &mdash; contrusted by <a href="https://instagram.com/wyred.on" target="_blank">@wyred.on</a></div>
+    <div id="credit-footer"><span onclick="openAdminPanel()" style="cursor:default;user-select:none;">&copy;</span> 2024&ndash;2025 Twisted&nbsp;Duality&trade; &amp; Reimagined&trade; &mdash; contrusted by <a href="https://instagram.com/wyred.on" target="_blank">@wyred.on</a></div>
 
     <div id="admin-panel" style="display:none;">
         <div id="admin-panel-inner">
@@ -721,7 +721,7 @@
             de: { light: 'Heller',  dark: 'Dunkel',  glitchLight: 'Ziehen?',      glitchDark: 'Licht ON?' },
             es: { light: 'Claro',   dark: 'Oscuro',  glitchLight: 'Lo atenúo?',   glitchDark: 'ON la luz?' },
             fr: { light: 'Clair',   dark: 'Sombre',  glitchLight: 'Débrancher?',  glitchDark: 'Vois pas?' },
-            vi: { light: 'Sáng',    dark: 'Tối',     glitchLight: 'Tắt đèn?',    glitchDark: 'Tối quá?' },
+            vi: { light: 'Sáng rỡ', dark: 'Tối tăm', glitchLight: 'Tắt đèn?',     glitchDark: 'Tối quá?' },
             nl: { light: 'Licht',   dark: 'Donker',  glitchLight: 'Licht uit?',   glitchDark: 'Licht aan?' },
             pl: { light: 'Jasny',   dark: 'Ciemny',  glitchLight: 'Wyłączyć?',    glitchDark: 'Zapalić?' }
         };
