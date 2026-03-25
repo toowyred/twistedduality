@@ -3,6 +3,8 @@
 <head>
     <link rel="icon" type="image/png" href="elements/favicon.png">
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#111619" id="theme-color-meta">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -60,6 +62,12 @@
             z-index: -1;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
+        }
+        #matrix-canvas {
+            position: fixed;
+            display: none;
+            pointer-events: none;
+            z-index: -2;
         }
 
         /* --- MATRIX VIDEO (behind hole PNGs) --- */
@@ -167,9 +175,9 @@
 
         /* --- GLITCH LOGIC --- */
         .originals-logo { animation: glitchUrsprung 12s infinite; }
-        @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('elements/Twisted_Duality_Originals_subtext.png'); } 87%, 98% { content: url('elements/Twisted_Duality_Originals_subtext_glitch_for_DE.png'); } }
+        @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('elements/TDo-sub.png'); } 87%, 98% { content: url('elements/TDo-sub-glitch-de.png'); } }
         .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
-        @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('elements/Twisted_Duality_Reimagined_subtext.png'); } 82%, 97% { content: url('elements/Twisted_Duality_Reimagined_subtext_glitch_for_DE.png'); } }
+        @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('elements/TDre-sub.png'); } 82%, 97% { content: url('elements/TDre-sub-glitch-de.png'); } }
 
         .nav-link { display: block; width: fit-content; margin: 14px auto; font-size: 0.75rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
         @media (max-width: 768px) { .nav-link { font-size: 1.15rem; } }
@@ -265,7 +273,7 @@
         #afest-back {
             position: fixed; top: 10px; left: 10px;
             font-size: 0.6rem; letter-spacing: 2px;
-            color: var(--highlight-color);
+            color: var(--text-color);
             text-decoration: none; text-transform: uppercase;
             background: rgba(255,255,255,0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
@@ -334,62 +342,57 @@
         // Background rotation (mobile 9:16, desktop 1:1)
         (function() {
             const isMobile = window.innerWidth <= 768;
+            // UA-based: actual phone/tablet vs PC in a narrow window
+            const isActualMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
 
-            const mobileBgs = ['web-background-darkmode-1.png', 'web-background-darkmode-2.png'];
-            const desktopBgs = ['pc-web-background-darkmode-1.png', 'pc-web-background-darkmode-2.png'];
+            const mobileBgs = ['bg-fone-dark-1.png', 'bg-fone-dark-2.png'];
+            const desktopBgs = ['bg-pc-dark-1.png', 'bg-pc-dark-2.png'];
 
-            const mobileLightBgs = ['web-background-main-lightmode.png', 'web-background-1-hole.png', 'web-background-2-hole.png'];
-            const desktopLightBgs = ['pc-web-background-main-lightmode.png', 'pc-web-background-1-hole.png', 'pc-web-background-2-hole.png'];
+            const mobileLightBgs = ['bg-fone-light.png', 'bg-fone-hole-1.png', 'bg-fone-hole-2.png'];
+            const desktopLightBgs = ['bg-pc-light.png', 'bg-pc-hole-1.png', 'bg-pc-hole-2.png'];
 
             const mobileFallbacks = {
-                'web-background-main-lightmode.png': 'web-background.png',
-                'web-background-1-hole.png': 'web-background-1-solid.png',
-                'web-background-2-hole.png': 'web-background-2-solid.png'
+                'bg-fone-light.png': 'bg-fone.png',
+                'bg-fone-hole-1.png': 'bg-fone-solid-1.png',
+                'bg-fone-hole-2.png': 'bg-fone-solid-2.png'
             };
             const desktopFallbacks = {
-                'pc-web-background-main-lightmode.png': 'pc-web-background.png',
-                'pc-web-background-1-hole.png': 'pc-web-background-1-solid.png',
-                'pc-web-background-2-hole.png': 'pc-web-background-2-solid.png'
+                'bg-pc-light.png': 'bg-pc.png',
+                'bg-pc-hole-1.png': 'bg-pc-solid-1.png',
+                'bg-pc-hole-2.png': 'bg-pc-solid-2.png'
             };
 
             const isLight = localStorage.getItem('Light Out') === 'false';
-            const bgs = isLight ? (isMobile ? mobileLightBgs : desktopLightBgs) : (isMobile ? mobileBgs : desktopBgs);
-            const fallbacks = isLight ? (isMobile ? mobileFallbacks : desktopFallbacks) : {};
+            const bgs = isLight ? (isActualMobile ? mobileLightBgs : desktopLightBgs) : (isActualMobile ? mobileBgs : desktopBgs);
+            const fallbacks = isLight ? (isActualMobile ? mobileFallbacks : desktopFallbacks) : {};
 
             function loadBackground() {
-                // Skip if light mode not active — applyDarkMode handles dark BG on toggle
-                if (!isLight) return;
-
-                const bgFile = bgs[Math.floor(Math.random() * bgs.length)];
-                const fallback = fallbacks[bgFile];
-                const grid = document.querySelector('.grid-bg');
-                if (!grid) return;
-
-                const img = new Image();
-                img.onload = () => {
-                    setDualLayerBg(grid, bgFile);
-                };
-                img.onerror = () => {
-                    setDualLayerBg(grid, fallback);
-                };
-                img.src = `elements/${bgFile}`;
+                // applyDarkMode handles all BG selection (dark + light + canvas) at DOMContentLoaded
+                // This function is kept as a no-op to avoid overwriting applyDarkMode's setup
             }
 
             function setDualLayerBg(grid, bgFile) {
                 const isHole = holeFiles.some(f => bgFile.includes(f));
-                if (isHole) {
-                    const matrixGif = isMobile ? 'matrix-mobile.gif' : 'matrix-pc.gif';
-                    // Dual layer: hole PNG on top, matrix GIF behind
-                    grid.style.backgroundImage = `url(elements/${bgFile}), url(elements/${matrixGif})`;
-                    grid.style.backgroundSize = `contain, 100% auto`;
-                    grid.style.backgroundPosition = `center center, center bottom`;
-                    grid.style.backgroundRepeat = `no-repeat, no-repeat`;
+                if (isHole && !isActualMobile) {
+                    // Non-phone: live canvas behind hole PNG — no GIF needed
+                    grid.style.backgroundImage = `url(elements/${bgFile})`;
+                    grid.style.backgroundSize = 'contain';
+                    grid.style.backgroundPosition = 'center center';
+                    grid.style.backgroundRepeat = 'no-repeat';
+                    positionAndStartMatrix(grid);
+                } else if (isHole) {
+                    // Actual phone/tablet: GIF layer
+                    grid.style.backgroundImage = `url(elements/${bgFile}), url(elements/matrix-fone.gif)`;
+                    grid.style.backgroundSize = 'contain, contain';
+                    grid.style.backgroundPosition = 'center center, center center';
+                    grid.style.backgroundRepeat = 'no-repeat, no-repeat';
                 } else {
+                    stopMatrix(grid);
                     // Single layer: just the solid BG
                     grid.style.backgroundImage = `url(elements/${bgFile})`;
-                    grid.style.backgroundSize = `contain`;
-                    grid.style.backgroundPosition = `center center`;
-                    grid.style.backgroundRepeat = `no-repeat`;
+                    grid.style.backgroundSize = 'contain';
+                    grid.style.backgroundPosition = 'center center';
+                    grid.style.backgroundRepeat = 'no-repeat';
                 }
             }
 
@@ -399,6 +402,7 @@
 </head>
 <body>
 
+    <canvas id="matrix-canvas"></canvas>
     <div class="grid-bg"></div>
 
     <!-- AFEST BACK LINK -->
@@ -434,12 +438,12 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
-    <div id="build-tag">0325<br>0010</div>
+    <div id="build-tag">0325<br>1831</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
-            <source src="elements/Twisted-Duality_videologo.webm" type="video/webm">
-            <source src="elements/Twisted-Duality_videologo-web.mp4" type="video/mp4">
+            <source src="elements/TDlogo-light.webm" type="video/webm">
+            <source src="elements/TDlogo-light.mp4" type="video/mp4">
         </video>
 
         <div class="intro-wrap">
@@ -456,7 +460,7 @@
         <div class="lang-pl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PRZEDMOWA">自己紹介 czym_jest TD?</a></div>
 
         <!-- [ SHARED PLATFORM LINKS ] -->
-        <img src="elements/Twisted_Duality_Originals_subtext.png" class="subtext-header originals-logo">
+        <img src="elements/TDo-sub.png" class="subtext-header originals-logo">
         <div class="sector">
             <a href="https://open.spotify.com/artist/6P2T8I0U7p6u4W7r6m8R5f" class="nav-link" data-glitch="[ 完全変異 ]">/spotify</a>
             <a href="https://music.apple.com/us/artist/twisted-duality/1882004399" class="nav-link" data-glitch="[ 音声同期 ]">/apple-music</a>
@@ -465,7 +469,7 @@
             <a href="https://instagram.com/t.wysted" class="nav-link" data-glitch="[ 網膜投影 ]">/instagram</a>
         </div>
 
-        <img src="elements/Twisted_Duality_Reimagined_subtext.png" class="subtext-header reimagined-logo">
+        <img src="elements/TDre-sub.png" class="subtext-header reimagined-logo">
         <div class="sector">
             <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構 造 継 承 ]">TDre/soundcloud</a>
             <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 短 編 映 画 ]">/tiktok</a>
@@ -773,6 +777,7 @@
             const grid = document.querySelector('.grid-bg');
             const video = document.getElementById('logo-video');
             const isMobile = window.innerWidth <= 768;
+            const isActualMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
 
             if (dark) {
                 document.documentElement.style.setProperty('--text-color', '#ffffff');
@@ -780,16 +785,17 @@
                 document.documentElement.style.setProperty('--bg-color', '#111619');
                 document.documentElement.style.backgroundColor = '#111619';
                 const tcMeta = document.getElementById('theme-color-meta'); if (tcMeta) tcMeta.content = '#111619';
+                stopMatrix(grid);
                 if (grid) {
-                    const darkBgs = isMobile
-                        ? ['web-background-darkmode-1.png', 'web-background-darkmode-2.png']
-                        : ['pc-web-background-darkmode-1.png', 'pc-web-background-darkmode-2.png'];
+                    const darkBgs = isActualMobile
+                        ? ['bg-fone-dark-1.png', 'bg-fone-dark-2.png']
+                        : ['bg-pc-dark-1.png', 'bg-pc-dark-2.png'];
                     const darkBg = darkBgs[Math.floor(Math.random() * darkBgs.length)];
                     grid.style.backgroundImage = `url(elements/${darkBg})`;
                 }
                 if (video) {
                     video.style.mixBlendMode = 'screen';
-                    video.innerHTML = '<source src="elements/Twisted-Duality_videologo_darkgold.webm" type="video/webm"><source src="elements/Twisted-Duality_videologo_darkgold-web.mp4" type="video/mp4">';
+                    video.innerHTML = '<source src="elements/TDlogo-dark.webm" type="video/webm"><source src="elements/TDlogo-dark.mp4" type="video/mp4">';
                     video.load();
                 }
             } else {
@@ -798,13 +804,35 @@
                 document.documentElement.style.setProperty('--bg-color', '#ffffff');
                 document.documentElement.style.backgroundColor = '#ffffff';
                 const tcMetaL = document.getElementById('theme-color-meta'); if (tcMetaL) tcMetaL.content = '#ffffff';
-                const bgs = isMobile
-                    ? ['web-background-main-lightmode.png', 'web-background-1-hole.png', 'web-background-2-hole.png']
-                    : ['pc-web-background-main-lightmode.png', 'pc-web-background-1-hole.png', 'pc-web-background-2-hole.png'];
-                if (grid) grid.style.backgroundImage = `url(elements/${bgs[Math.floor(Math.random() * bgs.length)]})`;
+                const bgs = isActualMobile
+                    ? ['bg-fone-light.png', 'bg-fone-hole-1.png', 'bg-fone-hole-2.png']
+                    : ['bg-pc-light.png', 'bg-pc-hole-1.png', 'bg-pc-hole-2.png'];
+                if (grid) {
+                    const bg = bgs[Math.floor(Math.random() * bgs.length)];
+                    const isHoleBg = holeFiles.some(f => bg.includes(f));
+                    if (!isActualMobile && isHoleBg) {
+                        grid.style.backgroundImage = `url(elements/${bg})`;
+                        grid.style.backgroundSize = 'contain';
+                        grid.style.backgroundPosition = 'center center';
+                        grid.style.backgroundRepeat = 'no-repeat';
+                        positionAndStartMatrix(grid);
+                    } else if (isActualMobile && isHoleBg) {
+                        stopMatrix(grid);
+                        grid.style.backgroundImage = `url(elements/${bg}), url(elements/matrix-fone.gif)`;
+                        grid.style.backgroundSize = 'contain, contain';
+                        grid.style.backgroundPosition = 'center center, center center';
+                        grid.style.backgroundRepeat = 'no-repeat, no-repeat';
+                    } else {
+                        stopMatrix(grid);
+                        grid.style.backgroundImage = `url(elements/${bg})`;
+                        grid.style.backgroundSize = 'contain';
+                        grid.style.backgroundPosition = 'center center';
+                        grid.style.backgroundRepeat = 'no-repeat';
+                    }
+                }
                 if (video) {
                     video.style.mixBlendMode = 'multiply';
-                    video.innerHTML = '<source src="elements/Twisted-Duality_videologo.webm" type="video/webm"><source src="elements/Twisted-Duality_videologo-web.mp4" type="video/mp4">';
+                    video.innerHTML = '<source src="elements/TDlogo-light.webm" type="video/webm"><source src="elements/TDlogo-light.mp4" type="video/mp4">';
                     video.load();
                 }
             }
@@ -816,17 +844,17 @@
         const logoVariants = ['DE', 'EN', 'ES', 'FR', 'NL', 'VI', 'PL']; // add codes as you create the PNGs
         function randomizeLogos() {
             const pick = logoVariants[Math.floor(Math.random() * logoVariants.length)];
-            const origBase = 'elements/Twisted_Duality_Originals_subtext.png';
-            const reimBase = 'elements/Twisted_Duality_Reimagined_subtext.png';
+            const origBase = 'elements/TDo-sub.png';
+            const reimBase = 'elements/TDre-sub.png';
             const origImg = document.querySelector('.originals-logo');
             const reimImg = document.querySelector('.reimagined-logo');
             if (origImg) {
                 origImg.onerror = () => { origImg.onerror = null; origImg.src = origBase; };
-                origImg.src = 'elements/Twisted_Duality_Originals_subtext_glitch_for_' + pick + '.png';
+                origImg.src = 'elements/TDo-sub-glitch-' + pick.toLowerCase() + '.png';
             }
             if (reimImg) {
                 reimImg.onerror = () => { reimImg.onerror = null; reimImg.src = reimBase; };
-                reimImg.src = 'elements/Twisted_Duality_Reimagined_subtext_glitch_for_' + pick + '.png';
+                reimImg.src = 'elements/TDre-sub-glitch-' + pick.toLowerCase() + '.png';
             }
         }
 
@@ -837,12 +865,63 @@
             randomizeLogos();
         });
 
-        /* --- MATRIX GIF HANDLED IN setDualLayerBg() --- */
-        const holeFiles = ['web-background-1-hole.png', 'web-background-2-hole.png', 'pc-web-background-1-hole.png', 'pc-web-background-2-hole.png'];
+        /* --- MATRIX CANVAS --- */
+        const holeFiles = ['bg-fone-hole-1.png', 'bg-fone-hole-2.png', 'bg-pc-hole-1.png', 'bg-pc-hole-2.png'];
 
-        function initMatrix() {
-            // Matrix is now integrated into dual-layer backgrounds
+        let _matrixAnimId = null;
+
+        function positionAndStartMatrix(grid) {
+            const canvas = document.getElementById('matrix-canvas');
+            if (!canvas) return;
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const size = Math.min(vw, vh);
+            canvas.style.left = ((vw - size) / 2) + 'px';
+            canvas.style.top  = ((vh - size) / 2) + 'px';
+            canvas.style.display = 'block';
+            canvas.width  = size;
+            canvas.height = size;
+            if (grid) grid.style.backgroundColor = 'transparent';
+
+            if (_matrixAnimId) { cancelAnimationFrame(_matrixAnimId); _matrixAnimId = null; }
+            const ctx = canvas.getContext('2d');
+            const fontSize = Math.max(14, Math.floor(size / 20));
+            const cols = Math.floor(size / fontSize);
+            const drops = Array(cols).fill(0).map(() => Math.random() * cols);
+            const chars = ['0','1','双','極','の','螺','旋','核','領','計','器','盤','自','脳','案','活','性','知','能','仮','名','コ','ア','K','A','N','L','Y','O'];
+            let frameCount = 0;
+
+            let localId;
+            (function draw() {
+                localId = requestAnimationFrame(draw);
+                _matrixAnimId = localId;
+                if (++frameCount % 3 !== 0) return;
+                // Fill white so transparent PNG edges don't bleed the canvas
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = `${fontSize}px 'WDXL Lubrifont JP N', monospace`;
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        ctx.fillStyle = Math.random() > 0.3 ? '#de7029' : '#b3a272';
+                        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, (drops[i] + j) * fontSize);
+                    }
+                    drops[i]++;
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.92) drops[i] = 0;
+                }
+            })();
         }
+
+        function stopMatrix(grid) {
+            if (_matrixAnimId) { cancelAnimationFrame(_matrixAnimId); _matrixAnimId = null; }
+            const canvas = document.getElementById('matrix-canvas');
+            if (canvas) canvas.style.display = 'none';
+            if (grid) grid.style.backgroundColor = '';
+        }
+
+        function initMatrix() {} // called at DOMContentLoaded — canvas starts only when a hole PNG is active
+
+        window.addEventListener('resize', () => {
+            if (_matrixAnimId) positionAndStartMatrix(document.querySelector('.grid-bg'));
+        });
 
         function setLanguage(lang) {
             langState.current = lang;
