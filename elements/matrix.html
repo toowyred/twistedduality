@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @font-face {
+            font-family: 'WDXL';
+            src: url('WDXLLubrifontJPN-Regular.ttf') format('truetype');
+        }
+        body { margin: 0; background: #111619; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width  = 800;
+        canvas.height = 533;
+
+        const fontSize = 50;
+        const cols = Math.floor(canvas.width / fontSize);
+        const rows = Math.floor(canvas.height / fontSize);
+        const drops = Array(cols).fill(0).map(() => Math.random() * rows);
+
+        const chars = [
+            '0','1','双','極','の','螺','旋','核','領','計','器','盤',
+            '自','脳','案','活','性','知','能','仮','名','コ','ア',
+            'K','A','N','L','Y','O'
+        ];
+
+        // Speed control — higher = slower, lower = faster
+        // 1 = max speed (every frame), 3 = medium, 6 = slow
+        const FRAME_SKIP = 3;
+        let frameCount = 0;
+
+        function drawMatrix() {
+            requestAnimationFrame(drawMatrix);
+            frameCount++;
+            if (frameCount % FRAME_SKIP !== 2) return; // skip frames
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${fontSize}px WDXL, monospace`;
+
+            for (let i = 0; i < cols; i++) {
+                // Multiple characters per column for density
+                for (let j = 0; j < 4; j++) {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillStyle = Math.random() > 0.3 ? '#de7029' : '#b3a272';
+                    ctx.fillText(char, i * fontSize, (drops[i] + j) * fontSize);
+                }
+
+                drops[i]++;
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.92) {
+                    drops[i] = 0;
+                }
+            }
+        }
+
+        drawMatrix();
+    </script>
+</body>
+</html>
