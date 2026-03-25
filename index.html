@@ -35,6 +35,8 @@
         html {
             background-color: #111619;
         }
+        /* !!! CRITICAL: body MUST stay transparent so grid-bg shows through !!! */
+        /* Safari chrome detection happens on html. Content area must never have solid bg. */
         body, html {
             margin: 0; padding: 0;
             background-color: transparent;
@@ -432,7 +434,7 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
-    <div id="build-tag">0325<br>0002</div>
+    <div id="build-tag">0325<br>0010</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
