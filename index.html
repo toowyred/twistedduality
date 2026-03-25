@@ -236,6 +236,12 @@
             display: flex; justify-content: center; align-items: center; font-family: monospace;
         }
         #back-to-top.visible { opacity: 1; pointer-events: auto; }
+        #build-tag {
+            position: fixed; bottom: 50px; right: 25px;
+            font-size: 0.45rem; letter-spacing: 1px; color: var(--text-color);
+            opacity: 0.3; pointer-events: none; font-family: monospace;
+            text-align: center; line-height: 1.6; z-index: 99;
+        }
 
         /* 5. RELEASE TO REFRESH */
         #pull-refresh {
@@ -418,6 +424,7 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
+    <div id="build-tag">0325<br>0002</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
