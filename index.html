@@ -116,8 +116,10 @@
             border-radius: 4px;
         }
 
-        .lang-btn { cursor: pointer; opacity: 0.4; transition: opacity 0.3s; color: var(--text-color); }
+        .lang-btn { cursor: pointer; opacity: 0.4; transition: opacity 0.3s; color: var(--text-color); position: relative; }
         .lang-btn.active { opacity: 1; font-weight: bold; border-bottom: 1px solid var(--text-color); }
+        .lang-btn[data-glitch]:hover { color: transparent; }
+        .lang-btn[data-glitch]:hover::after { content: attr(data-glitch); position: absolute; left: 0; width: 100%; text-align: right; color: var(--glitch-color); animation: stationary-flicker 0.3s steps(2) infinite; font-family: 'WDXL Lubrifont JP N', sans-serif; white-space: nowrap; }
 
         .mode-toggle { cursor: pointer; opacity: 0.7; transition: opacity 0.3s; color: var(--text-color); font-size: 0.65rem; letter-spacing: 1px; position: relative; display: inline-block; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid rgba(0,0,0,0.15); }
         .mode-toggle:hover { opacity: 1; }
@@ -187,7 +189,7 @@
         #lore-tooltip .jp-def { font-size: 0.8rem; margin-bottom: 5px; color: #eee; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         #lore-tooltip .en-def { font-size: 0.7rem; opacity: 0.5; font-style: italic; margin-bottom: 12px; }
 
-        #status-footer { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; letter-spacing: 1px; z-index: 100; line-height: 1.6; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 4px; text-align: center; white-space: nowrap; }
+        #status-footer { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); font-size: calc(0.52rem + 2px); letter-spacing: 1px; z-index: 100; line-height: 1.6; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 4px; text-align: center; white-space: nowrap; }
         #status-footer .online-status { cursor: pointer; text-decoration: underline; transition: color 0.2s ease; }
         #status-footer .online-status:hover { color: var(--glitch-color); }
 
@@ -397,8 +399,8 @@
 
     <div class="lang-switch" id="lang-container">
     <span class="mode-toggle" id="mode-toggle" data-glitch="Unplug?" onclick="toggleDarkMode()"><span class="mode-label">Light</span></span>
-    <span class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN英語</span>
-    <span class="lang-btn" id="btn-de" onclick="setLanguage('de')">DE独語</span>
+    <span class="lang-btn active" id="btn-en" onclick="setLanguage('en')" data-glitch="アメリカ">EN英語</span>
+    <span class="lang-btn" id="btn-de" onclick="setLanguage('de')" data-glitch="ドイツ語">DE独語</span>
 
     <span id="btn-expand" class="lang-btn" style="opacity: 0.6;" title="More languages" onclick="toggleExtraLangs(true)">[  +  ]</span>
 
@@ -456,7 +458,7 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">apple-music：listen_now</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHOES ]">spotify：listen_now</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/imagined. Reimagined from ILLENIUM x NURKO Remix">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：listen_now</a>
             </div>
@@ -467,9 +469,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music：jetzt_anhören</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify：jetzt_anhören</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/konstrukt. Neu interpretiert auf Basis des ILLENIUM x NURKO Remix">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：jetzt_anhören</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：jetzt_anhören</a>
             </div>
         </div>
         <div class="lang-es-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
@@ -478,9 +481,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">apple-music：oye_ahora</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CENTRO：残響 ]">spotify：oye_ahora</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/creación. Reimaginado del remix de ILLENIUM x NURKO">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：oye_ahora</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：oye_ahora</a>
             </div>
         </div>
         <div class="lang-fr-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
@@ -489,9 +493,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">apple-music：écoutez_ça</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ CŒUR：残響 ]">spotify：écoutez_ça</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/forge. Réinterprété à partir du remix ILLENIUM x NURKO">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：écoutez_ça</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：écoutez_ça</a>
             </div>
         </div>
         <div class="lang-nl-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
@@ -500,9 +505,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">apple-music：luister_nu</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ KERN：残響 ]">spotify：luister_nu</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/vorm. Opnieuw vervormd van de ILLENIUM x NURKO Remix">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：luister_nu</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：luister_nu</a>
             </div>
         </div>
         <div class="lang-vi-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
@@ -511,9 +517,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">apple-music：nghe_liền</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：âm_vang ]">spotify：nghe_liền</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Rèn/lại cảmxúc. Tái tạo từ bản remix ILLENIUM x NURKO">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：nghe_liền</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：nghe_liền</a>
             </div>
         </div>
         <div class="lang-pl-only" style="margin-top: 50px; margin-bottom: 30px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 30px;">
@@ -522,9 +529,10 @@
             <a href="https://music.apple.com/us/song/echoes-behind/1882062320" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">apple-music：słuchaj_teraz</a>
             <a href="https://open.spotify.com/track/3TrG4BUOPAcghfq9GAoi5d" class="nav-link stationary-glitch" data-glitch="[ 核心：ECHA ]">spotify：słuchaj_teraz</a>
             <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08);">
-                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <span class="notranslate">JVKE</span> ]</div>
+                <div style="font-size: 1.125rem; font-weight: bold; margin-bottom: 2px;">[ <span class="notranslate">Golden Hour</span> &mdash; <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" target="_blank" class="notranslate" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;">JVKE</a> ]</div>
                 <div style="margin-bottom: 12px;"><span class="reimagined-tag" data-reimagined="Re/kuźńia. Przerobiony z remiksu ILLENIUM x NURKO">Re/imagined</span></div>
                 <a href="https://soundcloud.com/twysted-re/goldenhour-tdre" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]">TDre/soundcloud：słuchaj_teraz</a>
+                <a href="https://www.instagram.com/reel/CkOZ9-CqJnK/" class="nav-link stationary-glitch" data-glitch="[ 構造継承 ]" target="_blank">instagram：słuchaj_teraz</a>
             </div>
         </div>
 
@@ -565,7 +573,7 @@
             <div class="signal-status">SIŁA SYGNAŁU：rekalibracja</div>
         </div>
 
-        <div style="height: 20vh; width: 100%;"></div>
+        <div style="height: 50vh; width: 100%;"></div>
 
         <div id="about-sector">
             <div class="about-slider">
@@ -702,6 +710,10 @@
 
 
     <script>
+        // --- SCROLL TO TOP ON REFRESH ---
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+
         // --- ANALYTICS ---
         const WORKER_URL = 'https://td-webanalytics.midcember.workers.dev';
         function track(event) {
