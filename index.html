@@ -175,8 +175,8 @@
             display: none;
             position: relative;
             margin-top: 20px;
-            margin-bottom: 40px;
-            padding: 30px 20px;
+            margin-bottom: 120px;
+            padding: 30px 20px 80px 20px;
             background: #de7029 !important;
             color: #000000;
             text-align: left;
@@ -191,6 +191,7 @@
         .log-header-row .log-header { margin-bottom: 0; }
         .cmd-trigger { display: inline !important; width: auto !important; margin: 0 !important; padding: 0 !important; font-size: 0.7rem !important; letter-spacing: 2px; font-weight: bold; color: rgba(0,0,0,0.6); cursor: pointer; white-space: nowrap; border: none; text-decoration: underline; text-underline-offset: 2px; }
         .cmd-trigger:hover, .cmd-trigger:active { color: #ffffff !important; }
+        .about-toggle-link.stationary-glitch:hover::after, .about-toggle-link.stationary-glitch:active::after { color: #de7029 !important; }
 
         /* --- CMD OVERLAY PANEL --- */
         #cmd-panel {
@@ -279,6 +280,12 @@
         @keyframes glitchUrsprung { 0%, 85%, 100% { content: url('elements/TDo-sub.png'); } 87%, 98% { content: url('elements/TDo-sub-glitch-de.png'); } }
         .reimagined-logo { animation: glitchKonstruiert 7s infinite; }
         @keyframes glitchKonstruiert { 0%, 80%, 100% { content: url('elements/TDre-sub.png'); } 82%, 97% { content: url('elements/TDre-sub-glitch-de.png'); } }
+
+        /* --- MOTION MEMORIES (TDmo) --- */
+        .motionmemories-logo { transition: filter 0.3s ease, opacity 0.6s ease; }
+        .motionmemories-logo:hover { filter: drop-shadow(0 0 8px rgba(222, 112, 41, 0.5)) drop-shadow(0 0 20px rgba(222, 112, 41, 0.25)); }
+        .tdmo-kanji { display: block; font-size: 0.72rem; letter-spacing: 12px; text-align: center; margin: 8px auto 6px auto; opacity: 0.35; font-family: 'WDXL Lubrifont JP N', sans-serif; }
+        @keyframes tdmo-text-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.65; } }
 
         .nav-link { display: block; width: fit-content; margin: 14px auto; font-size: 0.75rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
         @media (max-width: 768px) { .nav-link { font-size: 1.15rem; } }
@@ -540,7 +547,7 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
-    <div id="build-tag">0326<br>1420</div>
+    <div id="build-tag">0326<br>1619</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
@@ -553,13 +560,13 @@
         </div>
 
         <!-- [ ABOUT LINK ] -->
-        <div class="lang-en-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PREFACE">自己紹介 what_is TD about?</a></div>
-        <div class="lang-de-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> VORWORT">自己紹介 worum_geht es bei TD?</a></div>
-        <div class="lang-es-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PREFACIO">自己紹介 ¿qué_es TD?</a></div>
-        <div class="lang-fr-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PRÉFACE">自己紹介 qu_est_ce que TD?</a></div>
-        <div class="lang-nl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> VOORWOORD">自己紹介 woaar_gaat TD over?</a></div>
-        <div class="lang-vi-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> TỰA_ĐẦU">自己紹介 TD là_gì?</a></div>
-        <div class="lang-pl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch" onclick="toggleAbout()" data-glitch="> PRZEDMOWA">自己紹介 czym_jest TD?</a></div>
+        <div class="lang-en-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> PREFACE">自己紹介 what_is TD about?</a></div>
+        <div class="lang-de-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> VORWORT">自己紹介 worum_geht es bei TD?</a></div>
+        <div class="lang-es-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> PREFACIO">自己紹介 ¿qué_es TD?</a></div>
+        <div class="lang-fr-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> PRÉFACE">自己紹介 qu_est_ce que TD?</a></div>
+        <div class="lang-nl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> VOORWOORD">自己紹介 woaar_gaat TD over?</a></div>
+        <div class="lang-vi-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> TỰA_ĐẦU">自己紹介 TD là_gì?</a></div>
+        <div class="lang-pl-only" style="text-align: center; margin-bottom: 20px;"><a href="javascript:void(0)" class="nav-link stationary-glitch about-toggle-link" onclick="toggleAbout()" data-glitch="> PRZEDMOWA">自己紹介 czym_jest TD?</a></div>
 
         <!-- [ SHARED PLATFORM LINKS ] -->
         <img src="elements/TDo-sub.png" class="subtext-header originals-logo">
@@ -574,7 +581,17 @@
         <img src="elements/TDre-sub.png" class="subtext-header reimagined-logo">
         <div class="sector">
             <a href="https://soundcloud.com/twysted-re" class="nav-link" data-glitch="[ 構 造 継 承 ]">TDre/soundcloud</a>
-            <a href="https://tiktok.com/@twystedone" class="nav-link" data-glitch="[ 短 編 映 画 ]">/tiktok</a>
+        </div>
+
+        <!-- [ MOTION MEMORIES: TDmo ] -->
+        <!-- Logo files per language (upload when ready):
+             Light: TDmo-sub-black.png (EN), TDmo-sub-black-JA.png, TDmo-sub-black-DE.png, TDmo-sub-black-ES.png, TDmo-sub-black-FR.png, TDmo-sub-black-NL.png, TDmo-sub-black-VI.png, TDmo-sub-black-PL.png
+             Dark:  TDmo-sub-white.png (EN), TDmo-sub-white-JA.png, TDmo-sub-white-DE.png, TDmo-sub-white-ES.png, TDmo-sub-white-FR.png, TDmo-sub-white-NL.png, TDmo-sub-white-VI.png, TDmo-sub-white-PL.png
+             Space: TDmo-sub-gold.png  (EN), TDmo-sub-gold-JA.png,  TDmo-sub-gold-DE.png,  TDmo-sub-gold-ES.png,  TDmo-sub-gold-FR.png,  TDmo-sub-gold-NL.png,  TDmo-sub-gold-VI.png,  TDmo-sub-gold-PL.png -->
+        <img src="elements/TDmo-sub-white.png" class="subtext-header motionmemories-logo" id="tdmo-logo">
+        <div class="sector">
+            <span class="tdmo-kanji" id="tdmo-kanji">短 編 映 画</span>
+            <a href="https://tiktok.com/@twystedone" class="nav-link">/tiktok</a>
         </div>
 
         <!-- [ CURRENT TRANSMISSION ] -->
@@ -1017,6 +1034,7 @@
                 }
             }
             updateModeLabel();
+            updateTdmoForMode();
         }
 
         function applySpaceMode() {
@@ -1039,6 +1057,7 @@
                 video.load();
             }
             updateModeLabel();
+            updateTdmoForMode();
         }
 
         // Apply saved preference on load
@@ -1060,12 +1079,82 @@
             }
         }
 
+        // --- MOTION MEMORIES LOGO CYCLING ---
+        const tdmoLangs = ['EN', 'JA', 'DE', 'ES', 'FR', 'NL', 'VI', 'PL'];
+        let tdmoCycleIdx = 0;
+        let tdmoCycleTimer = null;
+
+        function getTdmoBase() {
+            if (document.documentElement.classList.contains('space-mode')) return 'TDmo-sub-gold';
+            const mode = localStorage.getItem('td_mode') || 'dark';
+            return mode === 'light' ? 'TDmo-sub-black' : 'TDmo-sub-white';
+        }
+
+        function getTdmoSrc(lang) {
+            const base = getTdmoBase();
+            return lang === 'EN' ? 'elements/' + base + '.png' : 'elements/' + base + '-' + lang + '.png';
+        }
+
+        function updateTdmoForMode() {
+            const logo = document.getElementById('tdmo-logo');
+            if (!logo) return;
+            const lang = tdmoLangs[tdmoCycleIdx];
+            const src = getTdmoSrc(lang);
+            logo.style.opacity = '0';
+            setTimeout(() => {
+                logo.src = src;
+                logo.onerror = function() { this.onerror = null; this.src = getTdmoSrc('EN'); };
+                logo.style.opacity = '';
+            }, 300);
+        }
+
+        function startTdmoCycle() {
+            const logo = document.getElementById('tdmo-logo');
+            if (!logo) return;
+            const pageLang = (document.documentElement.lang || 'en').toUpperCase();
+            const startIdx = tdmoLangs.indexOf(pageLang);
+            tdmoCycleIdx = startIdx >= 0 ? startIdx : 0;
+            logo.src = getTdmoSrc(tdmoLangs[tdmoCycleIdx]);
+            logo.onerror = function() { this.onerror = null; this.src = getTdmoSrc('EN'); };
+
+            clearInterval(tdmoCycleTimer);
+            tdmoCycleTimer = setInterval(() => {
+                const nextIdx = (tdmoCycleIdx + 1) % tdmoLangs.length;
+                const nextSrc = getTdmoSrc(tdmoLangs[nextIdx]);
+                const preload = new Image();
+                preload.onload = () => {
+                    logo.style.opacity = '0';
+                    setTimeout(() => {
+                        tdmoCycleIdx = nextIdx;
+                        logo.src = nextSrc;
+                        logo.style.opacity = '';
+                    }, 600);
+                };
+                preload.onerror = () => { tdmoCycleIdx = nextIdx; }; // skip missing
+                preload.src = nextSrc;
+            }, 5000);
+        }
+
+        function syncTdmoPulse() {
+            const el = document.getElementById('tdmo-kanji');
+            if (!el) return;
+            const ms = new Date().getMilliseconds();
+            const delay = (1000 - ms) % 1000;
+            setTimeout(() => {
+                el.style.animation = 'none';
+                void el.offsetHeight;
+                el.style.animation = 'tdmo-text-pulse 1s ease-in-out infinite';
+            }, delay);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const savedMode = localStorage.getItem('td_mode') || (localStorage.getItem('Light Out') === 'false' ? 'light' : 'dark');
             if (savedMode === 'space') applySpaceMode();
             else applyDarkMode(savedMode !== 'light');
             initMatrix();
             randomizeLogos();
+            startTdmoCycle();
+            syncTdmoPulse();
         });
 
         /* --- MATRIX CANVAS --- */
@@ -1132,6 +1221,7 @@
             document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
             updateModeLabel();
+            startTdmoCycle(); // restart cycle with new language as primary
         }
         function toggleExtraLangs(show) {
         const drawer = document.getElementById('extra-langs-drawer');
