@@ -36,6 +36,7 @@
 
         html {
             background-color: #111619;
+            transition: background-color 0.5s ease;
         }
         /* !!! CRITICAL: body MUST stay transparent so grid-bg shows through !!! */
         /* Safari chrome detection happens on html. Content area must never have solid bg. */
@@ -60,6 +61,7 @@
             background: var(--bg-color, #fff) no-repeat center center;
             background-size: contain;
             z-index: -1;
+            transition: opacity 0.5s ease;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
         }
@@ -141,6 +143,21 @@
         .mode-toggle:hover { opacity: 1; }
         .mode-toggle:hover .mode-label { opacity: 0; }
         .mode-toggle:hover::after { content: attr(data-glitch); position: absolute; left: 0; width: 100%; text-align: right; color: var(--glitch-color); animation: stationary-flicker 0.3s steps(2) infinite; font-family: 'WDXL Lubrifont JP N', sans-serif; white-space: nowrap; }
+
+        /* --- SPACE MODE — 9:16 letterboxed frame --- */
+        .space-mode { background-color: #000000 !important; }
+        .space-mode .grid-bg {
+            width: min(100vw, calc(100vh * 9 / 16)) !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: radial-gradient(ellipse at 50% 25%, #0b0b2d 0%, #030310 55%, #000000 100%) !important;
+            background-size: cover !important;
+            animation: space-pulse 7s ease-in-out infinite alternate;
+        }
+        @keyframes space-pulse {
+            from { filter: brightness(1); }
+            to   { filter: brightness(1.25) hue-rotate(25deg); }
+        }
 
 
 
@@ -421,7 +438,7 @@
     </div>
 
     <div class="lang-switch" id="lang-container">
-    <span class="mode-toggle" id="mode-toggle" data-glitch="Unplug?" onclick="toggleDarkMode()"><span class="mode-label">Light</span></span>
+    <span class="mode-toggle" id="mode-toggle" data-glitch="Unplug?" onclick="cycleMode()"><span class="mode-label">Dark  </span></span>
     <span class="lang-btn active" id="btn-en" onclick="setLanguage('en')" data-glitch="アメリカ">EN英語</span>
     <span class="lang-btn" id="btn-de" onclick="setLanguage('de')" data-glitch="ドイツ語">DE独語</span>
 
@@ -706,13 +723,13 @@
     </div>
 
     <div id="status-footer">
-        <div class="lang-en-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="CORE">核心</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"TWO FREQUENCIES. ONE VESSEL."</div>
-        <div class="lang-de-only">[ BE証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">BEREIT</span><br>"ZWEI FREQUENZEN. EIN GEFÄSS."</div>
-        <div class="lang-es-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CENTRO</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LA_RED</span><br>"DOS FRECUENCIAS. UN RECIPIENTE."</div>
-        <div class="lang-fr-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CŒUR</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">EN_LIGNE</span><br>"DEUX FRÉQUENCES. UN SEUL&nbsp;NAVIRE."</div>
-        <div class="lang-nl-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">ONLINE</span><br>"TWEE FREQUENTIES. ÉÉN VAARTUIG."</div>
-        <div class="lang-vi-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CỐTLÕI</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">TRỰC_TUYẾN</span><br>"HAI TẦN&nbsp;SỐ. MỘT QUỸ&nbsp;ĐẠO"</div>
-        <div class="lang-pl-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">RDZEŃ</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()">POŁĄCZONY</span><br>"DWIE CZĘSTOTLIWOŚCI. JEDNA JEDNOSTKA."</div>
+        <div class="lang-en-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="CORE">核心</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="ONLINE" data-word-offline="OFFLINE">ONLINE</span><br>"TWO FREQUENCIES. ONE VESSEL."</div>
+        <div class="lang-de-only">[ BE証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="BEREIT" data-word-offline="GETRENNT">BEREIT</span><br>"ZWEI FREQUENZEN. EIN GEFÄSS."</div>
+        <div class="lang-es-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CENTRO</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="EN_LA_RED" data-word-offline="DESCONECTADO">EN_LA_RED</span><br>"DOS FRECUENCIAS. UN RECIPIENTE."</div>
+        <div class="lang-fr-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CŒUR</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="EN_LIGNE" data-word-offline="HORS_LIGNE">EN_LIGNE</span><br>"DEUX FRÉQUENCES. UN SEUL&nbsp;NAVIRE."</div>
+        <div class="lang-nl-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">KERN</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="ONLINE" data-word-offline="OFFLINE">ONLINE</span><br>"TWEE FREQUENTIES. ÉÉN VAARTUIG."</div>
+        <div class="lang-vi-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">CỐTLÕI</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="TRỰC_TUYẾN" data-word-offline="NGOẠI_TUYẾN">TRỰC_TUYẾN</span><br>"HAI TẦN&nbsp;SỐ. MỘT QUỸ&nbsp;ĐẠO"</div>
+        <div class="lang-pl-only">[ AU証：<span class="lore-glitch stationary-glitch notranslate" data-glitch="核心">RDZEŃ</span> ] -> STATUS: <span class="online-status" onclick="checkPassword()" data-word-online="POŁĄCZONY" data-word-offline="ROZŁĄCZONY">POŁĄCZONY</span><br>"DWIE CZĘSTOTLIWOŚCI. JEDNA JEDNOSTKA."</div>
     </div>
 
     <div id="credit-footer"><span onclick="openAdminPanel()" style="cursor:default;user-select:none;">&copy;</span> 2024&ndash;2025 Twisted&nbsp;Duality&trade; &amp; Reimagined&trade; &mdash; contrusted by <a href="https://instagram.com/wyred.on" target="_blank">@wyred.on</a></div>
@@ -748,36 +765,45 @@
 
         // Dark mode toggle — per-language labels
         const modeLabels = {
-            en: { light: 'Light ',   dark: 'Dark  ',         glitchLight: 'Unplug? ',          glitchDark: 'Too dark? ' },
-            de: { light: 'Heller',   dark: 'Dunkel',         glitchLight: 'Ziehen? ',          glitchDark: 'Licht ON? ' },
-            es: { light: 'Claro ',   dark: 'Oscuro',         glitchLight: 'Lo atenúo? ',       glitchDark: 'ON la luz? ' },
-            fr: { light: 'Clair ',   dark: 'Sombre',         glitchLight: 'Débrancher? ',      glitchDark: 'Vois pas? ' },
-            vi: { light: 'Sáng rỡ',  dark: 'Tối tăm',        glitchLight: 'Tắt đèn? ',         glitchDark: 'Tối quá à? ' },
-            nl: { light: 'Licht ',   dark: 'Donker',         glitchLight: 'Licht uit? ',       glitchDark: 'Licht aan? ' },
-            pl: { light: 'Jasny ',   dark: 'Ciemny',         glitchLight: 'Wyłączyć? ',        glitchDark: 'Zapalić? ' }
+            en: { light: 'Light\xa0', dark: 'Dark\xa0\xa0', space: 'Space\xa0', glitchLight: 'Unplug?\xa0', glitchDark: 'Too\xa0dark?\xa0', glitchSpace: 'Orbit?\xa0' },
+            de: { light: 'Heller', dark: 'Dunkel', space: 'Orbit\xa0', glitchLight: 'Ziehen?\xa0', glitchDark: 'Licht\xa0ON?\xa0', glitchSpace: 'Weltraum?\xa0' },
+            es: { light: 'Claro\xa0', dark: 'Oscuro', space: 'Espacio', glitchLight: 'Lo\xa0atenuo?\xa0', glitchDark: 'ON la\xa0luz?\xa0', glitchSpace: 'Orbita?\xa0' },
+            fr: { light: 'Clair\xa0', dark: 'Sombre', space: 'Cosmos', glitchLight: 'Debrancher?\xa0', glitchDark: 'Vois\xa0pas?\xa0', glitchSpace: 'En orbite?' },
+            vi: { light: 'Sang ro', dark: 'Toi tam', space: 'Vu tru', glitchLight: 'Tat den?\xa0', glitchDark: 'Toi qua a?\xa0', glitchSpace: 'Quy dao?\xa0' },
+            nl: { light: 'Licht\xa0', dark: 'Donker', space: 'Ruimte', glitchLight: 'Licht\xa0uit?\xa0', glitchDark: 'Licht\xa0aan?\xa0', glitchSpace: 'Baan?\xa0' },
+            pl: { light: 'Jasny\xa0', dark: 'Ciemny', space: 'Kosmos', glitchLight: 'Wylacyc?\xa0', glitchDark: 'Zapalic?\xa0', glitchSpace: 'Orbita?\xa0' }
         };
 
-        function toggleDarkMode() {
-            const isLight = localStorage.getItem('Light Out') === 'false';
-            localStorage.setItem('Light Out', isLight ? 'true' : 'false');
-            applyDarkMode(isLight);
+        function cycleMode() {
+            const current = localStorage.getItem('td_mode') || (localStorage.getItem('Light Out') === 'false' ? 'light' : 'dark');
+            const next = current === 'dark' ? 'light' : current === 'light' ? 'space' : 'dark';
+            localStorage.setItem('td_mode', next);
+            if (next === 'space') applySpaceMode();
+            else applyDarkMode(next === 'dark');
         }
 
         function updateModeLabel() {
             const toggle = document.getElementById('mode-toggle');
             const label = toggle.querySelector('.mode-label');
             const lang = langState.current;
-            const isDark = localStorage.getItem('Light Out') !== 'false';
+            const mode = localStorage.getItem('td_mode') || (localStorage.getItem('Light Out') === 'false' ? 'light' : 'dark');
             const labels = modeLabels[lang] || modeLabels.en;
-            label.textContent = isDark ? labels.dark : labels.light;
-            toggle.setAttribute('data-glitch', isDark ? labels.glitchDark : labels.glitchLight);
+            if (mode === 'space') {
+                label.textContent = labels.space || 'Space ';
+                toggle.setAttribute('data-glitch', labels.glitchSpace || 'Orbit? ');
+            } else {
+                label.textContent = mode === 'dark' ? labels.dark : labels.light;
+                toggle.setAttribute('data-glitch', mode === 'dark' ? labels.glitchDark : labels.glitchLight);
+            }
         }
 
         function applyDarkMode(dark) {
             const grid = document.querySelector('.grid-bg');
             const video = document.getElementById('logo-video');
-            const isMobile = window.innerWidth <= 768;
             const isActualMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+
+            // Strip space-mode class so CSS overrides are removed
+            document.documentElement.classList.remove('space-mode');
 
             if (dark) {
                 document.documentElement.style.setProperty('--text-color', '#ffffff');
@@ -791,7 +817,8 @@
                         ? ['bg-fone-dark-1.png', 'bg-fone-dark-2.png']
                         : ['bg-pc-dark-1.png', 'bg-pc-dark-2.png'];
                     const darkBg = darkBgs[Math.floor(Math.random() * darkBgs.length)];
-                    grid.style.backgroundImage = `url(elements/${darkBg})`;
+                    grid.style.opacity = '0';
+                    setTimeout(() => { grid.style.backgroundImage = 'url(elements/' + darkBg + ')'; grid.style.opacity = '1'; }, 500);
                 }
                 if (video) {
                     video.style.mixBlendMode = 'screen';
@@ -810,31 +837,59 @@
                 if (grid) {
                     const bg = bgs[Math.floor(Math.random() * bgs.length)];
                     const isHoleBg = holeFiles.some(f => bg.includes(f));
-                    if (!isActualMobile && isHoleBg) {
-                        grid.style.backgroundImage = `url(elements/${bg})`;
-                        grid.style.backgroundSize = 'contain';
-                        grid.style.backgroundPosition = 'center center';
-                        grid.style.backgroundRepeat = 'no-repeat';
-                        positionAndStartMatrix(grid);
-                    } else if (isActualMobile && isHoleBg) {
-                        stopMatrix(grid);
-                        grid.style.backgroundImage = `url(elements/${bg}), url(elements/matrix-fone.gif)`;
-                        grid.style.backgroundSize = 'contain, contain';
-                        grid.style.backgroundPosition = 'center center, center center';
-                        grid.style.backgroundRepeat = 'no-repeat, no-repeat';
-                    } else {
-                        stopMatrix(grid);
-                        grid.style.backgroundImage = `url(elements/${bg})`;
-                        grid.style.backgroundSize = 'contain';
-                        grid.style.backgroundPosition = 'center center';
-                        grid.style.backgroundRepeat = 'no-repeat';
-                    }
+                    grid.style.opacity = '0';
+                    setTimeout(() => {
+                        if (!isActualMobile && isHoleBg) {
+                            grid.style.backgroundImage = 'url(elements/' + bg + ')';
+                            grid.style.backgroundSize = 'contain';
+                            grid.style.backgroundPosition = 'center center';
+                            grid.style.backgroundRepeat = 'no-repeat';
+                            grid.style.opacity = '1';
+                            positionAndStartMatrix(grid);
+                        } else if (isActualMobile && isHoleBg) {
+                            stopMatrix(grid);
+                            grid.style.backgroundImage = 'url(elements/' + bg + '), url(elements/matrix-fone.gif)';
+                            grid.style.backgroundSize = 'contain, contain';
+                            grid.style.backgroundPosition = 'center center, center center';
+                            grid.style.backgroundRepeat = 'no-repeat, no-repeat';
+                            grid.style.opacity = '1';
+                        } else {
+                            stopMatrix(grid);
+                            grid.style.backgroundImage = 'url(elements/' + bg + ')';
+                            grid.style.backgroundSize = 'contain';
+                            grid.style.backgroundPosition = 'center center';
+                            grid.style.backgroundRepeat = 'no-repeat';
+                            grid.style.opacity = '1';
+                        }
+                    }, 500);
                 }
                 if (video) {
                     video.style.mixBlendMode = 'multiply';
                     video.innerHTML = '<source src="elements/TDlogo-light.webm" type="video/webm"><source src="elements/TDlogo-light.mp4" type="video/mp4">';
                     video.load();
                 }
+            }
+            updateModeLabel();
+        }
+
+        function applySpaceMode() {
+            const grid = document.querySelector('.grid-bg');
+            const video = document.getElementById('logo-video');
+            stopMatrix(grid);
+            document.documentElement.classList.add('space-mode');
+            document.documentElement.style.setProperty('--text-color', '#c8d8ff');
+            document.documentElement.style.setProperty('--glitch-color', '#6b8fff');
+            document.documentElement.style.setProperty('--bg-color', '#000000');
+            document.documentElement.style.backgroundColor = '#000000';
+            const tcMeta = document.getElementById('theme-color-meta'); if (tcMeta) tcMeta.content = '#000000';
+            if (grid) {
+                grid.style.opacity = '0';
+                setTimeout(() => { grid.style.backgroundImage = 'none'; grid.style.opacity = '1'; }, 500);
+            }
+            if (video) {
+                video.style.mixBlendMode = 'screen';
+                video.innerHTML = '<source src="elements/TDlogo-dark.webm" type="video/webm"><source src="elements/TDlogo-dark.mp4" type="video/mp4">';
+                video.load();
             }
             updateModeLabel();
         }
@@ -859,8 +914,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('Light Out') === 'false') applyDarkMode(false);
-            else applyDarkMode(true);
+            const savedMode = localStorage.getItem('td_mode') || (localStorage.getItem('Light Out') === 'false' ? 'light' : 'dark');
+            if (savedMode === 'space') applySpaceMode();
+            else applyDarkMode(savedMode !== 'light');
             initMatrix();
             randomizeLogos();
         });
@@ -1168,6 +1224,15 @@
                     } else if (!data.onair) {
                         clearInterval(window._onairInterval);
                     }
+                    // Update STATUS: ONLINE/OFFLINE based on data.online field
+                    // Falls back to true if field is absent (backwards compat)
+                    const isOnline = data.online !== false;
+                    document.querySelectorAll('.online-status').forEach(span => {
+                        span.textContent = isOnline
+                            ? (span.dataset.wordOnline  || span.textContent)
+                            : (span.dataset.wordOffline || 'OFFLINE');
+                        span.style.opacity = isOnline ? '' : '0.35';
+                    });
                 })
                 .catch(() => {}); // silently fail — never breaks the page
         }
@@ -1227,7 +1292,7 @@
         function closeAdminPanel() { document.getElementById('admin-panel').style.display = 'none'; }
 
         // ON AIR cycling labels
-        const onairLabels = ['録音中','Opname','Grabando','Enregistrement','ON&nbspAIR','Aufnahme','录音中','ON&nbspAIR','Đang&nbspthu','REC','En cours','ON&nbspAIR'];
+        const onairLabels = ['録音中','Opname','Grabando','Enregistrement','ON AIR','Aufnahme','录音中','ON AIR','Đang thu','REC','En cours','ON AIR'];
         let onairIdx = 0;
         function cycleOnAir() {
             const label = document.getElementById('onair-label');
