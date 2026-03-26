@@ -7,7 +7,7 @@ import os, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 from datetime import datetime
 
-html_path = os.path.join(os.path.dirname(__file__), 'index.html')
+html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')
 
 with open(html_path, 'r', encoding='utf-8') as f:
     content = f.read()
