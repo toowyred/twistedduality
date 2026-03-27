@@ -81,8 +81,8 @@
         .main-terminal { width: 100%; max-width: 400px; text-align: center; padding: 5px 20px 40px 20px; }
         .main-logo { width: 100%; max-width: 210px; margin: 0 auto 10px auto; display: block; }
         @media (max-width: 768px) { .main-logo { max-width: 280px; } }
-        .subtext-header { width: 100%; max-width: 170px; margin: 15px auto 5px auto; display: block; padding: 12px 24px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 4px; }
-        @media (max-width: 768px) { .subtext-header { max-width: 200px; } }
+        .subtext-header { width: 170px; box-sizing: border-box; margin: 15px auto 5px auto; display: block; padding: 12px 24px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        @media (max-width: 768px) { .subtext-header { width: 200px; } }
         .sector { margin-top: 0; margin-bottom: 30px; }
 
         /* --- TICKER / RUNNING LINE --- */
@@ -286,8 +286,10 @@
         .tdmo-logo-wrap img { width: 100%; display: block; }
         .motionmemories-logo { transition: filter 0.3s ease, opacity 0.6s ease; }
         .motionmemories-logo:hover { filter: drop-shadow(0 0 8px rgba(222, 112, 41, 0.5)) drop-shadow(0 0 20px rgba(222, 112, 41, 0.25)); }
-        .tdmo-kanji { display: block; font-size: 0.72rem; letter-spacing: 12px; text-align: center; margin: 8px auto 6px auto; opacity: 0.35; font-family: 'WDXL Lubrifont JP N', sans-serif; }
-        @keyframes tdmo-text-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.65; } }
+        .tdmo-tiktok { position: relative; }
+        .tdmo-tiktok:hover { color: transparent !important; }
+        .tdmo-tiktok:hover::after { content: '短 編 映 画'; position: absolute; left: 0; width: 100%; text-align: center; font-family: 'WDXL Lubrifont JP N', sans-serif; animation: tdmo-kanji-color-pulse 2s ease-in-out infinite; }
+        @keyframes tdmo-kanji-color-pulse { 0%, 100% { color: #de7029; opacity: 1; } 25% { color: #de7029; opacity: 0.3; } 50% { color: #b3a272; opacity: 1; } 75% { color: #b3a272; opacity: 0.3; } }
 
         .nav-link { display: block; width: fit-content; margin: 14px auto; font-size: 0.75rem; color: var(--text-color); text-decoration: none; text-transform: lowercase; letter-spacing: 2px; position: relative; cursor: pointer; }
         @media (max-width: 768px) { .nav-link { font-size: 1.15rem; } }
@@ -315,7 +317,8 @@
         #lore-tooltip .jp-def { font-size: 0.8rem; margin-bottom: 5px; color: #eee; font-family: 'WDXL Lubrifont JP N', sans-serif; }
         #lore-tooltip .en-def { font-size: 0.7rem; opacity: 0.5; font-style: italic; margin-bottom: 12px; }
 
-        #status-footer { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); font-size: calc(0.52rem + 2px); letter-spacing: 1px; z-index: 100; line-height: 1.6; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 4px; text-align: center; white-space: nowrap; }
+        #status-footer { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); font-size: calc(0.52rem + 2px); letter-spacing: 1px; z-index: 100; line-height: 1.6; text-transform: uppercase; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 20px; border-radius: 4px; text-align: center; white-space: nowrap; min-width: 170px; box-sizing: border-box; }
+        @media (max-width: 768px) { #status-footer { min-width: 200px; } }
         #status-footer .online-status { cursor: pointer; text-decoration: underline; transition: color 0.2s ease; }
         #status-footer .online-status:hover { color: var(--glitch-color); }
 
@@ -549,7 +552,7 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
-    <div id="build-tag">0326<br>1924</div>
+    <div id="build-tag">0326<br>1942</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
@@ -594,8 +597,7 @@
             <img src="elements/TDmo-sub-white.png" class="motionmemories-logo" id="tdmo-logo">
         </div>
         <div class="sector">
-            <span class="tdmo-kanji" id="tdmo-kanji">短 編 映 画</span>
-            <a href="https://tiktok.com/@twystedone" class="nav-link">/tiktok</a>
+            <a href="https://tiktok.com/@twystedone" class="nav-link tdmo-tiktok">/tiktok</a>
         </div>
 
         <!-- [ CURRENT TRANSMISSION ] -->
@@ -1158,7 +1160,6 @@
             initMatrix();
             randomizeLogos();
             startTdmoCycle();
-            syncTdmoPulse();
         });
 
         /* --- MATRIX CANVAS --- */
