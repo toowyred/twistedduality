@@ -284,7 +284,7 @@
         /* --- MOTION MEMORIES (TDmo) --- */
         .tdmo-logo-wrap { display: block; }
         .tdmo-logo-wrap img { width: 100%; display: block; }
-        .motionmemories-logo { transition: filter 0.3s ease, opacity 0.6s ease; }
+        .motionmemories-logo { transition: filter 0.3s ease, opacity 0.5s ease; }
         .motionmemories-logo:hover { filter: drop-shadow(0 0 8px rgba(222, 112, 41, 0.5)) drop-shadow(0 0 20px rgba(222, 112, 41, 0.25)); }
         .tdmo-tiktok { position: relative; }
         .tdmo-tiktok:hover { color: transparent !important; }
@@ -552,7 +552,7 @@
 </div>
 
     <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
-    <div id="build-tag">0326<br>1942</div>
+    <div id="build-tag">0326<br>1943</div>
 
     <div class="main-terminal">
         <video class="main-logo" id="logo-video" autoplay muted playsinline style="mix-blend-mode: multiply;">
@@ -1123,22 +1123,29 @@
             logo.src = getTdmoSrc(tdmoLangs[tdmoCycleIdx]);
             logo.onerror = function() { this.onerror = null; this.src = getTdmoSrc('EN'); };
 
-            clearInterval(tdmoCycleTimer);
-            tdmoCycleTimer = setInterval(() => {
+            let tdmoTransitioning = false;
+
+            function tdmoAdvance() {
+                if (tdmoTransitioning) return;
                 const nextIdx = (tdmoCycleIdx + 1) % tdmoLangs.length;
                 const nextSrc = getTdmoSrc(tdmoLangs[nextIdx]);
                 const preload = new Image();
                 preload.onload = () => {
+                    tdmoTransitioning = true;
                     logo.style.opacity = '0';
                     setTimeout(() => {
                         tdmoCycleIdx = nextIdx;
                         logo.src = nextSrc;
                         logo.style.opacity = '';
-                    }, 600);
+                        setTimeout(() => { tdmoTransitioning = false; }, 700);
+                    }, 500);
                 };
-                preload.onerror = () => { tdmoCycleIdx = nextIdx; }; // skip missing
+                preload.onerror = () => { tdmoCycleIdx = nextIdx; };
                 preload.src = nextSrc;
-            }, 5000);
+            }
+
+            clearInterval(tdmoCycleTimer);
+            tdmoCycleTimer = setInterval(tdmoAdvance, 5000);
         }
 
         function syncTdmoPulse() {
