@@ -226,11 +226,13 @@
   .brand .title {
     font-size: 22px; letter-spacing: 6px; font-weight: bold;
     color: var(--fg); text-transform: uppercase;
+    white-space: nowrap;              /* keep on one line so text swaps don't reflow the locked box */
   }
   .brand .sub {
     font-size: 10px; letter-spacing: 3px; color: var(--muted);
     text-transform: uppercase; margin-top: 3px;
     pointer-events: auto;
+    white-space: nowrap;
   }
   .brand .sub a { color: var(--accent); text-decoration: none; transition: opacity 0.2s; }
   .brand .sub a:hover { opacity: 0.7; }
@@ -614,6 +616,78 @@
   @media (max-width: 520px) {
     .print-overlay .print-box { padding: 12px 18px; max-width: 90vw; margin-top: 15vh; }
   }
+  /* print images — inline token <img>filename</img> inside print text. Height
+     clamped to --print-img-max-h (live card-body height, updated on resize). */
+  .print-overlay .print-box img.print-img {
+    max-height: var(--print-img-max-h, 40vh);
+    max-width: 100%;
+    width: auto; height: auto;
+    vertical-align: middle;
+    margin: 0 4px;
+  }
+  .print-overlay .print-box .print-img-missing {
+    color: var(--muted); font-style: italic; opacity: 0.7; letter-spacing: 1px;
+  }
+
+  /* ── code-unlock panel (bottom-left above tuner; collapsed key → expanded input) ── */
+  .code-panel {
+    position: fixed;
+    left: 8px;
+    /* stays above the tuner like subtitles do; the CSS var is auto-synced to tuner height */
+    bottom: calc(var(--subtitle-bottom-offset, 128px) + 6px);
+    z-index: 160;
+    display: flex; align-items: stretch;
+    pointer-events: auto;
+  }
+  .code-key-btn {
+    width: 28px; height: 28px;
+    padding: 0; border: 1px solid var(--accent-dim);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--accent);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .code-key-btn:hover, .code-key-btn:focus-visible { background: rgba(0,0,0,0.8); color: var(--fg); outline: none; }
+  .code-key-btn svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+  html.no-transparency .code-key-btn { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  .code-expand {
+    display: none;
+    margin-left: -1px;   /* seam against the key button */
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--accent-dim);
+    padding: 2px;
+    gap: 4px;
+    align-items: stretch;
+  }
+  html.no-transparency .code-expand { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .code-panel.expanded .code-expand { display: inline-flex; }
+  .code-input {
+    background: transparent; color: var(--fg);
+    border: none; outline: none;
+    font-family: 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    width: 140px; padding: 4px 6px;
+  }
+  .code-input::placeholder { color: var(--dim); letter-spacing: 3px; }
+  .code-input.code-input--wrong { animation: code-shake 0.38s; color: var(--crit, #f44336); }
+  @keyframes code-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+  .code-go {
+    font-family: inherit;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    background: var(--accent); color: #000;
+    border: none; padding: 0 12px; cursor: pointer;
+    font-weight: bold;
+    transition: filter 0.15s;
+  }
+  .code-go:hover, .code-go:focus-visible { filter: brightness(1.15); outline: none; }
 
   /* ── SRT subtitle stack — sits above the tuner, stacks up to 3 cues ── */
   :root {
@@ -1120,9 +1194,11 @@
 </div>
 
 <!-- brand -->
-<div class="brand">
-  <div class="title">WSI Radio Receiver</div>
-  <div class="sub"><span data-i18n="constructed-by">Constructed by</span> <a href="https://www.instagram.com/wyred.on/" target="_blank" rel="noopener">@wyred.on</a></div>
+<!-- brand: dimensions locked on boot so timeline text-swaps (wsi-line1/wsi-line2)
+     don't reflow the logo position — users only see the text change, not layout shift. -->
+<div class="brand" id="brand">
+  <div class="title" id="brandLine1">WSI Radio Receiver</div>
+  <div class="sub" id="brandLine2"><span data-i18n="constructed-by">Constructed by</span> <a href="https://www.instagram.com/wyred.on/" target="_blank" rel="noopener">@wyred.on</a></div>
 </div>
 
 <!-- hidden <audio> backing element.
@@ -1135,6 +1211,18 @@
 <div class="toast" id="toast"></div>
 
 <!-- print overlay (centered, upper-third — fires on timeline 'print' events) -->
+<!-- code-unlock panel — bottom-left above tuner; tap key to expand → input + GO -->
+<div class="code-panel" id="codePanel">
+  <button class="code-key-btn" id="codeKey" type="button" aria-label="Enter unlock code" title="Code">
+    <!-- minimal key glyph (monoline) -->
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.6 10.59A6 6 0 1 0 6 17a6 6 0 0 0 5.6-3.88H14v3h3v-3h3v-3h-7.4zM6 14a2 2 0 1 1 2-2 2 2 0 0 1-2 2z"/></svg>
+  </button>
+  <div class="code-expand" id="codeExpand" aria-hidden="true">
+    <input type="text" class="code-input" id="codeInput" placeholder="CODE" spellcheck="false" autocomplete="off" autocapitalize="none" translate="no">
+    <button class="code-go" id="codeGo" type="button">GO</button>
+  </div>
+</div>
+
 <!-- subtitle stack (SRT) — above tuner, max 3 cues, newest at bottom -->
 <div class="subtitle-stack" id="subtitleStack" aria-hidden="true"></div>
 <!-- debug panel — 5-tap on "RADIO RECEIVER" title OR ?subdbg=1 -->
@@ -2288,6 +2376,54 @@ if (tunerHandle) {
 }
 syncTunerBodyClass();
 
+// ══════════════════════════════════════════════════════════════════
+// BRAND LOCK — measures WSI Radio Receiver logo dims at boot (after fonts load)
+// and pins them via inline style. Timeline events wsi-line1= / wsi-line2= can
+// then swap text freely without reflowing the page (easter-egg blink-and-miss).
+// Snapshot of original HTML is kept so track-change/end can restore cleanly.
+// ══════════════════════════════════════════════════════════════════
+const BrandLock = {
+  line1Html: null,
+  line2Html: null,
+  dimsLocked: false,
+
+  captureSnapshot() {
+    const l1 = document.getElementById('brandLine1');
+    const l2 = document.getElementById('brandLine2');
+    if (l1 && this.line1Html == null) this.line1Html = l1.innerHTML;
+    if (l2 && this.line2Html == null) this.line2Html = l2.innerHTML;
+  },
+
+  lockDims() {
+    if (this.dimsLocked) return;
+    const brand = document.getElementById('brand');
+    if (!brand) return;
+    const w = brand.offsetWidth, h = brand.offsetHeight;
+    brand.style.width  = w + 'px';
+    brand.style.height = h + 'px';
+    brand.style.boxSizing = 'border-box';
+    this.dimsLocked = true;
+  },
+
+  restore() {
+    if (this.line1Html != null) {
+      const l1 = document.getElementById('brandLine1');
+      if (l1 && l1.innerHTML !== this.line1Html) l1.innerHTML = this.line1Html;
+    }
+    if (this.line2Html != null) {
+      const l2 = document.getElementById('brandLine2');
+      if (l2 && l2.innerHTML !== this.line2Html) l2.innerHTML = this.line2Html;
+    }
+  },
+
+  async initAfterFonts() {
+    this.captureSnapshot();
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (_) {} }
+    this.lockDims();
+  }
+};
+BrandLock.initAfterFonts();
+
 // Waveform CFG presets — applied at boot based on viewport/orientation.
 // Does not live-migrate across breakpoint resizes; debug panel handles per-device tuning after.
 (function applyDevicePreset() {
@@ -2735,6 +2871,25 @@ function applyTimelineEvent(ev) {
     applyStatusValue(ev.value);
   } else if (ev.type === 'access') {
     applyAccessValue(ev.value);
+  } else if (ev.type === 'wsi-line1' || ev.type === 'wsi-line2') {
+    // Brand-logo text swap — blink-and-you-miss-it easter eggs. PLAIN TEXT ONLY.
+    // Reject HTML / URLs / paragraph-length input and fall back to the default line.
+    // Box dimensions are locked at boot so even accepted swaps can't reflow the page.
+    const id = ev.type === 'wsi-line1' ? 'brandLine1' : 'brandLine2';
+    const el = document.getElementById(id);
+    if (!el) return;
+    const MAX_LEN = ev.type === 'wsi-line1' ? 40 : 60;
+    const raw = String(ev.value == null ? '' : ev.value);
+    const hasTag   = /<[^>]+>/.test(raw);
+    const hasLink  = /:\/\//.test(raw) || /\bhttps?\b/i.test(raw);
+    const tooLong  = raw.length > MAX_LEN;
+    if (hasTag || hasLink || tooLong) {
+      // abuse → restore that line to its original HTML snapshot
+      const defHtml = (ev.type === 'wsi-line1') ? BrandLock.line1Html : BrandLock.line2Html;
+      if (defHtml != null) el.innerHTML = defHtml;
+    } else {
+      el.textContent = raw;
+    }
   }
   // origin isn't rendered in the card — the strip-top cycler reads it via liveMeta()
   // refresh strip-top cycler so signal/decoder/origin changes flow through
@@ -2970,12 +3125,97 @@ function syncTunerOffsetVar() {
   document.documentElement.style.setProperty('--subtitle-bottom-offset', (h + 10) + 'px');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// PRINT IMAGES — <img>filename</img> tokens inside print(secN)= text
+// Images live in radio/print/ (sibling to srt/ and tracks/). Files are listed
+// in a manifest index.json; bare tokens don't need extensions — client resolves
+// to the lightest available (webp < png < jpg < gif by typical size at quality).
+// Max-height clamped to current card-body height so images never dwarf the card.
+// ══════════════════════════════════════════════════════════════════
+const PrintImages = {
+  base: null,                  // e.g. https://.../twysted/radio/print/
+  manifest: [],                // [ 'hero.webp', 'meme.png', ... ]
+
+  EXT_ORDER: { webp: 1, avif: 1, png: 2, jpg: 3, jpeg: 3, gif: 4 },
+
+  async init() {
+    if (!Registry.source) return;
+    this.base = Registry.source.signal.replace(/[^/]+$/, 'print/');
+    try {
+      const r = await fetch(this.base + 'index.json', { cache: 'no-cache' });
+      if (!r.ok) return;       // no manifest → no images; tokens render as [img:name] placeholders
+      const data = await r.json();
+      if (Array.isArray(data)) this.manifest = data;
+    } catch (_) { /* silent */ }
+  },
+
+  // Basename → full filename (lightest ext). null if not found.
+  resolve(basename) {
+    if (!basename || !this.manifest.length) return null;
+    const key = basename.toLowerCase();
+    const matches = this.manifest.filter(f => f.replace(/\.[^.]+$/, '').toLowerCase() === key);
+    if (!matches.length) return null;
+    matches.sort((a, b) => {
+      const eA = (a.split('.').pop() || '').toLowerCase();
+      const eB = (b.split('.').pop() || '').toLowerCase();
+      return (this.EXT_ORDER[eA] || 99) - (this.EXT_ORDER[eB] || 99);
+    });
+    return matches[0];
+  }
+};
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Turn "Hello <img>meme</img>, right?" into safe HTML with real img tags where possible.
+function renderPrintText(raw) {
+  const parts = String(raw || '').split(/(<img>[^<]*<\/img>)/g);
+  let html = '';
+  for (const p of parts) {
+    const m = /^<img>([^<]*)<\/img>$/.exec(p);
+    if (m) {
+      const name = m[1].trim();
+      const resolved = PrintImages.resolve(name);
+      if (resolved && PrintImages.base) {
+        html += '<img class="print-img" src="' + escapeHtml(PrintImages.base + resolved) + '" alt="" onerror="this.replaceWith(document.createTextNode(\'[img: ' + escapeHtml(name) + ']\'))">';
+      } else {
+        html += '<em class="print-img-missing">[img: ' + escapeHtml(name) + ']</em>';
+      }
+    } else {
+      html += escapeHtml(p);
+    }
+  }
+  return html;
+}
+
+// Keep the print-image max-height in sync with the live card-body height so images
+// never tower over the card. Updated on load + resize; cheap measurement.
+function syncPrintImgMaxH() {
+  const cardBody = document.querySelector('.card-body');
+  if (!cardBody) return;
+  const h = Math.round(cardBody.getBoundingClientRect().height);
+  if (h > 0) document.documentElement.style.setProperty('--print-img-max-h', h + 'px');
+}
+window.addEventListener('resize', syncPrintImgMaxH);
+if (window.ResizeObserver) {
+  // observe the card body if present; otherwise fall back to setTimeout sync
+  const cb = document.querySelector('.card-body');
+  if (cb) new ResizeObserver(syncPrintImgMaxH).observe(cb);
+}
+setTimeout(syncPrintImgMaxH, 0);
+
 // print overlay — shown centered-upper for N seconds then fades out
 let _printTimer = null;
 function showPrintOverlay(text, durationSec) {
   const ov = $('printOverlay'); const box = $('printBox');
   if (!ov || !box) return;
-  box.textContent = text;
+  // If the text contains <img> tokens we render HTML; otherwise textContent for safety.
+  if (/<img>[^<]*<\/img>/.test(String(text || ''))) {
+    box.innerHTML = renderPrintText(text);
+  } else {
+    box.textContent = text;
+  }
   ov.classList.add('show');
   if (_printTimer) clearTimeout(_printTimer);
   _printTimer = setTimeout(() => ov.classList.remove('show'), Math.max(0.5, durationSec) * 1000);
@@ -3027,6 +3267,8 @@ function applyEmptyCard() {
   if (typeof FieldCycler !== 'undefined') FieldCycler.reset(-1);
   // clear any subtitles
   if (typeof SubtitleRunner !== 'undefined') SubtitleRunner.clearAll();
+  // wipe brand easter-egg overrides
+  if (typeof BrandLock !== 'undefined') BrandLock.restore();
 }
 
 // ── metadata display ──
@@ -3037,6 +3279,8 @@ function applyMeta(idx) {
   if (typeof updateCollapseLabel === 'function') updateCollapseLabel();
   // PLAY becomes usable once a track has been loaded
   btnPlay.disabled = false;
+  // wipe any wsi-line1/wsi-line2 overrides left over from the previous track
+  if (typeof BrandLock !== 'undefined') BrandLock.restore();
 
   // base metadata (timeline events may override later).
   // FieldCycler handles signal/decoder/vibe — ||-tokens cycle; single values localize once.
@@ -3651,6 +3895,12 @@ function updateDbReadout(freq) {
 
   // load track-links.dat from the same tier (non-blocking — dialogs work without it, just with empty links)
   LinksRegistry.init().catch(() => {/* ok, no links */});
+
+  // load print/index.json manifest so <img>name</img> tokens in print() text resolve (non-blocking)
+  PrintImages.init().catch(() => {/* ok, no images */});
+
+  // load codes.dat so the key-unlock panel can resolve user-typed codes
+  CodesRegistry.init().catch(() => {/* ok, no codes */});
 
   clearInterval(dotsTimer);
   hideLoading();
