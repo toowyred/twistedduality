@@ -1745,8 +1745,12 @@ function parseSignalDat(text) {
             const pEq = parts[i].indexOf('=');
             if (pEq > 0) params[parts[i].slice(0, pEq).trim().toLowerCase()] = parts[i].slice(pEq + 1).trim();
           }
-          const dRaw = params.d || '3';
-          const duration = parseFloat(String(dRaw).replace(/sec$/i, '')) || 3;
+          // duration=null signals "use Registry.globals.printDefault at render time"
+          let duration = null;
+          if (params.d != null && params.d !== '') {
+            const n = parseFloat(String(params.d).replace(/sec$/i, ''));
+            if (isFinite(n) && n > 0) duration = n;
+          }
           timeline.push({ time, type: 'print', text: txt, duration });
         } else {
           timeline.push({ time, type: field, value });
@@ -1773,7 +1777,7 @@ const Registry = {
   mode: null,          // 'online' | 'offline'
   source: null,        // SOURCES entry that succeeded
   tracks: [],
-  globals: { cyclerTick: 4.2 },   // populated from signal.dat globals block
+  globals: { cyclerTick: 4.2, printDefault: 5 },   // populated from signal.dat globals block
   currentIdx: -1,
   quality: localStorage.getItem('td-radio-quality') || 'normal',  // 'normal' | 'highfi'
 
@@ -1791,6 +1795,10 @@ const Registry = {
         if (parsed.globals && parsed.globals.cyclerTick) {
           const ct = parseFloat(parsed.globals.cyclerTick);
           if (isFinite(ct) && ct > 0) this.globals.cyclerTick = ct;
+        }
+        if (parsed.globals && parsed.globals.printDefault) {
+          const pd = parseFloat(parsed.globals.printDefault);
+          if (isFinite(pd) && pd > 0) this.globals.printDefault = pd;
         }
         this.source = src;
         this.mode = src.offline ? 'offline' : 'online';
@@ -3205,12 +3213,12 @@ if (window.ResizeObserver) {
 }
 setTimeout(syncPrintImgMaxH, 0);
 
-// print overlay — shown centered-upper for N seconds then fades out
+// print overlay — shown centered-upper for N seconds then fades out.
+// durationSec null/undefined/≤0 → fall back to Registry.globals.printDefault (default 5).
 let _printTimer = null;
 function showPrintOverlay(text, durationSec) {
   const ov = $('printOverlay'); const box = $('printBox');
   if (!ov || !box) return;
-  // If the text contains <img> tokens we render HTML; otherwise textContent for safety.
   if (/<img>[^<]*<\/img>/.test(String(text || ''))) {
     box.innerHTML = renderPrintText(text);
   } else {
@@ -3218,7 +3226,10 @@ function showPrintOverlay(text, durationSec) {
   }
   ov.classList.add('show');
   if (_printTimer) clearTimeout(_printTimer);
-  _printTimer = setTimeout(() => ov.classList.remove('show'), Math.max(0.5, durationSec) * 1000);
+  const dur = (durationSec != null && durationSec > 0)
+    ? durationSec
+    : (Registry.globals && Registry.globals.printDefault) || 5;
+  _printTimer = setTimeout(() => ov.classList.remove('show'), Math.max(0.5, dur) * 1000);
 }
 function hidePrintOverlay() {
   const ov = $('printOverlay');
@@ -3994,7 +4005,36 @@ const LinksRegistry = {
 // Comments start with '#', blank lines ignored.
 // ══════════════════════════════════════════════════════════════════
 const CodesRegistry = {
+  // map: code → { target, notBefore, notAfter, skipSec, printText }
+  // Multiple codes can share the same target — each line is an independent entry.
   map: Object.create(null),
+
+  // Parse "YYYYMMDD,HHMM" as UTC (GMT+0). Returns epoch ms or null.
+  _parseDateParam(date, time) {
+    if (!/^\d{8}$/.test(date) || !/^\d{4}$/.test(time)) return null;
+    const y  = +date.slice(0, 4);
+    const mo = +date.slice(4, 6);
+    const d  = +date.slice(6, 8);
+    const h  = +time.slice(0, 2);
+    const mi = +time.slice(2, 4);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59) return null;
+    return Date.UTC(y, mo - 1, d, h, mi, 0);
+  },
+
+  // Semicolon-split that respects parens — so `print(Hey; there)` stays one param.
+  _splitParams(str) {
+    const out = [];
+    let buf = '', depth = 0;
+    for (let i = 0; i < str.length; i++) {
+      const c = str[i];
+      if (c === '(') depth++;
+      else if (c === ')') depth = Math.max(0, depth - 1);
+      if (c === ';' && depth === 0) { if (buf.trim()) out.push(buf.trim()); buf = ''; }
+      else buf += c;
+    }
+    if (buf.trim()) out.push(buf.trim());
+    return out;
+  },
 
   async init() {
     if (!Registry.source) return;
@@ -4009,13 +4049,40 @@ const CodesRegistry = {
         const eq = trimmed.indexOf('=');
         if (eq <= 0) continue;
         const code = trimmed.slice(0, eq).trim();
-        const target = trimmed.slice(eq + 1).trim();
-        if (code && target) this.map[code] = target;
+        const rest = trimmed.slice(eq + 1).trim();
+        if (!code || !rest) continue;
+        const parts = this._splitParams(rest);
+        const target = parts[0];
+        if (!target) continue;
+        let notBefore = null, notAfter = null, skipSec = null, printText = null;
+        for (let i = 1; i < parts.length; i++) {
+          const p = parts[i];
+          const mT = p.match(/^t\s*([><])\s*(\d{8})\s*,\s*(\d{4})$/);
+          if (mT) {
+            const ts = this._parseDateParam(mT[2], mT[3]);
+            if (ts != null) { if (mT[1] === '>') notBefore = ts; else notAfter = ts; }
+            continue;
+          }
+          const mS = p.match(/^skip\s*\(\s*(?:sec)?\s*(\d+(?:\.\d+)?)\s*\)$/i);
+          if (mS) { skipSec = parseFloat(mS[1]); continue; }
+          const mP = p.match(/^print\s*\(([\s\S]*)\)$/);
+          if (mP) { printText = mP[1].trim(); continue; }
+        }
+        this.map[code] = { target, notBefore, notAfter, skipSec, printText };
       }
     } catch (_) { /* silent — codes are optional */ }
   },
 
-  resolve(code) { return this.map[String(code || '').trim()] || null; },
+  // Returns the full entry if code is known AND currently within its time window.
+  // Expired / not-yet-valid / unknown all return null → UI shakes "huh?".
+  resolve(code) {
+    const entry = this.map[String(code || '').trim()];
+    if (!entry) return null;
+    const now = Date.now();
+    if (entry.notBefore != null && now < entry.notBefore) return null;
+    if (entry.notAfter  != null && now >= entry.notAfter) return null;
+    return entry;
+  },
 
   // Find the track index for "td-audio003" or "td-audio003-normal.mp3" etc.
   _trackIdxForId(trackId) {
@@ -4028,32 +4095,47 @@ const CodesRegistry = {
     });
   },
 
-  async apply(target) {
+  async apply(entry) {
+    // Accept either a bare target string (legacy) or the full entry object.
+    const target    = (typeof entry === 'string') ? entry : entry.target;
+    const skipSec   = (typeof entry === 'object' && entry) ? entry.skipSec   : null;
+    const printText = (typeof entry === 'object' && entry) ? entry.printText : null;
+
+    let ok = false;
     if (target.startsWith('track:')) {
       const id = target.slice(6).trim();
       const idx = this._trackIdxForId(id);
-      if (idx < 0) return false;                 // track not in Registry — let UI show "huh?"
-      await loadTrack(idx, { autoplay: true });
-      return true;
-    }
-    if (target === 'debugMode') {
+      if (idx < 0) return false;
+      const loaded = await loadTrack(idx, { autoplay: true });
+      ok = !!loaded;
+      // skip(secN) — seek into the track immediately after load, and silently catch
+      // up the timeline so metadata overrides apply (prints in skipped range don't fire).
+      if (ok && skipSec != null && engine.mediaEl) {
+        try {
+          engine.mediaEl.currentTime = Math.max(0, skipSec);
+          if (typeof TimelineRunner !== 'undefined') TimelineRunner.catchUpTo(skipSec);
+        } catch (_) {}
+      }
+    } else if (target === 'debugMode') {
       const dbg = document.getElementById('debugPanel');
       if (dbg) dbg.classList.add('open');
-      return true;
-    }
-    if (target.startsWith('lang:')) {
+      ok = true;
+    } else if (target.startsWith('lang:')) {
       const lang = target.slice(5).trim();
-      if (typeof I18N !== 'undefined' && I18N[lang]) { applyLang(lang); return true; }
-      return false;
-    }
-    if (target.startsWith('perf:')) {
+      if (typeof I18N !== 'undefined' && I18N[lang]) { applyLang(lang); ok = true; }
+    } else if (target.startsWith('perf:')) {
       const tier = target.slice(5).trim();
       if (['low','lowest','high'].includes(tier) && typeof applyPerfTier === 'function') {
-        applyPerfTier(tier); return true;
+        applyPerfTier(tier); ok = true;
       }
-      return false;
     }
-    return false;
+
+    // print(...) — greeting message on successful unlock. Duration pulled from
+    // Registry.globals.printDefault (via showPrintOverlay's null-fallback).
+    if (ok && printText && typeof showPrintOverlay === 'function') {
+      showPrintOverlay(printText, null);
+    }
+    return ok;
   }
 };
 
@@ -4085,9 +4167,9 @@ const CodesRegistry = {
   const submit = async () => {
     const code = (input.value || '').trim();
     if (!code) return;
-    const target = CodesRegistry.resolve(code);
-    if (!target) { rejectWithHuh(); return; }
-    const ok = await CodesRegistry.apply(target);
+    const entry = CodesRegistry.resolve(code);            // {target, skipSec, printText, …} or null
+    if (!entry) { rejectWithHuh(); return; }
+    const ok = await CodesRegistry.apply(entry);
     if (!ok) { rejectWithHuh(); return; }
     setExpanded(false);
   };
