@@ -4032,7 +4032,7 @@ const CodesRegistry = {
     if (target.startsWith('track:')) {
       const id = target.slice(6).trim();
       const idx = this._trackIdxForId(id);
-      if (idx < 0) { toast('track not found'); return false; }
+      if (idx < 0) return false;                 // track not in Registry — let UI show "huh?"
       await loadTrack(idx, { autoplay: true });
       return true;
     }
@@ -4071,18 +4071,25 @@ const CodesRegistry = {
     if (next) { input.value = ''; setTimeout(() => input.focus(), 20); }
   };
 
+  // Show "huh?" red-shake inside the input for any failure (wrong code OR
+  // valid code whose target isn't available, e.g. track not in Registry yet).
+  const rejectWithHuh = () => {
+    input.value = 'huh?';
+    input.classList.add('code-input--wrong');
+    setTimeout(() => {
+      input.classList.remove('code-input--wrong');
+      input.value = '';
+    }, 700);
+  };
+
   const submit = async () => {
     const code = (input.value || '').trim();
     if (!code) return;
     const target = CodesRegistry.resolve(code);
-    if (!target) {
-      input.classList.add('code-input--wrong');
-      setTimeout(() => input.classList.remove('code-input--wrong'), 500);
-      return;
-    }
-    setExpanded(false);
+    if (!target) { rejectWithHuh(); return; }
     const ok = await CodesRegistry.apply(target);
-    if (!ok) toast('code target unavailable');
+    if (!ok) { rejectWithHuh(); return; }
+    setExpanded(false);
   };
 
   keyBtn.addEventListener('click', (e) => { e.stopPropagation(); setExpanded(); });
