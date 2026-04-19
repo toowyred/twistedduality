@@ -839,31 +839,29 @@
     .tuner .transport { justify-content: center; }
     #viz { height: calc(100% - 260px); }
     :root {
-      /* ── Mobile preset (baked from iPhone AIR / Safari 26.4 tuning session) ── */
-      /* Values that stay constant across FULL/COLLAPSED tuner states */
+      /* ── Mobile preset (baked from multi-device FULL-state reports) ── */
+      /* Flat across tuner state */
       --brand-right: 4px;
-      --brand-scale: 0.6;
-      --card-scale: 0.8;
+      --brand-scale: 0.55;
+      --card-scale: 0.95;
       --card-font-size: 15px;
       --card-strip-w: 30px;
-      --subtitle-padding-y: 3px;
-      --subtitle-padding-x: 30px;
+      --card-body-max: 60vw;
+      /* FULL-state values (default) — see body.tuner-is-collapsed for COLLAPSED overrides */
+      --card-offset-y: -65px;
+      --brand-bottom: 510px;
+      --subtitle-font-size: 9px;        /* print auto = 12.6px via ×1.4 */
+      --subtitle-padding-y: 4px;
+      --subtitle-padding-x: 20px;
+      --subtitle-width: 95vw;
       --subtitle-gap: 4px;
       --subtitle-extra: 0px;
-      /* State-dependent — these are the FULL-tuner values (default) */
-      --card-offset-y: -56px;
-      --card-body-max: 60vw;
-      --brand-bottom: 462px;
-      --subtitle-font-size: 10px;       /* print auto = 14px via ×1.4 */
-      --subtitle-width: 95vw;
     }
-    /* Tuner COLLAPSED on mobile → more room above, card + subtitle grow, logo drops closer */
+    /* Tuner COLLAPSED on mobile — bump font + drop logo */
     body.tuner-is-collapsed {
-      --card-offset-y: -65px;
-      --card-body-max: 75vw;
-      --brand-bottom: 298px;
-      --subtitle-font-size: 15px;       /* print auto = 21px via ×1.4 */
-      --subtitle-width: 97vw;
+      --brand-bottom: 310px;
+      --subtitle-font-size: 15px;
+      --subtitle-padding-y: 3px;
     }
     .brand { padding: 6px 10px; }
     .brand .title { font-size: 16px; letter-spacing: 4px; }
@@ -873,32 +871,99 @@
     .card-body .v { max-width: 56vw; }
   }
 
-  /* ── Shorter-viewport tier (iPhone 17 Pro / Chrome URL-bar etc, baked ≤720vh) ── */
-  /* Second-pass tuning: card scale bumped, logo smaller+higher, subtitle much more compact in FULL. */
-  @media (max-width: 860px) and (max-height: 720px) {
+  /* ── Short-mobile tier (Chrome URL-bar, Instagram in-app, anything ≤700vh) ── */
+  @media (max-width: 860px) and (max-height: 700px) {
     :root {
-      --card-scale: 0.95;
-      --card-offset-y: -65px;
-      --card-body-max: 60vw;
-      --brand-bottom: 494px;
+      --card-scale: 0.85;
+      --card-offset-y: -77px;
+      --brand-bottom: 485px;
       --brand-scale: 0.5;
-      /* Subtitle — FULL state (tight: small font, minimal padding/gap) */
-      --subtitle-font-size: 9px;        /* print auto = 12.6px via ×1.4 */
+      /* Subtitle goes extra-compact on these tight viewports */
       --subtitle-padding-y: 2px;
       --subtitle-padding-x: 4px;
       --subtitle-width: 90vw;
       --subtitle-gap: 2px;
     }
     body.tuner-is-collapsed {
-      --card-offset-y: -65px;           /* user kept card flat across states on 17Pro */
-      --card-body-max: 60vw;
-      --brand-bottom: 494px;            /* logo stays put on 17Pro */
-      /* Subtitle — COLLAPSED state: roomier padding, slightly wider */
+      --brand-bottom: 300px;
+      --subtitle-font-size: 15px;
       --subtitle-padding-y: 3px;
       --subtitle-padding-x: 30px;
       --subtitle-width: 91vw;
       --subtitle-gap: 4px;
     }
+  }
+
+  /* ── Tiny-mobile tier (iPhone Mini 13, Galaxy A14 etc, ≤390vw × ≤680vh) ── */
+  @media (max-width: 390px) and (max-height: 680px) {
+    :root {
+      --card-scale: 0.7;
+      --card-offset-y: -78px;
+      --brand-bottom: 465px;
+    }
+    body.tuner-is-collapsed {
+      --brand-bottom: 290px;
+    }
+  }
+
+  /* ── Tablet (iPad etc — touch device, between mobile and desktop) ── */
+  /* Uses (pointer: coarse) to avoid catching narrow desktop windows with a mouse. */
+  @media (min-width: 700px) and (max-width: 1199px) and (min-height: 600px) and (pointer: coarse) {
+    :root {
+      --card-scale: 1.15;
+      --card-offset-y: 23px;
+      --card-body-max: 60vw;
+      --brand-scale: 0.85;
+      --brand-bottom: 500px;
+      --subtitle-font-size: 12px;
+      --subtitle-padding-y: 5px;
+      --subtitle-padding-x: 20px;
+      --subtitle-width: 95vw;
+      --subtitle-gap: 4px;
+    }
+    /* user: "DONT LET IT MOVE WHEN TUNER COLLAPSES" on tablet — no overrides to --brand-bottom */
+  }
+
+  /* ── Wide desktop / 4K — scale up the whole look ── */
+  @media (min-width: 1800px) {
+    :root {
+      --card-scale: 1.4;
+      --card-offset-y: 79px;
+      --brand-scale: 1;
+      --brand-bottom: 486px;
+      --subtitle-font-size: 16px;
+      --subtitle-padding-y: 5px;
+      --subtitle-padding-x: 20px;
+      --subtitle-width: 95vw;
+      --subtitle-gap: 4px;
+    }
+  }
+
+  /* ── Landscape mobile — FULL tuner is unusable on short-height landscape phones.
+     Disable the handle (JS also forces-collapse on boot) and shrink everything compact. ── */
+  @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+    :root {
+      --card-scale: 0.6;
+      --card-offset-y: -8px;
+      --brand-bottom: 126px;
+      --brand-scale: 0.65;
+      --subtitle-font-size: 8px;
+      --subtitle-padding-y: 2px;
+      --subtitle-padding-x: 4px;
+      --subtitle-width: 57vw;
+      --subtitle-gap: 0px;
+    }
+    /* neutralise outer collapse-state overrides — keep the compact FULL values even when forced-collapsed */
+    body.tuner-is-collapsed {
+      --brand-bottom: 126px;
+      --subtitle-font-size: 8px;
+      --subtitle-padding-y: 2px;
+      --subtitle-padding-x: 4px;
+      --subtitle-width: 57vw;
+      --subtitle-gap: 0px;
+    }
+    /* hide the tuner expand handle so landscape mobile can't re-open it */
+    .tuner-handle { pointer-events: none; opacity: 0.25; }
   }
   /* mobile: quality row regains its old slim full-width look + RECALIBRATE SIGNAL label */
   @media (max-width: 860px) {
@@ -2156,23 +2221,55 @@ if (tunerHandle) {
 }
 syncTunerBodyClass();
 
-// Mobile waveform preset — baked from iPhone AIR tuning. Applied when viewport is narrow
-// at boot time (does not live-migrate across breakpoint resizes — the debug panel handles
-// per-device overrides once opened).
-(function applyMobilePreset() {
+// Waveform CFG presets — applied at boot based on viewport/orientation.
+// Does not live-migrate across breakpoint resizes; debug panel handles per-device tuning after.
+(function applyDevicePreset() {
   if (typeof CFG === 'undefined') return;
-  if (!window.matchMedia('(max-width: 860px)').matches) return;
-  Object.assign(CFG, {
-    _posX: 5, _posY: 94, _width: 66,
-    isoOffsetX: 7.7, isoOffsetY: 3.3,
-    heightScale: 3.8, terrainLines: 80,
-    lineWidth: 1, pushEvery: 3
-  });
-  // Terrain buffer was sized at class-construct time with the old 113 — resize now.
-  if (typeof terrain !== 'undefined' && terrain.buffer) {
+  const mm = (q) => window.matchMedia(q).matches;
+  const isMobile      = mm('(max-width: 860px)');
+  const isLandscape   = mm('(orientation: landscape) and (max-height: 500px)');
+  const isTinyMobile  = mm('(max-width: 390px) and (max-height: 680px)');
+
+  if (isLandscape) {
+    // Landscape phone — very flat, wide waveform
+    Object.assign(CFG, {
+      _posX: 1, _posY: 100, _width: 90,
+      isoOffsetX: 10, isoOffsetY: 2,
+      heightScale: 2.2, terrainLines: 80,
+      lineWidth: 0.3, pushEvery: 3
+    });
+  } else if (isTinyMobile) {
+    // Small devices (iPhone Mini / Galaxy A14) — lighter waveform for perf headroom
+    Object.assign(CFG, {
+      _posX: 1, _posY: 94, _width: 66,
+      isoOffsetX: 7.7, isoOffsetY: 3.3,
+      heightScale: 2.5, terrainLines: 59,
+      lineWidth: 0.5, pushEvery: 2
+    });
+  } else if (isMobile) {
+    // Standard mobile (Safari/Chrome/Brave/Instagram etc.)
+    Object.assign(CFG, {
+      _posX: 1, _posY: 94, _width: 66,
+      isoOffsetX: 7.7, isoOffsetY: 3.3,
+      heightScale: 3.8, terrainLines: 80,
+      lineWidth: 1, pushEvery: 3
+    });
+  }
+  // Desktop keeps the 113-line class default — handled by the base CFG declaration.
+
+  // Resize terrain buffer to match whatever CFG.terrainLines ended up being.
+  if (typeof terrain !== 'undefined' && terrain.buffer &&
+      terrain.buffer.length !== CFG.terrainLines * CFG.freqSamples) {
     terrain.buffer = new Float32Array(CFG.terrainLines * CFG.freqSamples);
     terrain.beatFlags = new Uint8Array(CFG.terrainLines);
     terrain.head = 0;
+  }
+
+  // Force-collapse the tuner on landscape mobile — FULL mode is unusable at low heights.
+  if (isLandscape && typeof tunerEl !== 'undefined' && tunerEl && !tunerEl.classList.contains('collapsed')) {
+    tunerEl.classList.add('collapsed');
+    if (typeof syncTunerBodyClass === 'function') syncTunerBodyClass();
+    if (typeof syncTunerOffsetVar === 'function') syncTunerOffsetVar();
   }
 })();
 
