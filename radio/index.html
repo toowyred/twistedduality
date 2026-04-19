@@ -186,6 +186,16 @@
   }
   html.no-transparency .top-bar      { background: var(--bg); }
   html.no-transparency .bar-menu     { background: var(--panel); }
+
+  /* ── perf tiers ── auto-applied on low-end devices; URL override: ?perf=low|lowest|high ── */
+  /* perf-low: opaque top-bar + brand plate (drops two expensive backdrop-filter surfaces).
+     The bar-menu (settings dropdown) keeps its glass — it's only visible on user-tap. */
+  html.perf-low .top-bar { background: var(--bg);   backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.perf-low .brand   { background: rgba(0,0,0,0.85); backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  /* perf-lowest: everything above + kill the body-wide grid + vignette layers */
+  html.perf-lowest body::before,
+  html.perf-lowest body::after { display: none; }
   html.no-transparency .card-body    { background: var(--panel); }
   html.no-transparency .tuner        { background: var(--panel); }
   html.no-transparency .tuner .frequency-panel { background: var(--panel-soft); }
@@ -293,6 +303,7 @@
     transition: max-width 0.35s ease, opacity 0.25s ease, padding 0.35s ease, border-width 0.3s ease;
   }
   .track-card.collapsed .card-body {
+    min-width: 0;                    /* release the intrinsic lock so max-width:0 can collapse */
     max-width: 0; opacity: 0;
     padding-left: 0; padding-right: 0;
     border-left-width: 0; border-right-width: 0;
@@ -1733,6 +1744,34 @@ const Registry = {
     return t.files[0] ? base + t.files[0] : null;
   },
 
+  // Turn a raw audio URL into a signed URL via the Worker's /sign endpoint.
+  // Only online tier needs signing; local/cfded URLs pass through unchanged.
+  // Signed URL lasts ~90s — we cache per URL for 70s to avoid re-sign spam on fast SCANs.
+  _signCache: Object.create(null),    // { url: { signedUrl, expiresAt_ms } }
+  async signUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+    // only sign online R2 URLs
+    if (!/^https?:\/\/assets\.afest\.io\/twysted\/radio\//.test(rawUrl)) return rawUrl;
+    const nowMs = Date.now();
+    const cached = this._signCache[rawUrl];
+    if (cached && cached.expiresAt_ms > nowMs + 2000) return cached.signedUrl;
+    try {
+      // derive relative path (drop the "assets.afest.io/twysted/radio/" prefix)
+      const m = /^https?:\/\/assets\.afest\.io\/twysted\/radio\/(.+)$/.exec(rawUrl);
+      if (!m) return rawUrl;
+      const relPath = m[1].split('?')[0];   // strip any pre-existing query
+      const signEndpoint = 'https://assets.afest.io/twysted/radio/sign?path=' + encodeURIComponent(relPath);
+      const res = await fetch(signEndpoint, { cache: 'no-store' });
+      if (!res.ok) return rawUrl;             // worker unreachable → use raw; Worker will serve prank
+      const data = await res.json();
+      if (!data || !data.url) return rawUrl;
+      // cache until ~70s from now (signed URL is valid 90s; keep margin for network)
+      const ttl = (data.expires ? (data.expires * 1000 - nowMs - 20000) : 70000);
+      this._signCache[rawUrl] = { signedUrl: data.url, expiresAt_ms: nowMs + Math.max(10000, ttl) };
+      return data.url;
+    } catch (_) { return rawUrl; }
+  },
+
   pickRandomIdx() {
     if (!this.tracks.length) return -1;
     if (this.tracks.length === 1) return 0;
@@ -2272,6 +2311,92 @@ syncTunerBodyClass();
     if (typeof syncTunerOffsetVar === 'function') syncTunerOffsetVar();
   }
 })();
+
+// ══════════════════════════════════════════════════════════════════
+// PERF TIERS — terrain/visuals scale down on low-end devices.
+// Tiers: default → low → lowest. URL override: ?perf=low|lowest|high.
+//   • Boot heuristic (CPU cores + RAM + UA) picks an initial tier.
+//   • Live FPS watchdog (120-frame window while engine.playing) demotes
+//     one tier if average FPS < 48, or jumps to lowest if < 35 — this
+//     catches thermal throttle / long-session ring-buffer slowdown that
+//     boot-time detection can't see.
+//   • perf-low: drops backdrop-filter on top-bar + brand (expensive surfaces)
+//                + reduces terrain density (Galaxy A14 preset).
+//   • perf-lowest: above + kills body grid/vignette layers entirely.
+// ══════════════════════════════════════════════════════════════════
+const PerfTiers = {
+  LOW: {
+    _posX: 1, _posY: 94, _width: 66,
+    isoOffsetX: 7.7, isoOffsetY: 3.3,
+    heightScale: 3, terrainLines: 50,
+    lineWidth: 0.5, pushEvery: 2,
+    opacityFront: 0.80, opacityBack: 0.10
+  },
+  LOWEST: {
+    _posX: 1, _posY: 94, _width: 66,
+    isoOffsetX: 7.7, isoOffsetY: 3.3,
+    heightScale: 2.5, terrainLines: 35,
+    lineWidth: 0.4, pushEvery: 3,
+    opacityFront: 0.70, opacityBack: 0.08
+  }
+};
+
+function _rebuildTerrainBuffer() {
+  if (typeof terrain === 'undefined' || !terrain.buffer) return;
+  if (terrain.buffer.length === CFG.terrainLines * CFG.freqSamples) return;
+  terrain.buffer = new Float32Array(CFG.terrainLines * CFG.freqSamples);
+  terrain.beatFlags = new Uint8Array(CFG.terrainLines);
+  terrain.head = 0;
+}
+
+function applyPerfTier(tier) {
+  const html = document.documentElement;
+  html.classList.remove('perf-low', 'perf-lowest');
+  if (tier === 'low' || tier === 'lowest') {
+    html.classList.add(tier === 'lowest' ? 'perf-lowest' : 'perf-low');
+    Object.assign(CFG, PerfTiers[tier === 'lowest' ? 'LOWEST' : 'LOW']);
+    _rebuildTerrainBuffer();
+  }
+  // 'high' / 'auto' / anything else → no CSS class; CFG keeps whatever the device preset seeded.
+}
+
+(function initPerfTier() {
+  const params = new URLSearchParams(location.search);
+  const override = params.get('perf');        // 'low' | 'lowest' | 'high' | null
+  if (override === 'low' || override === 'lowest' || override === 'high') {
+    applyPerfTier(override);
+    return;
+  }
+  // Auto-detect at boot. Conservative: only demote, never promote.
+  const cores = navigator.hardwareConcurrency || 4;
+  const ram   = navigator.deviceMemory        || 4;   // Safari: undefined → 4
+  const ua    = navigator.userAgent || '';
+  const isOlderAndroid = /Android\s[4-9]\D/.test(ua);
+  if (cores <= 4 && (ram <= 3 || isOlderAndroid)) {
+    applyPerfTier('low');
+  }
+})();
+
+// Runtime FPS watchdog — invoked from loop() while audio plays.
+const _perfWatch = { frames: 0, t0: 0 };
+function perfWatchTick() {
+  if (typeof engine === 'undefined' || !engine.playing) { _perfWatch.t0 = 0; return; }
+  if (_perfWatch.t0 === 0) { _perfWatch.t0 = performance.now(); _perfWatch.frames = 0; }
+  _perfWatch.frames++;
+  if (_perfWatch.frames >= 120) {
+    const fps = 120_000 / (performance.now() - _perfWatch.t0);
+    const html = document.documentElement;
+    if (fps < 35 && !html.classList.contains('perf-lowest')) {
+      console.warn('[radio] FPS ' + fps.toFixed(1) + ' — demoting to perf-lowest');
+      applyPerfTier('lowest');
+    } else if (fps < 48 && !html.classList.contains('perf-low') && !html.classList.contains('perf-lowest')) {
+      console.warn('[radio] FPS ' + fps.toFixed(1) + ' — demoting to perf-low');
+      applyPerfTier('low');
+    }
+    _perfWatch.frames = 0;
+    _perfWatch.t0 = performance.now();
+  }
+}
 
 function setLoadStatus(key) { loadStatus.textContent = t(key); }
 function hideLoading() { loadingEl.classList.add('hidden'); setTimeout(() => loadingEl.style.display = 'none', 600); }
@@ -2935,12 +3060,13 @@ function applyMediaSession(idx) {
 
 async function reloadCurrent() {
   if (Registry.currentIdx < 0) return;
-  const url = Registry.urlFor(Registry.currentIdx);
-  if (!url) return;
+  const rawUrl = Registry.urlFor(Registry.currentIdx);
+  if (!rawUrl) return;
   const wasPlaying = engine.playing;
   const offset = engine.currentTime;
   StreamRate.fetching(0);
   try {
+    const url = await Registry.signUrl(rawUrl);
     const res = await engine.loadUrl(url, p => StreamRate.fetching(p));
     if (res && res.buffer) {
       const kbps = res.buffer.duration > 0 ? Math.round((res.bytes * 8) / (res.buffer.duration * 1000)) : 0;
@@ -2955,14 +3081,15 @@ async function reloadCurrent() {
 
 async function loadTrack(idx, options) {
   options = options || {};
-  const url = Registry.urlFor(idx);
-  if (!url) { toast(t('no-signal')); StreamRate.bad(); return false; }
+  const rawUrl = Registry.urlFor(idx);
+  if (!rawUrl) { toast(t('no-signal')); StreamRate.bad(); return false; }
   // reveal metadata immediately on user gesture, before the fetch
   // (no need to wait — the user clicked, so they want to see what's loading)
   Registry.currentIdx = idx;
   applyMeta(idx);
   StreamRate.fetching(0);
   try {
+    const url = await Registry.signUrl(rawUrl);
     const res = await engine.loadUrl(url, p => StreamRate.fetching(p));
     // fresh analyzers for new track
     bpmDetector = new BPMDetector();
@@ -3008,8 +3135,9 @@ btnScan.addEventListener('click', async () => {
   let decodeOk = false;
   let loadedBytes = 0, dur = 0;
   try {
-    const url = Registry.urlFor(nextIdx);
-    if (url) {
+    const rawUrl = Registry.urlFor(nextIdx);
+    if (rawUrl) {
+      const url = await Registry.signUrl(rawUrl);
       const res = await engine.loadUrl(url, p => StreamRate.fetching(p));
       if (res && res.buffer) { loadedBytes = res.bytes || 0; dur = res.buffer.duration; decodeOk = true; }
     }
@@ -3024,7 +3152,13 @@ btnScan.addEventListener('click', async () => {
     applyMeta(nextIdx);
     bpmDetector = new BPMDetector();
     keyDetector = new KeyDetector(engine.ctx.sampleRate);
-    engine.crossfadeToTrack(0, 0.4);
+    // Randomize playback start 2–4s in — discourages full-file ripping via SCAN.
+    // Timeline events (signal/decoder/etc. FIELD(secN)=value) in the skipped range are
+    // applied silently via catchUpTo; print() overlays in that range are suppressed.
+    // Short tracks (<8s) skip the offset so we don't clobber the whole thing.
+    const scanOffset = (dur > 8) ? (2 + Math.random() * 2) : 0;
+    engine.crossfadeToTrack(scanOffset, 0.4);
+    if (scanOffset > 0) TimelineRunner.catchUpTo(scanOffset);
     updatePlayBtn();
     const kbps = (dur > 0 && loadedBytes > 0) ? Math.round((loadedBytes * 8) / (dur * 1000)) : 0;
     StreamRate.loaded(kbps);
@@ -3133,6 +3267,8 @@ function loop() {
   if (engine.playing) TimelineRunner.tick(engine.currentTime);
   // render active subtitles (independent of timeline)
   SubtitleRunner.tick(engine.currentTime || 0);
+  // watch FPS while playing — auto-demote perf tier if the device can't keep up
+  perfWatchTick();
 
   updateSignalBars(freq);
   updateDbReadout(freq);
@@ -3793,8 +3929,11 @@ const Settings = {
 
   applyWaves() {
     const mult = this.waves === '50' ? 0.5 : this.waves === '75' ? 0.75 : 1;
-    // Baseline differs by device (mobile preset uses 80 lines) — scale off that.
-    const base = window.matchMedia('(max-width: 860px)').matches ? 80 : 113;
+    // Baseline respects the active perf tier: perf-lowest→35, perf-low→50, mobile→80, desktop→113.
+    const html = document.documentElement;
+    const base = html.classList.contains('perf-lowest') ? 35
+               : html.classList.contains('perf-low')    ? 50
+               : window.matchMedia('(max-width: 860px)').matches ? 80 : 113;
     const newLines = Math.max(20, Math.round(base * mult));
     if (CFG.terrainLines !== newLines) {
       CFG.terrainLines = newLines;
