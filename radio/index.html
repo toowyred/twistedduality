@@ -1898,6 +1898,9 @@ function localizeBrands(text) {
   if (lang === 'ja') {
     text = text.replace(/TWISTED\s+DUALITY/g, '\u53CC\u6975\u306E\u87BA\u65CB');     // 双極の螺旋
     text = text.replace(/RE\/IMAGINED/g, '\u30B5\u30A4\u30B3\u30A6\u30C1\u30AF');      // サイコウチク
+    text = text.replace(/\bMADEON\b/g, '\u30DE\u30C7\u30AA\u30F3');                    // マデオン
+    text = text.replace(/Porter\s+Robinson/g, '\u30DD\u30FC\u30BF\u30FC\u30FB\u30ED\u30D3\u30F3\u30BD\u30F3'); // ポーター・ロビンソン
+    text = text.replace(/\bILLENIUM\b/g, '\u30A4\u30EC\u30CB\u30A2\u30E0');             // イレニアム
   } else if (lang === 'de') {
     text = text.replace(/RE\/IMAGINED/g, 'RE/KONSTRUKT');
     // TWISTED DUALITY intentionally unchanged in DE (user said "others use as-is")
