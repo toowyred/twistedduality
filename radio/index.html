@@ -194,11 +194,18 @@
   html.no-transparency .info-panel   { background: var(--panel); }
   html.no-transparency .toast        { background: var(--panel); }
 
-  /* ── brand (bottom-right corner) ── */
+  /* ── brand (bottom-right corner — sits above the subtitle zone + tuner) ── */
   .brand {
-    position: fixed; bottom: 110px; right: 24px; z-index: 5;
+    position: fixed; bottom: 260px; right: 24px; z-index: 5;
     text-align: right; pointer-events: none;
+    /* translucent glass plate so text stays readable over the noise waveform */
+    padding: 8px 14px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-left: 2px solid var(--accent-dim);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
   }
+  html.no-transparency .brand { background: rgba(0,0,0,0.85); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .brand .title {
     font-size: 22px; letter-spacing: 6px; font-weight: bold;
     color: var(--fg); text-transform: uppercase;
@@ -574,6 +581,67 @@
     .print-overlay .print-box { font-size: 15px; padding: 12px 18px; max-width: 90vw; margin-top: 15vh; }
   }
 
+  /* ── SRT subtitle stack — sits above the tuner, stacks up to 3 cues ── */
+  :root {
+    --subtitle-font-size: 13px;
+    --subtitle-padding-y: 5px;
+    --subtitle-padding-x: 12px;
+    --subtitle-bottom-offset: 128px;   /* tuner(118) + 10 gap; updated in JS when tuner resizes */
+  }
+  .subtitle-stack {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    bottom: var(--subtitle-bottom-offset);
+    width: 80vw;
+    z-index: 140;                       /* below the dialog (400) + tuner z=150? Note: must sit above tuner visually when collapsed, so 140 is fine since stack is ABOVE tuner in space */
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+    pointer-events: none;
+  }
+  .subtitle-line {
+    background: #000;                   /* fully opaque per spec — "No transparency for speed" */
+    color: var(--accent);
+    font-family: Tahoma, Geneva, sans-serif;
+    font-size: var(--subtitle-font-size);
+    line-height: 1.35;
+    padding: var(--subtitle-padding-y) var(--subtitle-padding-x);
+    letter-spacing: 0.5px;
+    text-align: center;
+    box-shadow: 4px 4px 0 var(--accent-dim), 0 6px 20px rgba(0,0,0,0.45);
+    max-width: 100%;
+    animation: subtitle-in 0.15s ease-out;
+  }
+  .subtitle-line.leaving { animation: subtitle-out 0.18s ease-in forwards; }
+  @keyframes subtitle-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes subtitle-out {
+    from { opacity: 1; }
+    to   { opacity: 0; transform: translateY(-4px); }
+  }
+  /* subtitle formatting tags (SRT supports <b>, <i>, <u>, <font color>) */
+  .subtitle-line b, .subtitle-line strong { font-weight: bold; }
+  .subtitle-line i, .subtitle-line em     { font-style: italic; }
+  .subtitle-line u                        { text-decoration: underline; }
+
+  /* debug: size/tune controls for subtitle (activated via ?subdbg=1) */
+  .subtitle-dbg {
+    position: fixed; bottom: 10px; left: 10px; z-index: 500;
+    display: none;
+    background: rgba(0,0,0,0.85); color: var(--fg);
+    padding: 6px 8px;
+    font-family: 'Courier New', monospace; font-size: 10px;
+    letter-spacing: 1px;
+    border-left: 2px solid var(--accent);
+  }
+  .subtitle-dbg.show { display: flex; gap: 4px; align-items: center; }
+  .subtitle-dbg button {
+    background: var(--accent); color: #000; border: none;
+    padding: 3px 8px; cursor: pointer; font: inherit; font-weight: bold;
+  }
+  .subtitle-dbg span { color: var(--accent); min-width: 3em; text-align: center; }
+
   /* ── toast ── */
   .toast {
     position: fixed; top: 54px; left: 50%;
@@ -864,6 +932,14 @@
 <div class="toast" id="toast"></div>
 
 <!-- print overlay (centered, upper-third — fires on timeline 'print' events) -->
+<!-- subtitle stack (SRT) — above tuner, max 3 cues, newest at bottom -->
+<div class="subtitle-stack" id="subtitleStack" aria-hidden="true"></div>
+<!-- debug controls for subtitle size (shown only when ?subdbg=1) -->
+<div class="subtitle-dbg" id="subtitleDbg">
+  SIZE <button id="subSizeDown" type="button">−</button><span id="subSizeVal">13</span><button id="subSizeUp" type="button">+</button>
+  <button id="subDbgToggle" type="button" style="margin-left:8px">DEMO</button>
+</div>
+
 <div class="print-overlay" id="printOverlay" aria-hidden="true">
   <div class="print-box" id="printBox"></div>
 </div>
