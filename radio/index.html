@@ -306,7 +306,7 @@
   /* ── FM tuner control strip ── */
   .tuner {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
-    height: 96px;
+    height: 118px;   /* 96px content + 22px extra for the 18px handle + 4px clearance */
     background: linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.82));
     backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     box-shadow: 0 -12px 40px rgba(0,0,0,0.4);
@@ -1236,11 +1236,61 @@ function applyLang(lang) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// VALUE/PARAMS + CYCLE FIELD HELPERS
+// ══════════════════════════════════════════════════════════════════
+// A cf-signal.dat value may trail with ";-separated" params:
+//   signal=A||B||C; t=2.5; localizeBrands=0,1,1
+// Returns { value: "A||B||C", params: {t:"2.5", localizebrands:"0,1,1"} }
+function splitValueAndParams(raw) {
+  const parts = String(raw || '').split(/\s*;\s*/);
+  const value = parts[0];
+  const params = {};
+  for (let i = 1; i < parts.length; i++) {
+    const eq = parts[i].indexOf('=');
+    if (eq > 0) params[parts[i].slice(0, eq).trim().toLowerCase()] = parts[i].slice(eq + 1).trim();
+  }
+  return { value, params };
+}
+
+// Parse a cycleable field value. Tokens are "||"-separated.
+//   { tokens: [...], tickMs: number|null, localizeFlags: bool[]|null }
+// tickMs=null means "use Registry.globals.cyclerTick". localizeFlags=null → all true.
+function parseCycleField(raw) {
+  const { value, params } = splitValueAndParams(raw);
+  const tokens = value.split('||').map(s => s.trim());
+  let tickMs = null;
+  if (params.t) {
+    const n = parseFloat(params.t);
+    if (isFinite(n) && n > 0) tickMs = n * 1000;
+  }
+  let localizeFlags = null;
+  if ('localizebrands' in params) {
+    localizeFlags = params.localizebrands.split(',').map(s => s.trim() === '1');
+  }
+  return { tokens, tickMs, localizeFlags };
+}
+
+// Apply brand aliases to a single token unless per-token flag says no. Default: true.
+function brandForToken(token, localizeFlags, i) {
+  const allow = (localizeFlags == null) ? true : !!localizeFlags[i];
+  return allow ? localizeBrands(token) : token;
+}
+
+// Flatten a cycling value into " x "-joined display string (used in strip-top cycler).
+function flattenCycleTokens(raw, sep) {
+  const { tokens, localizeFlags } = parseCycleField(raw);
+  return tokens.map((tk, i) => brandForToken(tk, localizeFlags, i)).join(sep || ' x ');
+}
+
+// ══════════════════════════════════════════════════════════════════
 // SIGNAL (metadata) PARSER
 // ══════════════════════════════════════════════════════════════════
 function parseSignalDat(text) {
   const blocks = text.split(/={5,}/).map(b => b.trim()).filter(b => b);
   const tracks = [];
+  // Global config block: any block with no File: entries, no offline_file, and no timeline
+  // events contributes its key=value lines to this globals bag (e.g. cyclerTick=4.2).
+  const globals = {};
   for (const block of blocks) {
     const lines = block.split(/\r?\n/).map(l => l.trim()).filter(l => l);
     const files = [];
@@ -1284,9 +1334,12 @@ function parseSignalDat(text) {
     timeline.sort((a, b) => a.time - b.time);
     if (files.length || meta.offline_file || timeline.length) {
       tracks.push({ files, meta, timeline });
+    } else {
+      // no track content — promote plain key=value lines to globals
+      Object.assign(globals, meta);
     }
   }
-  return tracks;
+  return { tracks, globals };
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1296,6 +1349,7 @@ const Registry = {
   mode: null,          // 'online' | 'offline'
   source: null,        // SOURCES entry that succeeded
   tracks: [],
+  globals: { cyclerTick: 4.2 },   // populated from signal.dat globals block
   currentIdx: -1,
   quality: localStorage.getItem('td-radio-quality') || 'normal',  // 'normal' | 'highfi'
 
@@ -1307,11 +1361,16 @@ const Registry = {
         if (!res.ok) throw new Error(src.id + ' signal ' + res.status);
         const text = await res.text();
         const parsed = parseSignalDat(text);
-        if (!parsed.length) throw new Error(src.id + ' signal empty');
-        this.tracks = parsed;
+        if (!parsed.tracks.length) throw new Error(src.id + ' signal empty');
+        this.tracks = parsed.tracks;
+        // merge globals (known numeric key: cyclerTick). Preserve defaults for missing keys.
+        if (parsed.globals && parsed.globals.cyclerTick) {
+          const ct = parseFloat(parsed.globals.cyclerTick);
+          if (isFinite(ct) && ct > 0) this.globals.cyclerTick = ct;
+        }
         this.source = src;
         this.mode = src.offline ? 'offline' : 'online';
-        console.log('[radio] signal loaded from tier:', src.id, '(' + parsed.length + ' track' + (parsed.length === 1 ? '' : 's') + ')');
+        console.log('[radio] signal loaded from tier:', src.id, '(' + parsed.tracks.length + ' track' + (parsed.tracks.length === 1 ? '' : 's') + ', cyclerTick=' + this.globals.cyclerTick + 's)');
         if (src.offline) toast(t('offline-mode'), 3000);
         return;
       } catch (e) {
@@ -1919,15 +1978,16 @@ const TrackCycler = {
   },
   paint() {
     if (this.idx < 0) { trackNameCycler.textContent = '--'; return; }
-    // liveMeta() returns the timeline-override value if any event has fired;
-    // localizeBrands() swaps TD / RE/IMAGINED to the active lang where applicable
+    // liveMeta() returns the timeline-override value if any event has fired.
+    // Strip-top flattens ||-tokens into " x "-joined string (no cycling at this level),
+    // honoring per-token localizeBrands flags. Composite labels (TRACK:/ORIGIN:) stay English.
     if (this.state === 'origin') {
-      const origin = liveMeta(this.idx, 'origin') || '---';
-      trackNameCycler.textContent = localizeBrands('ORIGIN: ' + origin);
+      const originRaw = liveMeta(this.idx, 'origin') || '---';
+      trackNameCycler.textContent = 'ORIGIN: ' + flattenCycleTokens(originRaw);
     } else {
-      const sig = liveMeta(this.idx, 'signal') || '---';
-      const dec = liveMeta(this.idx, 'decoder') || '---';
-      trackNameCycler.textContent = localizeBrands('TRACK: ' + sig + ' | ' + dec);
+      const sig = flattenCycleTokens(liveMeta(this.idx, 'signal') || '---');
+      const dec = flattenCycleTokens(liveMeta(this.idx, 'decoder') || '---');
+      trackNameCycler.textContent = 'TRACK: ' + sig + ' | ' + dec;
     }
   }
 };
@@ -2093,18 +2153,18 @@ function applyTimelineEvent(ev) {
     showPrintOverlay(ev.text, ev.duration);
     return;
   }
-  // metadata mutation — set override + sync the visible DOM / cycler
+  // metadata mutation — set override + rebuild cycle state + repaint
   LiveState.set(ev.type, ev.value);
-  switch (ev.type) {
-    case 'signal':  $('m-signal').textContent  = ev.value; break;
-    case 'decoder': $('m-decoder').textContent = localizeBrands(ev.value); break;
-    case 'status':  applyStatusValue(ev.value); break;
-    case 'access':  applyAccessValue(ev.value); break;
-    case 'vibe':    applyVibeValue(ev.value); break;
-    // origin isn't rendered in the card — cycler reads via liveMeta()
-    // so no DOM update needed here.
+  if (ev.type === 'signal' || ev.type === 'decoder' || ev.type === 'vibe') {
+    FieldCycler.register(ev.type, ev.value);
+    FieldCycler.paintCard(ev.type);
+  } else if (ev.type === 'status') {
+    applyStatusValue(ev.value);
+  } else if (ev.type === 'access') {
+    applyAccessValue(ev.value);
   }
-  // refresh cycler in case signal/decoder/origin changed
+  // origin isn't rendered in the card — the strip-top cycler reads it via liveMeta()
+  // refresh strip-top cycler so signal/decoder/origin changes flow through
   if (typeof TrackCycler !== 'undefined' && TrackCycler.paint) TrackCycler.paint();
 }
 
@@ -2135,6 +2195,75 @@ function applyVibeValue(v) {
     vibeValue.textContent = raw;
   }
 }
+
+// ══════════════════════════════════════════════════════════════════
+// FIELD CYCLER — rotates track-card cells whose value has ||-separated tokens.
+// Only affects card display. The strip-top (trackNameCycler) flattens ||→" x "
+// without cycling (see TrackCycler.paint). Uses Registry.globals.cyclerTick as
+// default interval; per-field `; t=SEC` in signal.dat overrides.
+// ══════════════════════════════════════════════════════════════════
+const FieldCycler = {
+  states: Object.create(null),   // { key: { tokens, tickMs, localizeFlags, curr, timerId } }
+
+  reset(idx) {
+    // tear down any prior state
+    for (const k of Object.keys(this.states)) {
+      if (this.states[k].timerId) clearInterval(this.states[k].timerId);
+    }
+    this.states = Object.create(null);
+    if (idx < 0) return;
+    // (re)register each cycleable field. liveMeta honors timeline overrides if any.
+    this.register('signal',  liveMeta(idx, 'signal'));
+    this.register('decoder', liveMeta(idx, 'decoder'));
+    this.register('vibe',    liveMeta(idx, 'vibe'));
+  },
+
+  // Set up (or tear down) a cycle state for one key based on its raw value.
+  register(key, raw) {
+    if (this.states[key] && this.states[key].timerId) {
+      clearInterval(this.states[key].timerId);
+      delete this.states[key];
+    }
+    const parsed = parseCycleField(raw);
+    if (parsed.tokens.length < 2) return;   // single value — nothing to cycle
+    const tickMs = parsed.tickMs || (Registry.globals.cyclerTick * 1000);
+    const state = {
+      tokens: parsed.tokens,
+      tickMs,
+      localizeFlags: parsed.localizeFlags,
+      curr: 0,
+      timerId: null,
+    };
+    this.states[key] = state;
+    state.timerId = setInterval(() => {
+      state.curr = (state.curr + 1) % state.tokens.length;
+      this.paintCard(key);
+    }, tickMs);
+  },
+
+  // Current token (brand-aliased if allowed) for a key; non-cycling fields return the full raw.
+  currentDisplay(key, raw) {
+    const state = this.states[key];
+    if (!state) {
+      // no cycle — still apply brand alias on the raw single value
+      return localizeBrands(String(raw == null ? '' : raw));
+    }
+    return brandForToken(state.tokens[state.curr], state.localizeFlags, state.curr);
+  },
+
+  paintCard(key) {
+    const idx = Registry.currentIdx;
+    if (idx < 0) return;
+    const raw = liveMeta(idx, key);
+    if (key === 'signal') {
+      $('m-signal').textContent = this.currentDisplay('signal', raw) || '---';
+    } else if (key === 'decoder') {
+      $('m-decoder').textContent = this.currentDisplay('decoder', raw) || '---';
+    } else if (key === 'vibe') {
+      applyVibeValue(this.currentDisplay('vibe', raw));
+    }
+  }
+};
 
 // print overlay — shown centered-upper for N seconds then fades out
 let _printTimer = null;
@@ -2187,9 +2316,10 @@ function applyEmptyCard() {
   mAccess.classList.remove('tap', 'access-none', 'access-granted');
   $('m-origin').textContent = '';
   vibeBlock.classList.add('hidden');
-  // reset cycler to neutral
+  // reset cyclers to neutral
   TrackCycler.idx = -1; TrackCycler.paint();
   if (TrackCycler.timer) { clearInterval(TrackCycler.timer); TrackCycler.timer = null; }
+  if (typeof FieldCycler !== 'undefined') FieldCycler.reset(-1);
 }
 
 // ── metadata display ──
@@ -2201,13 +2331,15 @@ function applyMeta(idx) {
   // PLAY becomes usable once a track has been loaded
   btnPlay.disabled = false;
 
-  // base metadata (timeline events may override later)
-  $('m-signal').textContent  = Registry.metaFor(idx, 'signal')  || '---';
-  $('m-decoder').textContent = localizeBrands(Registry.metaFor(idx, 'decoder') || '---');
+  // base metadata (timeline events may override later).
+  // FieldCycler handles signal/decoder/vibe — ||-tokens cycle; single values localize once.
+  FieldCycler.reset(idx);
+  FieldCycler.paintCard('signal');
+  FieldCycler.paintCard('decoder');
+  FieldCycler.paintCard('vibe');
   applyStatusValue(Registry.metaFor(idx, 'status') || '---');
   applyAccessValue(Registry.metaFor(idx, 'access') || '---');
   $('m-origin').textContent  = Registry.metaFor(idx, 'origin')  || '---';
-  applyVibeValue(Registry.metaFor(idx, 'vibe'));
 
   // reset per-track runtime state + catch up timeline to current position
   TimelineRunner.reset(idx);
@@ -2252,9 +2384,10 @@ function applyMediaSession(idx) {
     const track  = liveMeta(idx, 'WebAudio_track');
     const artist = liveMeta(idx, 'WebAudio_artist');
     const album  = liveMeta(idx, 'WebAudio_album');
-    const title  = track  || localizeBrands(liveMeta(idx, 'signal')  || '---');
-    const arts   = artist || localizeBrands(liveMeta(idx, 'decoder') || '');
-    const alb    = album  || liveMeta(idx, 'origin') || '';
+    // Flatten any ||-cycling token lists into " x "-joined strings for the lock-screen display.
+    const title  = track  || flattenCycleTokens(liveMeta(idx, 'signal')  || '---');
+    const arts   = artist || flattenCycleTokens(liveMeta(idx, 'decoder') || '');
+    const alb    = album  || flattenCycleTokens(liveMeta(idx, 'origin')  || '');
     navigator.mediaSession.metadata = new MediaMetadata({
       title:  title,
       artist: arts,
