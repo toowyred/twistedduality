@@ -2933,13 +2933,30 @@ function updateDbReadout(freq) {
   // first sync after layout
   setTimeout(syncTunerOffsetVar, 0);
 
-  // Debug controls: ?subdbg=1 shows a top-left panel with sliders for track-card
-  // and subtitle. DEMO button injects 3 stacked fake cues (also auto-shown once
-  // on open so mobile previews have content without clicking).
+  // Hidden gesture: 5 taps on the "RADIO RECEIVER" title within 2s toggles the debug panel.
+  // Works regardless of ?subdbg=1 — lets us open debug on any phone without URL typing.
+  const barTitle = document.getElementById('barTitle');
+  if (barTitle) {
+    let taps = 0, firstTapAt = 0;
+    barTitle.addEventListener('click', () => {
+      const now = Date.now();
+      if (now - firstTapAt > 2000) { taps = 0; firstTapAt = now; }
+      taps++;
+      if (taps >= 5) {
+        taps = 0;
+        const p = document.getElementById('debugPanel');
+        if (p) p.classList.toggle('open');
+      }
+    });
+  }
+
+  // Debug controls: wired unconditionally so the 5-tap gesture can open them on
+  // any device. ?subdbg=1 just auto-opens the panel on first load.
   const panel = $('debugPanel');
+  if (!panel) return;
   const params = new URLSearchParams(location.search);
-  if (!panel || !params.has('subdbg')) return;
-  panel.classList.add('open');
+  const autoOpen = params.has('subdbg');
+  if (autoOpen) panel.classList.add('open');
 
   const closeBtn = $('debugClose');
   if (closeBtn) closeBtn.onclick = () => panel.classList.remove('open');
@@ -2989,8 +3006,8 @@ function updateDbReadout(freq) {
   }
   const btnDemo = $('subDbgToggle');
   if (btnDemo) btnDemo.onclick = injectDemo;
-  // auto-show demos after boot finishes (Registry.init + applyEmptyCard have cleared first)
-  setTimeout(injectDemo, 1500);
+  // auto-show demos only when panel auto-opens (?subdbg=1); otherwise wait for DEMO tap
+  if (autoOpen) setTimeout(injectDemo, 1500);
 
   // ── device / browser / resolution detector ──────────────────────────
   function detectDevice() {
