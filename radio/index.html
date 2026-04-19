@@ -870,6 +870,22 @@
     .card-body { padding: 10px 12px; font-size: 11px; column-gap: 8px; row-gap: 4px; max-width: 72vw; }
     .card-body .v { max-width: 56vw; }
   }
+
+  /* ── Shorter-viewport tier (iPhone 17 Pro / Chrome URL-bar etc, baked ≤720vh) ── */
+  /* Applied on top of the ≤860vw preset above; overrides height-sensitive values only. */
+  @media (max-width: 860px) and (max-height: 720px) {
+    :root {
+      --card-offset-y: -75px;           /* 17Pro Safari/Chrome avg (user kept flat across states) */
+      --card-body-max: 60vw;            /* stays 60 on this device */
+      --brand-bottom: 455px;            /* 17Pro Safari 462 / Chrome 448 avg */
+    }
+    body.tuner-is-collapsed {
+      --card-offset-y: -75px;           /* same as FULL on shorter viewports */
+      --card-body-max: 60vw;            /* no expansion on collapse */
+      --brand-bottom: 455px;            /* logo stays put */
+      --subtitle-padding-y: 12px;       /* 17Pro wants more breathing room when collapsed */
+    }
+  }
   /* mobile: quality row regains its old slim full-width look + RECALIBRATE SIGNAL label */
   @media (max-width: 860px) {
     .tuner .quality {
