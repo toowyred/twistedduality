@@ -837,27 +837,30 @@
     #viz { height: calc(100% - 260px); }
     :root {
       /* ── Mobile preset (baked from iPhone AIR / Safari 26.4 tuning session) ── */
-      --brand-right: 14px;
-      --brand-bottom: 420px;
-      --brand-scale: 1;
+      /* Values that stay constant across FULL/COLLAPSED tuner states */
+      --brand-right: 4px;
+      --brand-scale: 0.6;
       --card-scale: 0.8;
-      --card-offset-y: -56px;
-      --card-body-max: 60vw;
       --card-font-size: 15px;
       --card-strip-w: 30px;
-      /* Subtitle — values when tuner is FULL (more compact layout) */
-      --print-font-size: 15px;          /* subtitle auto = 10px */
       --subtitle-padding-y: 3px;
       --subtitle-padding-x: 30px;
-      --subtitle-width: 95vw;
       --subtitle-gap: 4px;
       --subtitle-extra: 0px;
+      /* State-dependent — these are the FULL-tuner values (default) */
+      --card-offset-y: -56px;
+      --card-body-max: 60vw;
+      --brand-bottom: 462px;
+      --print-font-size: 15px;          /* subtitle auto = 10px */
+      --subtitle-width: 95vw;
     }
-    /* When tuner collapses on mobile, give subtitles more breathing room */
+    /* Tuner COLLAPSED on mobile → more room above, card + subtitle grow, logo drops closer */
     body.tuner-is-collapsed {
+      --card-offset-y: -65px;
+      --card-body-max: 75vw;
+      --brand-bottom: 298px;
       --print-font-size: 20px;          /* subtitle auto = 15px */
-      --subtitle-padding-y: 6px;
-      --subtitle-extra: 6px;
+      --subtitle-width: 97vw;
     }
     .brand { padding: 6px 10px; }
     .brand .title { font-size: 16px; letter-spacing: 4px; }
@@ -3209,20 +3212,27 @@ function updateDbReadout(freq) {
   const copyBtn = $('dbgCopy');
   if (copyBtn) copyBtn.onclick = async () => {
     const d = detectDevice();
-    const settings = [...panel.querySelectorAll('input[type="range"]')].map(s => {
-      const label = s.previousElementSibling ? s.previousElementSibling.textContent.trim() : (s.dataset.css || s.dataset.js);
-      return '  ' + label.padEnd(12) + ' = ' + s.value + (s.dataset.unit ? s.dataset.unit : '');
-    }).join('\n');
+    // Group sliders by their parent <details> section so section headers keep context
+    // (e.g. Subtitle "Width" vs Waveform "Width" no longer read the same in the paste).
+    const sections = [];
+    panel.querySelectorAll('details').forEach(det => {
+      const title = (det.querySelector('summary')?.textContent || '').trim();
+      const rows = [];
+      det.querySelectorAll('input[type="range"]').forEach(s => {
+        const label = s.previousElementSibling ? s.previousElementSibling.textContent.trim() : (s.dataset.css || s.dataset.js);
+        rows.push('  ' + label.padEnd(12) + ' = ' + s.value + (s.dataset.unit || ''));
+      });
+      if (rows.length) sections.push(title + ':\n' + rows.join('\n'));
+    });
     const body =
       '── Radio Debug Report ──\n' +
       infoLines() + '\n' +
       'UA     : ' + d.ua + '\n' +
-      '\nSettings:\n' + settings + '\n';
+      '\n' + sections.join('\n\n') + '\n';
     try {
       await navigator.clipboard.writeText(body);
       showToast('COPIED');
     } catch (_) {
-      // Clipboard API unavailable (Safari sometimes needs user-activation). Fallback: show in a prompt.
       try { window.prompt('Copy this report:', body); showToast('SHOWN'); }
       catch (__) { showToast('COPY FAILED'); }
     }
