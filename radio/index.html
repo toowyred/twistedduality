@@ -3604,6 +3604,7 @@ async function loadTrack(idx, options) {
   // reveal metadata immediately on user gesture, before the fetch
   // (no need to wait — the user clicked, so they want to see what's loading)
   Registry.currentIdx = idx;
+  Registry.rememberPlayed(idx);     // feeds the "last 3 played" rolling window
   applyMeta(idx);
   StreamRate.fetching(0);
   try {
@@ -3688,6 +3689,7 @@ btnScan.addEventListener('click', async () => {
 
   if (decodeOk) {
     Registry.currentIdx = nextIdx;
+    Registry.rememberPlayed(nextIdx);     // rolling "last 3" window for pickRandomIdx
     applyMeta(nextIdx);
     bpmDetector = new BPMDetector();
     keyDetector = new KeyDetector(engine.ctx.sampleRate);
@@ -3695,7 +3697,20 @@ btnScan.addEventListener('click', async () => {
     // Timeline events (signal/decoder/etc. FIELD(secN)=value) in the skipped range are
     // applied silently via catchUpTo; print() overlays in that range are suppressed.
     // Short tracks (<8s) skip the offset so we don't clobber the whole thing.
-    const scanOffset = (dur > 8) ? (2 + Math.random() * 2) : 0;
+    // Pool of candidate entry points for SCAN:
+    //   • the default 2–4s random skip
+    //   • plus any timestamps declared for this track in scan-skip.dat
+    // Pick one, then back off by a random 0–3s lead-in to build "flow" rather than
+    // dropping into the middle of a phrase. Clamp to >= 0.
+    let scanOffset = 0;
+    if (dur > 8) {
+      const pool = [2 + Math.random() * 2];                   // default random window
+      const extras = ScanSkipRegistry.forIdx(nextIdx);
+      for (const s of extras) if (s > 0 && (dur - s) > 2) pool.push(s);
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      const leadIn = Math.random() * 3;                       // 0–3s ramp-in
+      scanOffset = Math.max(0, chosen - leadIn);
+    }
     engine.crossfadeToTrack(scanOffset, 0.4);
     if (scanOffset > 0) TimelineRunner.catchUpTo(scanOffset);
     updatePlayBtn();
@@ -4210,6 +4225,63 @@ const LinksRegistry = {
 // File format:  code=target   (target = track:<id> | debugMode | lang:<xx> | perf:<tier>)
 // Comments start with '#', blank lines ignored.
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// SCAN-SKIP REGISTRY
+// Extra entry timestamps per track for the SCAN button. Added to the random
+// 2–4s pool so each SCAN hit can drop into a curated moment (chorus/drop/etc.).
+// File format (radio/tracks/scan-skip.dat, one or many lines per track):
+//   td-audio003; skip(sec45); skip(sec120)
+//   td-audio008; skip(sec30)
+// The chosen timestamp is then backed off by a random 0–3s lead-in to build "flow".
+// ══════════════════════════════════════════════════════════════════
+const ScanSkipRegistry = {
+  map: Object.create(null),       // trackStem → [ seconds, seconds, ... ]
+
+  async init() {
+    if (!Registry.source) return;
+    const base = Registry.source.audioBase;                // .../tracks/
+    const url  = base + 'scan-skip.dat';
+    try {
+      const r = await fetch(url, { cache: 'no-cache' });
+      if (!r.ok) return;
+      const text = await r.text();
+      this._parse(text);
+    } catch (_) { /* silent — scan-skip is optional */ }
+  },
+
+  _parse(text) {
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      // split on ; — first part is the track stem, rest are skip(secN) tokens
+      const parts = t.split(/\s*;\s*/);
+      const stem = parts[0].trim();
+      if (!stem) continue;
+      const secs = [];
+      for (let i = 1; i < parts.length; i++) {
+        const m = parts[i].match(/^skip\s*\(\s*(?:sec)?\s*(\d+(?:\.\d+)?)\s*\)$/i);
+        if (m) {
+          const n = parseFloat(m[1]);
+          if (isFinite(n) && n >= 0) secs.push(n);
+        }
+      }
+      if (secs.length) {
+        if (!this.map[stem]) this.map[stem] = [];
+        for (const s of secs) this.map[stem].push(s);
+      }
+    }
+  },
+
+  // Return scan-skip timestamps for a track (by index into Registry.tracks).
+  forIdx(idx) {
+    const t = Registry.tracks[idx];
+    if (!t) return [];
+    const firstFile = (t.files && t.files[0]) || t.meta.offline_file || '';
+    const stem = firstFile.replace(/-(?:normal|high|off)\.(?:mp3|wav)$/i, '') || '';
+    return this.map[stem] || [];
+  }
+};
+
 const CodesRegistry = {
   // map: code → { target, notBefore, notAfter, skipSec, printText }
   // Multiple codes can share the same target — each line is an independent entry.
