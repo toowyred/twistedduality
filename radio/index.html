@@ -1229,7 +1229,8 @@
 
     <div class="menu-sep"></div>
     <div class="menu-label" data-i18n="themes">Themes</div>
-    <button data-theme-btn="orange" class="active" data-i18n="theme-orange">Industrial Orange</button>
+    <button data-theme-btn="auto" class="active" data-i18n="theme-auto">Auto</button>
+    <button data-theme-btn="orange" data-i18n="theme-orange">Industrial Orange</button>
     <button data-theme-btn="mono" data-i18n="theme-mono">Monochromatic</button>
 
     <div class="menu-sep"></div>
@@ -1536,6 +1537,7 @@ const I18N = {
     'settings': 'Settings',
     'lang-label': 'Languages',
     'themes': 'Themes',
+    'theme-auto': 'Auto',
     'theme-orange': 'Industrial Orange',
     'theme-mono': 'Monochromatic',
     'transparency': 'Transparency',
@@ -1587,6 +1589,7 @@ const I18N = {
     'settings': 'Einstellungen',
     'lang-label': 'Sprachen',
     'themes': 'Designs',
+    'theme-auto': 'Automatisch',
     'theme-orange': 'Industrial Orange',
     'theme-mono': 'Monochrom',
     'transparency': 'Transparenz',
@@ -1638,6 +1641,7 @@ const I18N = {
     'settings': 'Ajustes',
     'lang-label': 'Idiomas',
     'themes': 'Temas',
+    'theme-auto': 'Auto',
     'theme-orange': 'Industrial Orange',
     'theme-mono': 'Monocrom\u00E1tico',
     'transparency': 'Transparencia',
@@ -1689,6 +1693,7 @@ const I18N = {
     'settings': 'Param\u00E8tres',
     'lang-label': 'Langues',
     'themes': 'Th\u00E8mes',
+    'theme-auto': 'Auto',
     'theme-orange': 'Industrial Orange',
     'theme-mono': 'Monochrome',
     'transparency': 'Transparence',
@@ -1740,6 +1745,7 @@ const I18N = {
     'settings': '設定',
     'lang-label': '言語',
     'themes': '\u30C6\u30FC\u30DE',
+    'theme-auto': '自動',
     'theme-orange': 'Industrial Orange',
     'theme-mono': '\u30E2\u30CE\u30AF\u30ED\u30FC\u30E0',
     'transparency': '透明',
@@ -4867,7 +4873,7 @@ updateCollapseLabel();
 const Settings = {
   transparency: localStorage.getItem('td-radio-transparency') || 'on',
   waves: localStorage.getItem('td-radio-waves') || 'full',
-  theme: localStorage.getItem('td-radio-theme') || 'orange',
+  theme: localStorage.getItem('td-radio-theme') || 'auto',
 
   applyTransparency() {
     document.documentElement.classList.toggle('no-transparency', this.transparency === 'off');
