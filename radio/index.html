@@ -1580,6 +1580,7 @@ const I18N = {
     'scanning': 'SCANNING',
     'no-signal': 'NO SIGNAL FOUND',
     'failed': 'TRANSMISSION FAILED',
+    'corrupted': 'CORRUPTED TRANSMISSION',
   },
   de: {
     'bar-title': 'FUNKEMPFÄNGER',
@@ -1630,6 +1631,7 @@ const I18N = {
     'scanning': 'SUCHLAUF',
     'no-signal': 'KEIN SIGNAL',
     'failed': 'ÜBERTRAGUNG FEHLGESCHLAGEN',
+    'corrupted': 'ÜBERTRAGUNG GESTÖRT',
   },
   es: {
     'bar-title': 'RECEPTOR DE RADIO',
@@ -1680,6 +1682,7 @@ const I18N = {
     'scanning': 'BUSCANDO',
     'no-signal': 'SIN SE\u00D1AL',
     'failed': 'TRANSMISI\u00D3N FALLIDA',
+    'corrupted': 'TRANSMISI\u00D3N CORRUPTA',
   },
   fr: {
     'bar-title': 'R\u00C9CEPTEUR RADIO',
@@ -1730,6 +1733,7 @@ const I18N = {
     'scanning': 'BALAYAGE',
     'no-signal': 'AUCUN SIGNAL',
     'failed': 'TRANSMISSION \u00C9CHOU\u00C9E',
+    'corrupted': 'TRANSMISSION CORROMPUE',
   },
   ja: {
     'bar-title': '受信機',
@@ -1780,6 +1784,7 @@ const I18N = {
     'scanning': '走査中',
     'no-signal': '信号喪失',
     'failed': '伝送失敗',
+    'corrupted': '伝送破損',
   }
 };
 
@@ -2043,18 +2048,26 @@ const Registry = {
     while (this._recentPlayed.length > this.RECENT_LIMIT) this._recentPlayed.shift();
   },
 
+  _playable(i) {
+    // Locked-and-not-unlocked tracks are filtered out of all pool picks.
+    if (typeof LockedRegistry !== 'undefined' && !LockedRegistry.isPlayable(i)) return false;
+    return true;
+  },
+
   pickRandomIdx() {
     if (!this.tracks.length) return -1;
-    if (this.tracks.length === 1) return 0;
-    // Filter out recently-played + the current one
+    const playable = this.tracks.map((_, i) => i).filter(i => this._playable(i));
+    if (!playable.length) return -1;                      // "Corrupted Transmission" handled by caller
+    if (playable.length === 1) return playable[0];
+    // Filter out recently-played + the current one from the playable pool
     const exclude = new Set(this._recentPlayed);
     exclude.add(this.currentIdx);
-    let pool = this.tracks.map((_, i) => i).filter(i => !exclude.has(i));
+    let pool = playable.filter(i => !exclude.has(i));
     if (!pool.length) {
-      // fewer fresh tracks than window allows → reset memory, re-pick excluding only current
+      // pool exhausted → reset memory, re-pick from all playable excluding current only
       this._recentPlayed = [];
-      pool = this.tracks.map((_, i) => i).filter(i => i !== this.currentIdx);
-      if (!pool.length) return this.currentIdx;
+      pool = playable.filter(i => i !== this.currentIdx);
+      if (!pool.length) return playable[0];               // only one playable + it's current → play it anyway
     }
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -3509,10 +3522,14 @@ function applyMeta(idx) {
 // ══════════════════════════════════════════════════════════════════
 function onTrackFullyPlayed() {
   updatePlayBtn();
-  const next = Registry.currentIdx + 1;
-  if (next < 0 || next >= Registry.tracks.length) return;   // last track — natural stop
-  // Low-volume noise bed covers the load-and-start gap between tracks.
-  // loadTrack's crossfade: true branch ramps audio in + noise out simultaneously.
+  // Walk forward until we find a playable (unlocked) track. If nothing's left to play,
+  // surface "Corrupted Transmission" and stop (natural end of playback).
+  let next = Registry.currentIdx + 1;
+  while (next < Registry.tracks.length && !Registry._playable(next)) next++;
+  if (next < 0 || next >= Registry.tracks.length) {
+    if (typeof toast === 'function') toast(t('corrupted'));
+    return;
+  }
   try { engine.startNoise(Registry.globals.interNoiseLevel); } catch (_) {}
   loadTrack(next, { autoplay: true, crossfade: true })
     .then(ok => { if (!ok) try { engine.stopNoise(); } catch (_) {} });
@@ -3647,8 +3664,14 @@ btnScan.addEventListener('click', async () => {
   _scanInFlight = true;
   btnScan.classList.add('active');
 
-  // pick random (not current)
+  // pick random (not current). May return -1 if every track is locked-and-not-unlocked.
   const nextIdx = Registry.pickRandomIdx();
+  if (nextIdx < 0) {
+    toast(t('corrupted'));
+    btnScan.classList.remove('active');
+    _scanInFlight = false;
+    return;
+  }
 
   // cue up static noise
   engine.init();
@@ -3833,6 +3856,12 @@ function loop() {
   SubtitleRunner.tick(engine.currentTime || 0);
   // watch FPS while playing — auto-demote perf tier if the device can't keep up
   perfWatchTick();
+  // glitch sanity: if the currently-playing track is no longer playable (lock just
+  // applied / time gate expired / etc.), jump forward. Rare but prevents leaks.
+  if (engine.playing && typeof LockedRegistry !== 'undefined' && !LockedRegistry.isPlayable(Registry.currentIdx)) {
+    console.warn('[radio] current track became locked mid-play — jumping to next allowed');
+    onTrackFullyPlayed();
+  }
 
   updateSignalBars(freq);
   updateDbReadout(freq);
@@ -4134,6 +4163,9 @@ function updateDbReadout(freq) {
   // load tracks/scan-skip.dat — extra scan-entry timestamps per track
   ScanSkipRegistry.init().catch(() => {/* ok, no skip data */});
 
+  // load locked.dat — tracks to hide from scan pool unless unlocked via a code this session
+  await LockedRegistry.init().catch(() => {/* ok, no locks */});
+
   clearInterval(dotsTimer);
   hideLoading();
 })();
@@ -4225,6 +4257,80 @@ const LinksRegistry = {
 // File format:  code=target   (target = track:<id> | debugMode | lang:<xx> | perf:<tier>)
 // Comments start with '#', blank lines ignored.
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// LOCKED-TRACKS REGISTRY
+// File (R2 meta): radio/locked.dat. One line per locked track.
+//   trackStem; locked=1 [; t>YYYYMMDD,HHMM] [; t<YYYYMMDD,HHMM]
+//   trackStem; locked=0                       ← explicit unlock override
+// locked=1 removes the track from pickRandomIdx + auto-advance. Codes that resolve
+// to a locked track flip it to `sessionUnlocked` until refresh (in-memory only).
+// t>, t< reuse CodesRegistry._parseDateParam (UTC / GMT+0).
+// ══════════════════════════════════════════════════════════════════
+const LockedRegistry = {
+  map: Object.create(null),                   // stem → { locked:bool, notBefore, notAfter }
+  sessionUnlocked: new Set(),                 // stems opened via code this session
+
+  async init() {
+    if (!Registry.source) return;
+    const url = Registry.source.signal.replace(/[^/]+$/, 'locked.dat');
+    try {
+      const r = await fetch(url, { cache: 'no-cache' });
+      if (!r.ok) return;
+      const text = await r.text();
+      this._parse(text);
+    } catch (_) { /* silent — file optional */ }
+  },
+
+  _parse(text) {
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const parts = t.split(/\s*;\s*/);
+      const stem = parts[0].trim();
+      if (!stem) continue;
+      let locked = false, notBefore = null, notAfter = null;
+      for (let i = 1; i < parts.length; i++) {
+        const p = parts[i];
+        if (/^locked\s*=\s*1$/i.test(p))      locked = true;
+        else if (/^locked\s*=\s*0$/i.test(p)) locked = false;
+        else {
+          const m = p.match(/^t\s*([><])\s*(\d{8})\s*,\s*(\d{4})$/);
+          if (m && typeof CodesRegistry !== 'undefined' && CodesRegistry._parseDateParam) {
+            const ts = CodesRegistry._parseDateParam(m[2], m[3]);
+            if (ts != null) { if (m[1] === '>') notBefore = ts; else notAfter = ts; }
+          }
+        }
+      }
+      this.map[stem] = { locked, notBefore, notAfter };
+    }
+  },
+
+  // Is this stem currently locked (respecting time gates) AND not session-unlocked?
+  isLockedNow(stem) {
+    if (!stem) return false;
+    if (this.sessionUnlocked.has(stem)) return false;
+    const entry = this.map[stem];
+    if (!entry || !entry.locked) return false;
+    const now = Date.now();
+    if (entry.notBefore != null && now < entry.notBefore) return false;   // not-yet-locked
+    if (entry.notAfter  != null && now >= entry.notAfter) return false;   // lock expired
+    return true;
+  },
+
+  stemForIdx(idx) {
+    const t = Registry.tracks[idx];
+    if (!t) return '';
+    const f = (t.files && t.files[0]) || t.meta.offline_file || '';
+    return f.replace(/-(?:normal|high|off)\.(?:mp3|wav)$/i, '') || '';
+  },
+
+  isPlayable(idx) { return !this.isLockedNow(this.stemForIdx(idx)); },
+
+  unlockForSession(stem) {
+    if (stem) this.sessionUnlocked.add(stem);
+  }
+};
+
 // ══════════════════════════════════════════════════════════════════
 // SCAN-SKIP REGISTRY
 // Extra entry timestamps per track for the SCAN button. Added to the random
@@ -4384,6 +4490,9 @@ const CodesRegistry = {
       const id = target.slice(6).trim();
       const idx = this._trackIdxForId(id);
       if (idx < 0) return false;
+      // Session-unlock if the target is currently locked — code access bypasses the lock
+      // until the tab refreshes / closes. Nothing persisted.
+      if (typeof LockedRegistry !== 'undefined') LockedRegistry.unlockForSession(id);
       // If we already had a track loaded (playing or paused mid-track), crossfade with the
       // low-noise bed. First-play from empty state just starts cleanly (no crossfade).
       const hadTrack = Registry.currentIdx >= 0;
