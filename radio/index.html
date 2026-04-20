@@ -187,6 +187,29 @@
   html.no-transparency .top-bar      { background: var(--bg); }
   html.no-transparency .bar-menu     { background: var(--panel); }
 
+  /* ── theme: Monochromatic (white accent + rainbow-cycling waveforms) ── */
+  /* Default theme keeps orange accent. Links use --link-color which equals accent
+     by default; only the mono theme overrides to #F0F8FF so anchors stay readable
+     against the white text of the mono palette. */
+  :root { --link-color: var(--accent); }
+  html[data-theme="mono"] {
+    --accent: #F8F8FF;
+    --accent-dim: rgba(248, 248, 255, 0.35);
+    --link-color: #F0F8FF;
+    --grid-rgba: rgba(248, 248, 255, 0.06);   /* grid bg follows accent */
+  }
+  /* anchor + tap-link colors — use --link-color (identical to --accent on orange,
+     swapped to #F0F8FF on mono so the text is distinguishable from the white body text). */
+  a { color: var(--link-color); }
+  .card-body .v.tap.access-check,
+  .card-body .v.tap.access-none,
+  .card-body .v.access-check,
+  .link-list a,
+  .bar-menu button.active,
+  .bar-menu [data-lang-btn].active,
+  .bar-menu [data-theme-btn].active,
+  .bar-menu .mrbtn.active { color: var(--link-color); }
+
   /* ── perf tiers ── auto-applied on low-end devices; URL override: ?perf=low|lowest|high ── */
   /* perf-low: opaque top-bar + brand plate (drops two expensive backdrop-filter surfaces).
      The bar-menu (settings dropdown) keeps its glass — it's only visible on user-tap. */
@@ -1122,6 +1145,11 @@
     <button data-lang-btn="ja">日本語</button>
 
     <div class="menu-sep"></div>
+    <div class="menu-label" data-i18n="themes">Themes</div>
+    <button data-theme-btn="orange" class="active" data-i18n="theme-orange">Industrial Orange</button>
+    <button data-theme-btn="mono" data-i18n="theme-mono">Monochromatic</button>
+
+    <div class="menu-sep"></div>
     <div class="menu-label" data-i18n="transparency">Transparency</div>
     <div class="menu-row">
       <button data-transparency="on"  class="mrbtn active">ON</button>
@@ -1407,6 +1435,9 @@ const I18N = {
     'bar-title': 'RADIO RECEIVER',
     'settings': 'Settings',
     'lang-label': 'Languages',
+    'themes': 'Themes',
+    'theme-orange': 'Industrial Orange',
+    'theme-mono': 'Monochromatic',
     'transparency': 'Transparency',
     'waves': 'Waves',
     'press-scan': '(press SCAN)',
@@ -1454,6 +1485,9 @@ const I18N = {
     'bar-title': 'FUNKEMPFÄNGER',
     'settings': 'Einstellungen',
     'lang-label': 'Sprachen',
+    'themes': 'Designs',
+    'theme-orange': 'Industrial Orange',
+    'theme-mono': 'Monochrom',
     'transparency': 'Transparenz',
     'waves': 'Wellen',
     'press-scan': '(SUCHE dr\u00FCcken)',
@@ -1501,6 +1535,9 @@ const I18N = {
     'bar-title': 'RECEPTOR DE RADIO',
     'settings': 'Ajustes',
     'lang-label': 'Idiomas',
+    'themes': 'Temas',
+    'theme-orange': 'Industrial Orange',
+    'theme-mono': 'Monocrom\u00E1tico',
     'transparency': 'Transparencia',
     'waves': 'Ondas',
     'press-scan': '(oprime BUSCAR)',
@@ -1548,6 +1585,9 @@ const I18N = {
     'bar-title': 'R\u00C9CEPTEUR RADIO',
     'settings': 'Param\u00E8tres',
     'lang-label': 'Langues',
+    'themes': 'Th\u00E8mes',
+    'theme-orange': 'Industrial Orange',
+    'theme-mono': 'Monochrome',
     'transparency': 'Transparence',
     'waves': 'Ondes',
     'press-scan': '(appuie sur BALAYER)',
@@ -1595,6 +1635,9 @@ const I18N = {
     'bar-title': '受信機',
     'settings': '設定',
     'lang-label': '言語',
+    'themes': '\u30C6\u30FC\u30DE',
+    'theme-orange': 'Industrial Orange',
+    'theme-mono': '\u30E2\u30CE\u30AF\u30ED\u30FC\u30E0',
     'transparency': '透明',
     'waves': '波形',
     'press-scan': '(\u8D70\u67FB\u3092\u62BC\u3059)',
@@ -2156,7 +2199,9 @@ class TerrainRenderer {
     }
     this.head = (this.head + 1) % CFG.terrainLines;
   }
-  render(lineColor, fillColor, accentColor) {
+  // rainbow param (optional): { hue: 0..360, hueSpan: degrees of drift from front→back, lightness: 0..100 }
+  // When present, every line uses an HSL color instead of lineColor/accentColor.
+  render(lineColor, fillColor, accentColor, rainbow) {
     const ctx = this.ctx;
     const w = this.w, h = this.h;
     ctx.clearRect(0, 0, w, h);
@@ -2205,7 +2250,15 @@ class TerrainRenderer {
       ctx.fillStyle = fillColor;
       ctx.fill();
 
-      const color = flag === 2 ? accentColor : lineColor;
+      let color;
+      if (rainbow) {
+        // hue drifts from `rainbow.hue` at the newest/front line to `hue + hueSpan` at the back
+        const h = (((rainbow.hue + depth * rainbow.hueSpan) % 360) + 360) % 360;
+        const l = flag === 2 ? Math.min(rainbow.lightness + 18, 95) : rainbow.lightness;
+        color = 'hsl(' + h.toFixed(1) + ', 100%, ' + l + '%)';
+      } else {
+        color = flag === 2 ? accentColor : lineColor;
+      }
       const lineAlpha = flag === 2 ? Math.min(alpha * 2.5, 1) : flag === 1 ? Math.min(alpha * 1.4, 1) : alpha;
       ctx.strokeStyle = color;
       ctx.globalAlpha = lineAlpha;
@@ -4461,6 +4514,7 @@ updateCollapseLabel();
 const Settings = {
   transparency: localStorage.getItem('td-radio-transparency') || 'on',
   waves: localStorage.getItem('td-radio-waves') || 'full',
+  theme: localStorage.getItem('td-radio-theme') || 'orange',
 
   applyTransparency() {
     document.documentElement.classList.toggle('no-transparency', this.transparency === 'off');
@@ -4468,6 +4522,17 @@ const Settings = {
       b.classList.toggle('active', b.dataset.transparency === this.transparency);
     });
     localStorage.setItem('td-radio-transparency', this.transparency);
+  },
+
+  applyTheme() {
+    // `orange` is the default — no data-theme attribute needed. `mono` adds the attribute
+    // to activate the white-accent + rainbow-waveform CSS.
+    if (this.theme === 'mono') document.documentElement.setAttribute('data-theme', 'mono');
+    else                       document.documentElement.removeAttribute('data-theme');
+    document.querySelectorAll('.bar-menu [data-theme-btn]').forEach(b => {
+      b.classList.toggle('active', b.dataset.themeBtn === this.theme);
+    });
+    localStorage.setItem('td-radio-theme', this.theme);
   },
 
   applyWaves() {
@@ -4506,10 +4571,18 @@ document.querySelectorAll('.bar-menu [data-waves]').forEach(b => {
     Settings.applyWaves();
   });
 });
+document.querySelectorAll('.bar-menu [data-theme-btn]').forEach(b => {
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    Settings.theme = b.dataset.themeBtn;
+    Settings.applyTheme();
+  });
+});
 
 // apply saved settings on boot
 Settings.applyTransparency();
 Settings.applyWaves();
+Settings.applyTheme();
 
 </script>
 </body>
