@@ -4883,11 +4883,28 @@ const Settings = {
     localStorage.setItem('td-radio-transparency', this.transparency);
   },
 
+  // Resolve the *effective* theme when setting is 'auto':
+  //   1. URL `?sun=day` or `?sun=night` (passed by radio.afest.io splash)
+  //   2. Local clock fallback — 6am–6:59pm = day → orange, else night → mono
+  // This never asks the user for geolocation and runs entirely synchronously so
+  // the theme is applied BEFORE the terrain starts rendering.
+  _resolveAutoTheme() {
+    try {
+      const p = new URLSearchParams(location.search);
+      const sun = (p.get('sun') || '').toLowerCase();
+      if (sun === 'night') return 'mono';
+      if (sun === 'day')   return 'orange';
+    } catch (_) {}
+    const h = new Date().getHours();
+    return (h >= 6 && h < 19) ? 'orange' : 'mono';
+  },
+
   applyTheme() {
-    // `orange` is the default — no data-theme attribute needed. `mono` adds the attribute
-    // to activate the white-accent + rainbow-waveform CSS.
-    if (this.theme === 'mono') document.documentElement.setAttribute('data-theme', 'mono');
+    const effective = (this.theme === 'auto') ? this._resolveAutoTheme() : this.theme;
+    if (effective === 'mono') document.documentElement.setAttribute('data-theme', 'mono');
     else                       document.documentElement.removeAttribute('data-theme');
+    // Button state reflects the CHOSEN setting (auto / orange / mono), not the resolved one —
+    // so "Auto" stays highlighted even while the player is currently painting orange/mono.
     document.querySelectorAll('.bar-menu [data-theme-btn]').forEach(b => {
       b.classList.toggle('active', b.dataset.themeBtn === this.theme);
     });
