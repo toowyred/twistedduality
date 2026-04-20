@@ -2263,6 +2263,11 @@ class AudioEngine {
     // pause the element before swapping src (iOS quirk: playing element
     // getting src replaced can throw / glitch)
     try { this.mediaEl.pause(); } catch (_) {}
+    // Hard-reset the element before the new blob. Without this, an element that
+    // just reached natural end (ended=true, currentTime===duration) can swallow
+    // the new src — loadedmetadata never refires and duration stays stuck on the
+    // previous track, leaving the UI frozen until the user seeks.
+    try { this.mediaEl.removeAttribute('src'); this.mediaEl.load(); } catch (_) {}
     // revoke any previous blob URL first
     if (this.blobUrl) { try { URL.revokeObjectURL(this.blobUrl); } catch (_) {} this.blobUrl = null; }
     this.blobUrl = URL.createObjectURL(blob);
@@ -2270,10 +2275,19 @@ class AudioEngine {
 
     // wait for metadata (duration becomes available). If the load races
     // (superseded), the next loadUrl will replace src and reject this.
+    // Watchdog: if loadedmetadata doesn't fire within 4s, poke the element with
+    // a second load() — a defence in depth for the same post-ended quirk above.
     await new Promise((resolve, reject) => {
+      let kicked = false;
+      const kick = setTimeout(() => {
+        if (kicked) return;
+        kicked = true;
+        try { this.mediaEl.load(); } catch (_) {}
+      }, 4000);
       const onMeta = () => { cleanup(); resolve(); };
       const onErr  = () => { cleanup(); reject(new Error('audio load error')); };
       const cleanup = () => {
+        clearTimeout(kick);
         this.mediaEl.removeEventListener('loadedmetadata', onMeta);
         this.mediaEl.removeEventListener('error', onErr);
       };
