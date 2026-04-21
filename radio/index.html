@@ -434,6 +434,74 @@
     to   { filter: hue-rotate(360deg); }
   }
 
+  /* HI-FI success glow — rainbow pulse that stays on while HI-FI is the active tier.
+     Re-uses the same mechanic as the SCAN first-run pulse but always hue-cycles. */
+  .tuner .tbtn.qbtn.hifi-glow {
+    animation: hifi-glow-pulse 1.8s ease-in-out infinite,
+               hifi-glow-hue   4.8s linear infinite;
+  }
+  @keyframes hifi-glow-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(0, 100%, 65%); }
+    50%      { box-shadow: 0 0 14px 3px hsl(0, 100%, 65%); }
+  }
+  @keyframes hifi-glow-hue {
+    from { filter: hue-rotate(0deg);   }
+    to   { filter: hue-rotate(360deg); }
+  }
+
+  /* HI-FI slide-up popup — appears above the HI-FI button when 2+ flavours exist */
+  .tuner .hifi-wrap {
+    position: relative;
+    display: flex; align-items: stretch; justify-content: stretch;
+    min-width: 0;
+  }
+  .tuner .hifi-wrap > .tbtn.qbtn { flex: 1 1 auto; width: 100%; }
+  .tuner .hifi-options {
+    position: absolute; bottom: calc(100% + 6px); right: 0;
+    display: none; flex-direction: column; gap: 2px;
+    padding: 6px; min-width: 96px;
+    background: rgba(0, 0, 0, 0.88);
+    border: 1px solid var(--accent);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6), 4px 4px 0 var(--accent-dim);
+    z-index: 50;
+    transform: translateY(8px); opacity: 0;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    pointer-events: none;
+  }
+  .tuner .hifi-options.open {
+    display: flex;
+    transform: translateY(0); opacity: 1;
+    pointer-events: auto;
+  }
+  .tuner .hifi-options::before, .tuner .hifi-options::after {
+    content: ''; position: absolute; width: 8px; height: 8px;
+    border: 1.5px solid var(--accent);
+  }
+  .tuner .hifi-options::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .tuner .hifi-options::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+  .tuner .hifi-options .hifi-opt {
+    background: transparent; color: var(--fg);
+    border: 1px solid transparent;
+    font: inherit; font-size: 12px; letter-spacing: 1px;
+    padding: 6px 10px; cursor: pointer; text-align: center;
+    font-family: 'Courier New', monospace;
+  }
+  .tuner .hifi-options .hifi-opt:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
+  .tuner .hifi-options .hifi-opt.active { color: var(--accent); border-color: var(--accent); }
+  .tuner .hifi-options .hifi-opt[disabled] { color: var(--dim); cursor: not-allowed; text-decoration: line-through; }
+
+  /* Tuning bar — start= locked intro region (greyed, not clickable) */
+  .tuner .tuning-lock {
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%);
+    height: 10px; pointer-events: none;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(80,80,80,0.5) 0 4px,
+      rgba(40,40,40,0.5) 4px 8px);
+    display: none;
+  }
+
   /* left: frequency display + scan */
   .tuner .frequency-panel {
     display: grid; grid-template-rows: 1fr auto; gap: 6px;
@@ -1534,6 +1602,7 @@
     </div>
     <div class="tuning-bar" id="tuningBar">
       <div class="tuning-ticks" id="tuningTicks"></div>
+      <div class="tuning-lock"  id="tuningLock"></div>
       <div class="tuning-prog" id="tuningProg"></div>
       <div class="tuning-needle" id="tuningNeedle"></div>
     </div>
@@ -1556,7 +1625,14 @@
   <div class="quality">
     <div class="quality-label" data-i18n="recalibrate">RECALIBRATE SIGNAL</div>
     <button class="tbtn qbtn active" data-quality="normal" id="qbtnNormal" data-i18n="q-normal" title="Recalibrate signal to NORMAL">NORMAL</button>
-    <button class="tbtn qbtn"        data-quality="highfi" id="qbtnHighfi" data-i18n="q-highfi" title="Recalibrate signal to HI-FI">HI-FI</button>
+    <div class="hifi-wrap">
+      <button class="tbtn qbtn" data-quality="highfi" id="qbtnHighfi" data-i18n="q-highfi" title="Recalibrate signal to HI-FI">HI-FI</button>
+      <!-- slide-up popup: appears when the track has 2+ hi-fi flavours available -->
+      <div class="hifi-options" id="hifiOptions" role="menu" aria-hidden="true">
+        <button class="hifi-opt" data-kind="wav"     id="hifiOptWav">WAV</button>
+        <button class="hifi-opt" data-kind="mp3-320" id="hifiOptMp3">320 KB/S</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1945,6 +2021,39 @@ function flattenCycleTokens(raw, sep) {
 // ══════════════════════════════════════════════════════════════════
 // SIGNAL (metadata) PARSER
 // ══════════════════════════════════════════════════════════════════
+// Timeline keys and start= values may use either unit:
+//   (sec264)      → 264 seconds
+//   (sec264.5)    → 264.5 seconds
+//   (min4:24)     → 4*60 + 24 = 264 seconds
+//   (min4)        → 4*60 = 240 seconds
+// Returns NaN if it can't parse — caller filters.
+function parseTimeToken(unit, raw) {
+  if (unit === 'sec') {
+    const n = parseFloat(raw);
+    return isFinite(n) ? n : NaN;
+  }
+  if (unit === 'min') {
+    const parts = String(raw).split(':');
+    if (parts.length === 2) {
+      const mm = parseFloat(parts[0]), ss = parseFloat(parts[1]);
+      if (isFinite(mm) && isFinite(ss)) return mm * 60 + ss;
+    } else {
+      const n = parseFloat(raw);
+      if (isFinite(n)) return n * 60;
+    }
+  }
+  return NaN;
+}
+// Parse a start= value. Accepts "(sec10)", "(min4:24)", or a bare number (seconds).
+function parseStartValue(raw) {
+  if (raw == null) return NaN;
+  const s = String(raw).trim();
+  const m = /^\(?(sec|min)([0-9:\.]+)\)?$/i.exec(s);
+  if (m) return parseTimeToken(m[1].toLowerCase(), m[2]);
+  const n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
+
 function parseSignalDat(text) {
   const blocks = text.split(/={5,}/).map(b => b.trim()).filter(b => b);
   const tracks = [];
@@ -1967,11 +2076,12 @@ function parseSignalDat(text) {
       if (eq <= 0) continue;
       const key = line.slice(0, eq).trim();
       const value = line.slice(eq + 1).trim();
-      // timed key?  e.g. signal(sec96) or print(sec103)
-      const m = key.match(/^([a-zA-Z_][\w-]*)\(sec(\d+(?:\.\d+)?)\)$/);
+      // timed key?  e.g. signal(sec96) / print(sec103) / print(min4:24)
+      const m = key.match(/^([a-zA-Z_][\w-]*)\((sec|min)([0-9:\.]+)\)$/i);
       if (m) {
         const field = m[1].toLowerCase();
-        const time = parseFloat(m[2]);
+        const time = parseTimeToken(m[2].toLowerCase(), m[3]);
+        if (!isFinite(time)) continue;
         if (field === 'print') {
           // value format:  "text" or "text; d=3" / "text; d=3sec"
           const parts = value.split(/\s*;\s*/);
@@ -1996,6 +2106,12 @@ function parseSignalDat(text) {
       }
     }
     timeline.sort((a, b) => a.time - b.time);
+    // Resolve start= into a numeric startSec (if present + valid).
+    // Accepted forms:  start=(sec10)  start=(min0:10)  start=10
+    if (meta.start != null) {
+      const sv = parseStartValue(meta.start);
+      if (isFinite(sv) && sv > 0) meta.startSec = sv;
+    }
     if (files.length || meta.offline_file || timeline.length) {
       tracks.push({ files, meta, timeline });
     } else {
@@ -2021,6 +2137,10 @@ const Registry = {
   },
   currentIdx: -1,
   quality: localStorage.getItem('td-radio-quality') || 'normal',  // 'normal' | 'highfi'
+  // Which "flavour" of HI-FI the user picked last. Chosen via the HI-FI slide-up popup.
+  //   'wav'     → match *.wav      (lossless)
+  //   'mp3-320' → match *-high.mp3 (320 kbps mp3)
+  hifiKind: localStorage.getItem('td-radio-hifi-kind') || 'wav',
 
   async init() {
     setLoadStatus('contacting');
@@ -2082,11 +2202,33 @@ const Registry = {
       const f = t.meta.offline_file;
       return f ? base + f : null;
     }
-    // online: pick by quality (WAV for hi-fi, MP3 for normal)
-    const wantWav = this.quality === 'highfi';
-    const match = t.files.find(f => wantWav ? /\.wav$/i.test(f) : /\.mp3$/i.test(f));
-    if (match) return base + match;
+    // online: pick by quality, with graceful fallback so one missing file never 404s.
+    //   HI-FI + kind='wav'     → *.wav          → any mp3 (prefer -high) → first file
+    //   HI-FI + kind='mp3-320' → *-high.mp3     → *.wav                  → first mp3 → first file
+    //   NORMAL                 → *-normal.mp3   → any mp3 that isn't -high.mp3 → first file
+    const isHigh = f => /-high\.mp3$/i.test(f);
+    const isWav  = f => /\.wav$/i.test(f);
+    const isMp3  = f => /\.mp3$/i.test(f);
+    if (this.quality === 'highfi') {
+      const kind = this.hifiKind === 'mp3-320' ? 'mp3-320' : 'wav';
+      let match;
+      if (kind === 'wav') match = t.files.find(isWav) || t.files.find(isHigh);
+      else                match = t.files.find(isHigh) || t.files.find(isWav);
+      if (match) return base + match;
+    } else {
+      const match = t.files.find(f => /-normal\.mp3$/i.test(f))
+                 || t.files.find(f => isMp3(f) && !isHigh(f));
+      if (match) return base + match;
+    }
     return t.files[0] ? base + t.files[0] : null;
+  },
+
+  // Per-track start offset (seconds). 0 if no start= was set.
+  // Used by loadTrack/seek/tuning-bar/godmode to enforce a "protected intro" region.
+  startFor(idx) {
+    const t = this.tracks[idx];
+    const s = t && t.meta && t.meta.startSec;
+    return (typeof s === 'number' && isFinite(s) && s > 0) ? s : 0;
   },
 
   // Turn a raw audio URL into a signed URL via the Worker's /sign endpoint.
@@ -2334,7 +2476,11 @@ class AudioEngine {
 
   async seek(pct) {
     if (!this.mediaEl || !this.mediaEl.duration) return;
-    try { this.mediaEl.currentTime = this.mediaEl.duration * Math.max(0, Math.min(1, pct)); } catch (_) {}
+    let t = this.mediaEl.duration * Math.max(0, Math.min(1, pct));
+    // Honour start= protection: refuse to seek into the locked intro region.
+    const start = (typeof Registry !== 'undefined' && Registry.startFor) ? Registry.startFor(Registry.currentIdx) : 0;
+    if (start > 0 && t < start) t = start;
+    try { this.mediaEl.currentTime = t; } catch (_) {}
   }
 
   // crossfade: noise already running — fade it out while bringing track in
@@ -2637,6 +2783,8 @@ let keyDetector = null;
 const $ = id => document.getElementById(id);
 const btnPlay = $('btnPlay'), btnScan = $('btnScan');
 const tuningBar = $('tuningBar'), tuningProg = $('tuningProg'), tuningNeedle = $('tuningNeedle');
+const tuningLock = $('tuningLock');
+const hifiOptions = $('hifiOptions'), hifiOptWav = $('hifiOptWav'), hifiOptMp3 = $('hifiOptMp3');
 const trackNameCycler = $('trackNameCycler'), trackTime = $('trackTime');
 const freqNum = $('freqNum'), freqUnit = $('freqUnit'), dbReadout = $('dbReadout');
 const bpmVal = $('bpmVal'), keyVal = $('keyVal');
@@ -3024,6 +3172,10 @@ tuningBar.addEventListener('click', e => {
   if (!engine.buffer) return;
   const rect = tuningBar.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  // start= locked region — clicks here are ignored entirely (no "jump to start" auto-pull)
+  const dur = engine.duration;
+  const startSec = Registry.startFor ? Registry.startFor(Registry.currentIdx) : 0;
+  if (dur > 0 && startSec > 0 && (pct * dur) < startSec) return;
   engine.seek(pct);
   // re-apply/skip timeline events for the new position (no replay of old prints)
   if (Registry.currentIdx >= 0) {
@@ -3068,24 +3220,100 @@ btnPlay.addEventListener('click', async () => {
   updatePlayBtn();
 });
 
-// ── quality toggle ──
+// ── quality toggle (NORMAL / HI-FI with flavour sub-menu) ──
+// HI-FI can serve either lossless WAV or a 320 kbps MP3 (-high.mp3). The user picks
+// the flavour via a slide-up popup above the HI-FI button; the button label stays
+// "HI-FI" regardless. While HI-FI is active, the button rainbow-glows.
 function setQuality(q) {
   if (q !== 'normal' && q !== 'highfi') q = 'normal';
   Registry.quality = q;
   localStorage.setItem('td-radio-quality', q);
   qbtnNormal.classList.toggle('active', q === 'normal');
   qbtnHighfi.classList.toggle('active', q === 'highfi');
+  // Rainbow glow only while HI-FI is the live tier.
+  qbtnHighfi.classList.toggle('hifi-glow', q === 'highfi');
 }
+function setHifiKind(kind) {
+  if (kind !== 'wav' && kind !== 'mp3-320') kind = 'wav';
+  Registry.hifiKind = kind;
+  localStorage.setItem('td-radio-hifi-kind', kind);
+  hifiOptWav.classList.toggle('active', kind === 'wav');
+  hifiOptMp3.classList.toggle('active', kind === 'mp3-320');
+}
+function closeHifiMenu() {
+  hifiOptions.classList.remove('open');
+  hifiOptions.setAttribute('aria-hidden', 'true');
+}
+function openHifiMenu() {
+  hifiOptions.classList.add('open');
+  hifiOptions.setAttribute('aria-hidden', 'false');
+}
+// Enable/disable individual flavour rows based on what files this track ships.
+function refreshHifiMenuAvailability() {
+  const t = Registry.tracks[Registry.currentIdx];
+  const files = (t && t.files) || [];
+  const hasWav = files.some(f => /\.wav$/i.test(f));
+  const hasMp3 = files.some(f => /-high\.mp3$/i.test(f));
+  hifiOptWav.disabled = !hasWav;
+  hifiOptMp3.disabled = !hasMp3;
+  return { hasWav, hasMp3 };
+}
+
 qbtnNormal.addEventListener('click', async () => {
+  closeHifiMenu();
   if (Registry.quality === 'normal') return;
   setQuality('normal');
   if (Registry.currentIdx >= 0) await reloadCurrent();
 });
-qbtnHighfi.addEventListener('click', async () => {
-  if (Registry.quality === 'highfi') return;
-  setQuality('highfi');
-  if (Registry.currentIdx >= 0) await reloadCurrent();
+
+qbtnHighfi.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  if (qbtnHighfi.disabled) return;
+  const { hasWav, hasMp3 } = refreshHifiMenuAvailability();
+  // 0 flavours (shouldn't happen — button would be disabled) → bail
+  if (!hasWav && !hasMp3) return;
+  // Exactly 1 flavour → switch directly, no popup noise.
+  if (hasWav && !hasMp3) {
+    closeHifiMenu();
+    setHifiKind('wav');
+    if (Registry.quality !== 'highfi') { setQuality('highfi'); if (Registry.currentIdx >= 0) await reloadCurrent(); }
+    return;
+  }
+  if (!hasWav && hasMp3) {
+    closeHifiMenu();
+    setHifiKind('mp3-320');
+    if (Registry.quality !== 'highfi') { setQuality('highfi'); if (Registry.currentIdx >= 0) await reloadCurrent(); }
+    return;
+  }
+  // 2 flavours → toggle the slide-up
+  if (hifiOptions.classList.contains('open')) closeHifiMenu();
+  else openHifiMenu();
 });
+
+async function pickHifiKind(kind) {
+  closeHifiMenu();
+  const { hasWav, hasMp3 } = refreshHifiMenuAvailability();
+  if (kind === 'wav' && !hasWav) kind = 'mp3-320';
+  if (kind === 'mp3-320' && !hasMp3) kind = 'wav';
+  const kindChanged = Registry.hifiKind !== kind;
+  setHifiKind(kind);
+  if (Registry.quality !== 'highfi') {
+    setQuality('highfi');
+    if (Registry.currentIdx >= 0) await reloadCurrent();
+  } else if (kindChanged && Registry.currentIdx >= 0) {
+    await reloadCurrent();
+  }
+}
+hifiOptWav.addEventListener('click', (e) => { e.stopPropagation(); if (!hifiOptWav.disabled) pickHifiKind('wav'); });
+hifiOptMp3.addEventListener('click', (e) => { e.stopPropagation(); if (!hifiOptMp3.disabled) pickHifiKind('mp3-320'); });
+// click-outside closes the popup
+document.addEventListener('click', (e) => {
+  if (!hifiOptions.classList.contains('open')) return;
+  if (hifiOptions.contains(e.target) || qbtnHighfi.contains(e.target)) return;
+  closeHifiMenu();
+});
+
+setHifiKind(Registry.hifiKind);
 setQuality(Registry.quality);
 
 // ══════════════════════════════════════════════════════════════════
@@ -3552,12 +3780,24 @@ function updateQualityAvailability() {
     qbtnHighfi.disabled = true;  qbtnHighfi.title = 'Emergency fallback — single quality only';
     return;
   }
-  const hasNormal = !!(t && t.files && t.files.some(f => /\.mp3$/i.test(f)));
-  const hasHighfi = !!(t && t.files && t.files.some(f => /\.wav$/i.test(f)));
+  const files = (t && t.files) || [];
+  // "normal" = any mp3 that ISN'T our 320-kbps hi-fi mp3 variant
+  const hasNormal  = files.some(f => /\.mp3$/i.test(f) && !/-high\.mp3$/i.test(f));
+  const hasHifiWav = files.some(f => /\.wav$/i.test(f));
+  const hasHifiMp3 = files.some(f => /-high\.mp3$/i.test(f));
+  const hasHighfi  = hasHifiWav || hasHifiMp3;
   qbtnNormal.disabled = !hasNormal;
   qbtnNormal.title = hasNormal ? 'Recalibrate signal to NORMAL' : 'No NORMAL file available';
   qbtnHighfi.disabled = !hasHighfi;
   qbtnHighfi.title = hasHighfi ? 'Recalibrate signal to HI-FI' : 'No HI-FI file for this track';
+  // If the user previously picked a kind that isn't available for THIS track, fall
+  // back silently — urlFor() has its own fallback, but keep the menu state truthful.
+  if (Registry.quality === 'highfi') {
+    if (Registry.hifiKind === 'wav' && !hasHifiWav && hasHifiMp3) setHifiKind('mp3-320');
+    else if (Registry.hifiKind === 'mp3-320' && !hasHifiMp3 && hasHifiWav) setHifiKind('wav');
+  }
+  // Keep the popup rows in sync even if it's closed (it might be opened next click).
+  if (typeof refreshHifiMenuAvailability === 'function') refreshHifiMenuAvailability();
 }
 
 // ── empty state: no track yet → hide all rows except Signal, show "(press SCAN)" ──
@@ -3675,7 +3915,11 @@ function applyMediaSession(idx) {
     });
     try {
       navigator.mediaSession.setActionHandler('seekto', (e) => {
-        if (engine.duration > 0 && e.seekTime != null) engine.seek(e.seekTime / engine.duration);
+        if (engine.duration > 0 && e.seekTime != null) {
+          const startSec = Registry.startFor(Registry.currentIdx);
+          const tgt = Math.max(startSec, e.seekTime);
+          engine.seek(tgt / engine.duration);
+        }
       });
     } catch (_) { /* older browsers: ignore */ }
   } catch (_) { /* ignore — best-effort */ }
@@ -3706,7 +3950,11 @@ async function reloadCurrent() {
       const kbps = res.buffer.duration > 0 ? Math.round((res.bytes * 8) / (res.buffer.duration * 1000)) : 0;
       StreamRate.loaded(kbps);
     }
-    if (wasPlaying) engine._startAt(Math.min(offset, engine.duration - 0.1), 0);
+    // preserve previous offset on reload, but never backtrack into the locked intro
+    const startSec = Registry.startFor(Registry.currentIdx);
+    const resumeAt = Math.max(startSec, Math.min(offset, engine.duration - 0.1));
+    if (wasPlaying) engine._startAt(resumeAt, 0);
+    else if (startSec > 0 && offset < startSec) { try { engine.mediaEl.currentTime = startSec; } catch (_) {} }
     updatePlayBtn();
     // rebuild LiveState + timeline cursor for the current offset (no print replay)
     TimelineRunner.reset(Registry.currentIdx);
@@ -3734,15 +3982,25 @@ async function loadTrack(idx, options) {
     // fresh analyzers for new track
     bpmDetector = new BPMDetector();
     keyDetector = new KeyDetector(engine.ctx ? engine.ctx.sampleRate : 44100);
+    // start= honoured on every load — track begins at the protected offset, never 0.
+    const startSec = Registry.startFor(idx);
     if (options.autoplay) {
       if (options.crossfade) {
         // Caller already started a low-volume noise bed before the fetch.
         // crossfadeToTrack ramps track-gain 0→1 and noise→0 simultaneously.
         const fadeS = Math.max(0.05, (Registry.globals.crossfadeMs || 400) / 1000);
-        await engine.crossfadeToTrack(0, fadeS);
+        await engine.crossfadeToTrack(startSec || 0, fadeS);
       } else {
+        if (startSec > 0) { try { engine.mediaEl.currentTime = startSec; } catch (_) {} }
         await engine.play();
       }
+    } else if (startSec > 0) {
+      // even without autoplay, seed currentTime so the UI needle lands inside the playable region
+      try { engine.mediaEl.currentTime = startSec; } catch (_) {}
+    }
+    // catch the timeline up past the skipped intro so no sec<start events fire retroactively
+    if (startSec > 0 && typeof TimelineRunner !== 'undefined') {
+      TimelineRunner.catchUpTo(startSec);
     }
     updatePlayBtn();
     if (res && res.buffer) {
@@ -3836,6 +4094,9 @@ btnScan.addEventListener('click', async () => {
       const leadIn = Math.random() * 3;                       // 0–3s ramp-in
       scanOffset = Math.max(0, chosen - leadIn);
     }
+    // clamp against this track's start= (never drop into the locked intro region)
+    const startSec = Registry.startFor(nextIdx);
+    if (startSec > 0 && scanOffset < startSec) scanOffset = startSec;
     engine.crossfadeToTrack(scanOffset, 0.4);
     if (scanOffset > 0) TimelineRunner.catchUpTo(scanOffset);
     updatePlayBtn();
@@ -3934,6 +4195,17 @@ function loop() {
 
   // UI
   const cur = engine.currentTime, dur = engine.duration;
+  // start= locked-intro overlay (hatched grey block at the left of the tuning bar)
+  if (tuningLock) {
+    const startSec = Registry.startFor ? Registry.startFor(Registry.currentIdx) : 0;
+    if (startSec > 0 && dur > 0) {
+      const lockPct = Math.min(1, startSec / dur) * 100;
+      tuningLock.style.display = 'block';
+      tuningLock.style.width = lockPct + '%';
+    } else {
+      tuningLock.style.display = 'none';
+    }
+  }
   if (dur > 0) {
     const pct = cur / dur;
     tuningProg.style.width = (pct * 100) + '%';
@@ -4496,8 +4768,13 @@ const GodMode = {
   restart() {
     if (!engine.mediaEl) return;
     try {
-      engine.mediaEl.currentTime = 0;
-      if (typeof TimelineRunner !== 'undefined') TimelineRunner.reset(Registry.currentIdx);
+      // respect start= — "restart" means "back to the intro-protected entry", not 0
+      const startSec = Registry.startFor(Registry.currentIdx);
+      engine.mediaEl.currentTime = startSec || 0;
+      if (typeof TimelineRunner !== 'undefined') {
+        TimelineRunner.reset(Registry.currentIdx);
+        if (startSec > 0) TimelineRunner.catchUpTo(startSec);
+      }
       if (!engine.playing) engine.play();
     } catch (_) {}
   },
@@ -4516,6 +4793,9 @@ const GodMode = {
     let target = null;
     for (const s of skips) { if (s < now - 1) target = s; }
     if (target == null) target = 0;
+    // never backtrack into the locked intro region
+    const startSec = Registry.startFor(Registry.currentIdx);
+    if (startSec > 0 && target < startSec) target = startSec;
     try { engine.mediaEl.currentTime = target; if (typeof TimelineRunner !== 'undefined') TimelineRunner.catchUpTo(target); } catch (_) {}
   },
 
