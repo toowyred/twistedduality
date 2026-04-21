@@ -7067,16 +7067,22 @@ const BeatsRegistry = {
     for (const line of String(text || '').split(/\r?\n/)) {
       const t = line.trim();
       if (!t || t.startsWith('#')) continue;
-      // Format:   <id> : <bpm-field> : <key> : <ms,ms,ms,...>
-      // <bpm-field> is either a bare  <bpm*100>     (single-tempo track)
-      //             or                <bpm*100>@<t_ms>|<bpm*100>@<t_ms>|…
-      //                                             (multi-segment track)
+      // Format:   <id> : <bpm-field> : <key> : <beats_ms> [ : <flash_indices> ]
+      //   <bpm-field>   bare <bpm*100> (single-tempo) OR <bpm*100>@<t_ms>|…
+      //                                (multi-tempo segments)
+      //   <beats_ms>    comma-separated beat timestamps in milliseconds
+      //   <flash_indices>  (OPTIONAL 5th field) author-picked indices into
+      //                    the beats list that MUST flash. When present,
+      //                    this is the player's authoritative answer — the
+      //                    every-4th default rule is NOT used. When absent,
+      //                    the every-4th rule applies.
       const parts = t.split(':');
       if (parts.length < 4) continue;
-      const id        = parts[0].trim();
-      const bpmField  = parts[1].trim();
-      const key       = parts[2].trim();
-      const beatField = parts[3];
+      const id         = parts[0].trim();
+      const bpmField   = parts[1].trim();
+      const key        = parts[2].trim();
+      const beatField  = parts[3];
+      const flashField = parts.length > 4 ? parts[4] : '';
 
       // Parse BPM segments (time-ordered). Always produces at least one entry.
       let segments;
@@ -7107,7 +7113,19 @@ const BeatsRegistry = {
         .filter(n => isFinite(n) && n >= 0)
         .map(ms => ms / 1000);
 
-      this.map[id] = { bpm: primary, key, beats, segments };
+      // Parse optional flash override. `flashSet === null` means "no override,
+      // use the every-4th default rule"; a Set (even empty) means "these are
+      // the author's picks — honor them exactly, no every-4th fallback."
+      let flashSet = null;
+      if (flashField) {
+        flashSet = new Set();
+        for (const x of flashField.split(',')) {
+          const n = parseInt(x, 10);
+          if (isFinite(n) && n >= 0 && n < beats.length) flashSet.add(n);
+        }
+      }
+
+      this.map[id] = { bpm: primary, key, beats, segments, flashSet };
     }
   },
 
@@ -7159,8 +7177,20 @@ const BeatsRegistry = {
   },
 
   // Drop-in replacement for bpmDetector.getBeatFlag(). Returns 0 / 1 / 2 —
-  // flag 2 on every 4th beat (bar accent), flag 1 on the others. De-dupes so
-  // the same beat can't fire twice in quick succession (RAF jitter / tiny seeks).
+  // flag 2 = FLASH (bar accent on the terrain), flag 1 = regular beat tick,
+  // flag 0 = no beat this frame.
+  //
+  // Flash selection priority:
+  //   1. If the author picked specific flash beats in the Refine UI (5th
+  //      field present in cf-rhythm.dat) → that set is the ONLY source of
+  //      truth. Every index NOT in the set is a regular beat. This lets
+  //      authors override cases where the player's default guess was wrong
+  //      (drops that need a flash, fake every-4ths that shouldn't flash,
+  //      anacrusis offsets, etc.).
+  //   2. Otherwise → default every-4th rule.
+  //
+  // De-dupes the same (idx, beatIndex) for 250 ms so RAF jitter / tiny seeks
+  // don't double-fire the same flash.
   beatFlagAt(idx, t) {
     const data = this.forIdx(idx);
     if (!data) return 0;
@@ -7171,7 +7201,12 @@ const BeatsRegistry = {
     if (this._lastHitKey === key && now - this._lastHitT < 250) return 0;
     this._lastHitKey = key;
     this._lastHitT   = now;
-    return (hit.index % 4 === 0) ? 2 : 1;
+    // Flash when the author said so (authoritative list), or fall back to
+    // every-4th when no list was supplied.
+    const isFlash = data.flashSet
+      ? data.flashSet.has(hit.index)
+      : (hit.index % 4 === 0);
+    return isFlash ? 2 : 1;
   }
 };
 
