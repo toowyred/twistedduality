@@ -7067,22 +7067,26 @@ const BeatsRegistry = {
     for (const line of String(text || '').split(/\r?\n/)) {
       const t = line.trim();
       if (!t || t.startsWith('#')) continue;
-      // Format:   <id> : <bpm-field> : <key> : <beats_ms> [ : <flash_indices> ]
-      //   <bpm-field>   bare <bpm*100> (single-tempo) OR <bpm*100>@<t_ms>|…
-      //                                (multi-tempo segments)
-      //   <beats_ms>    comma-separated beat timestamps in milliseconds
-      //   <flash_indices>  (OPTIONAL 5th field) author-picked indices into
-      //                    the beats list that MUST flash. When present,
-      //                    this is the player's authoritative answer — the
-      //                    every-4th default rule is NOT used. When absent,
-      //                    the every-4th rule applies.
+      // Format:
+      //   <id> : <bpm-field> : <key> : <beats_ms>
+      //        [ : <flash_indices>
+      //        [ : <hidden_indices> ] ]
+      //
+      //   <bpm-field>   bare <bpm*100> (single-tempo)  OR  <bpm*100>@<t_ms>|…
+      //                                                    (multi-tempo segments)
+      //   <beats_ms>    comma-separated beat timestamps in milliseconds.
+      //   <flash_indices>   (optional 5th field) author-picked indices that
+      //     flash. When present — even when EMPTY — it's authoritative: the
+      //     every-4th default rule is NOT used. Absent (4-field line) → default.
+      //   <hidden_indices>  (optional 6th field) beats that should not render
+      //     at all on the Player (no flag, no color mark). They still live in
+      //     the beats list for BPM derivation + debug reference.
       const parts = t.split(':');
       if (parts.length < 4) continue;
       const id         = parts[0].trim();
       const bpmField   = parts[1].trim();
       const key        = parts[2].trim();
       const beatField  = parts[3];
-      const flashField = parts.length > 4 ? parts[4] : '';
 
       // Parse BPM segments (time-ordered). Always produces at least one entry.
       let segments;
@@ -7115,17 +7119,31 @@ const BeatsRegistry = {
 
       // Parse optional flash override. `flashSet === null` means "no override,
       // use the every-4th default rule"; a Set (even empty) means "these are
-      // the author's picks — honor them exactly, no every-4th fallback."
+      // the author's picks — honor them exactly, no every-4th fallback." The
+      // presence check is `parts.length > 4`, not truthiness of the string,
+      // so an empty 5th field still counts as "authoritative: zero flashes".
       let flashSet = null;
-      if (flashField) {
+      if (parts.length > 4) {
         flashSet = new Set();
-        for (const x of flashField.split(',')) {
+        for (const x of parts[4].split(',')) {
           const n = parseInt(x, 10);
           if (isFinite(n) && n >= 0 && n < beats.length) flashSet.add(n);
         }
       }
+      // Optional 6th field: beats the author muted in Refine. Same presence
+      // semantics. Hidden beats return flag 0 from beatFlagAt() — no visual
+      // at all on the Player, even if they appear in flashSet (flashSet is
+      // pre-trimmed by Refine but we belt-and-suspenders in beatFlagAt too).
+      let hiddenSet = null;
+      if (parts.length > 5) {
+        hiddenSet = new Set();
+        for (const x of parts[5].split(',')) {
+          const n = parseInt(x, 10);
+          if (isFinite(n) && n >= 0 && n < beats.length) hiddenSet.add(n);
+        }
+      }
 
-      this.map[id] = { bpm: primary, key, beats, segments, flashSet };
+      this.map[id] = { bpm: primary, key, beats, segments, flashSet, hiddenSet };
     }
   },
 
@@ -7178,16 +7196,16 @@ const BeatsRegistry = {
 
   // Drop-in replacement for bpmDetector.getBeatFlag(). Returns 0 / 1 / 2 —
   // flag 2 = FLASH (bar accent on the terrain), flag 1 = regular beat tick,
-  // flag 0 = no beat this frame.
+  // flag 0 = no beat this frame (either off-beat OR a hidden beat).
   //
-  // Flash selection priority:
-  //   1. If the author picked specific flash beats in the Refine UI (5th
-  //      field present in cf-rhythm.dat) → that set is the ONLY source of
-  //      truth. Every index NOT in the set is a regular beat. This lets
-  //      authors override cases where the player's default guess was wrong
-  //      (drops that need a flash, fake every-4ths that shouldn't flash,
-  //      anacrusis offsets, etc.).
-  //   2. Otherwise → default every-4th rule.
+  // Flag resolution order:
+  //   1. If beat index is in hiddenSet (6th field) → flag 0. No visual at
+  //      all. Takes priority over flashSet. Useful when a section reads
+  //      cleaner without the default every-4th grid lines.
+  //   2. If the author picked specific flash beats (5th field present) →
+  //      flashSet is authoritative. Only indices in it flash; every other
+  //      beat is flag 1.
+  //   3. Otherwise → default every-4th rule (index % 4 === 0).
   //
   // De-dupes the same (idx, beatIndex) for 250 ms so RAF jitter / tiny seeks
   // don't double-fire the same flash.
@@ -7196,13 +7214,13 @@ const BeatsRegistry = {
     if (!data) return 0;
     const hit = this._nearest(data.beats, t, 0.06);
     if (!hit) return 0;
+    // Hidden beats render as nothing at all.
+    if (data.hiddenSet && data.hiddenSet.has(hit.index)) return 0;
     const key = idx + ':' + hit.index;
     const now = performance.now();
     if (this._lastHitKey === key && now - this._lastHitT < 250) return 0;
     this._lastHitKey = key;
     this._lastHitT   = now;
-    // Flash when the author said so (authoritative list), or fall back to
-    // every-4th when no list was supplied.
     const isFlash = data.flashSet
       ? data.flashSet.has(hit.index)
       : (hit.index % 4 === 0);
