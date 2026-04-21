@@ -5172,6 +5172,40 @@ const NextBuffer = {
 
   async prepareFor(currentIdx) {
     this.cancel();
+
+    // Cross-block pre-fetch: if the natural-next track lives in an unloaded
+    // block, grab its shards first so we have real metadata (not the synthetic
+    // rhythm-orphan stub) before we fetch + decode the audio. 15 s of lead time
+    // before outro absorbs a ~200-400 ms block load comfortably.
+    // Also covers the "current block exhausted, rhythm has no orphan for next
+    // block" edge case by scanning the manifest for the next numerical block.
+    if (Registry.usingBlocks && typeof BlockRegistry !== 'undefined') {
+      let probe = this._nextIdxFor(currentIdx);
+      if (probe >= 0) {
+        const nextBlock = BlockRegistry.blockOfTrackIdx(probe);
+        if (nextBlock != null
+            && !BlockRegistry.loaded.has(nextBlock)
+            && BlockRegistry.manifest.some(b => b.num === nextBlock)) {
+          console.log('[teaser] cross-block pre-fetch → loading block b' +
+                      String(nextBlock).padStart(2, '0'));
+          try { await BlockRegistry.loadBlock(nextBlock); } catch (_) {}
+        }
+      } else {
+        // No next in Registry.tracks (current block exhausted, no orphans).
+        // Look for the next numerical block in the manifest and load it.
+        const currentBlock = BlockRegistry.blockOfTrackIdx(currentIdx);
+        if (currentBlock != null) {
+          const nextEntry = BlockRegistry.manifest.find(b =>
+            b.num > currentBlock && !BlockRegistry.loaded.has(b.num));
+          if (nextEntry) {
+            console.log('[teaser] current block exhausted → loading b' +
+                        String(nextEntry.num).padStart(2, '0'));
+            try { await BlockRegistry.loadBlock(nextEntry.num); } catch (_) {}
+          }
+        }
+      }
+    }
+
     const next = this._nextIdxFor(currentIdx);
     if (next < 0) return;
     this.idx = next;
