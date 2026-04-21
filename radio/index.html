@@ -873,6 +873,106 @@
   }
   .playback-info-close:hover, .playback-info-close:focus-visible { filter: brightness(1.15); outline: none; }
 
+  /* ── Camelot wheel modal ──────────────────────────────────────────
+     All colors pull from the active theme's CSS variables — no per-theme
+     PNG assets, the SVG recolors itself whenever the user switches theme. */
+  .camelot-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 430;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .camelot-overlay.open { display: flex; }
+  html.no-transparency .camelot-overlay { background: #000; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .camelot-box {
+    background: rgba(0,0,0,0.94);
+    border: 1px solid var(--accent-dim);
+    border-left: 3px solid var(--accent);
+    padding: 18px 20px;
+    max-width: 520px; width: 100%;
+    max-height: 92vh; overflow: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6), 6px 6px 0 var(--accent-dim);
+    color: var(--fg);
+    /* slide-up animation (matches the HI-FI popup spirit: transform+opacity fade) */
+    transform: translateY(24px);
+    opacity: 0;
+    transition: transform 0.28s ease, opacity 0.22s ease;
+  }
+  .camelot-overlay.open .camelot-box { transform: translateY(0); opacity: 1; }
+  html.no-transparency .camelot-box { background: var(--panel); }
+  .camelot-title {
+    font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--accent-dim);
+    text-align: center;
+  }
+  .camelot-wheel-host { display: flex; justify-content: center; }
+  .camelot-wheel-svg { width: 100%; max-width: 420px; height: auto; display: block; }
+  /* circle chrome pulls theme vars — attribute-level fill/stroke can't reference
+     CSS custom properties on all browsers, so use class rules instead. */
+  .camelot-frame { fill: rgba(255,255,255,0.02); stroke: var(--accent-dim); stroke-width: 0.6; }
+  .camelot-hub   { fill: rgba(0,0,0,0.6);        stroke: var(--accent-dim); stroke-width: 0.8; }
+  /* wedges: base, compatible-with-current (harmonic match), current */
+  .camelot-wedge {
+    fill: rgba(255,255,255,0.05);
+    stroke: var(--border);
+    stroke-width: 0.8;
+    transition: fill 0.25s ease, filter 0.25s ease;
+  }
+  .camelot-wedge.compatible {
+    fill: var(--accent-dim);
+  }
+  .camelot-wedge.current {
+    fill: var(--accent);
+    stroke: var(--accent);
+    filter: drop-shadow(0 0 8px var(--accent));
+  }
+  .camelot-wheel-svg text {
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    dominant-baseline: middle;
+    text-anchor: middle;
+  }
+  .camelot-code      { fill: var(--fg);    font-size: 13px; letter-spacing: 0.5px; }
+  .camelot-code.on-current { fill: var(--bg); }
+  .camelot-subkey    { fill: var(--muted); font-size: 8px;  font-weight: normal; }
+  .camelot-subkey.on-current { fill: var(--bg); opacity: 0.85; }
+  .camelot-center    { fill: var(--accent); font-size: 14px; letter-spacing: 3px; }
+  .camelot-caption {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px; letter-spacing: 0.5px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+  .camelot-caption-label { margin-right: 6px; color: var(--muted); }
+  .camelot-now { color: var(--accent); font-weight: bold; }
+  .camelot-legend {
+    display: flex; justify-content: center; align-items: center;
+    gap: 6px; flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+  .camelot-legend .legend-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border: 1px solid var(--accent-dim);
+    margin: 0 4px 0 10px;
+  }
+  .camelot-legend .legend-dot:first-child { margin-left: 0; }
+  .camelot-legend .dot-current { background: var(--accent); border-color: var(--accent); }
+  .camelot-legend .dot-compat  { background: var(--accent-dim); }
+
+  /* Make the KEY readout feel tappable — subtle underline on hover, finger cursor. */
+  .tuner .keyval { cursor: pointer; }
+  .tuner .keyval:hover { text-decoration: underline; text-decoration-color: var(--accent-dim); text-underline-offset: 3px; }
+  @media (max-width: 860px) { .tuner .keyval:hover { text-decoration: none; } }
+
   /* ── code-unlock panel (bottom-left above tuner; collapsed key → expanded input) ── */
   .code-panel {
     position: fixed;
@@ -1558,6 +1658,24 @@
   </div>
 </div>
 
+<!-- Camelot wheel modal — opened by tapping the KEY readout. Inline SVG is
+     built by JS, so the whole thing auto-recolors from theme CSS vars. -->
+<div class="camelot-overlay" id="camelotOverlay" aria-hidden="true">
+  <div class="camelot-box" role="dialog" aria-modal="true" aria-labelledby="camelotTitle">
+    <div class="camelot-title" id="camelotTitle">CAMELOT WHEEL</div>
+    <div class="camelot-wheel-host" id="camelotWheelHost"><!-- SVG injected --></div>
+    <div class="camelot-caption">
+      <span class="camelot-caption-label" data-i18n="camelot-now">Now playing:</span>
+      <span class="camelot-now" id="camelotNow">—</span>
+    </div>
+    <div class="camelot-legend">
+      <span class="legend-dot dot-current"></span><span class="legend-label" data-i18n="camelot-current">current</span>
+      <span class="legend-dot dot-compat"></span><span class="legend-label" data-i18n="camelot-compat">harmonic match</span>
+    </div>
+    <button class="playback-info-close" id="camelotClose" type="button">[ CLOSE ]</button>
+  </div>
+</div>
+
 <!-- code-unlock panel — bottom-left above tuner; tap key to expand → input + GO -->
 <div class="code-panel" id="codePanel">
   <button class="code-key-btn" id="codeKey" type="button" aria-label="Enter unlock code" title="Code">
@@ -1825,6 +1943,9 @@ const I18N = {
     'help-hint': 'Tap again if <span translate="no">meta-data</span> is incorrect.',
     'meta-refreshed': 'METADATA REFRESHED',
     'meta-refreshing': 'REFRESHING METADATA...',
+    'camelot-now': 'Now playing:',
+    'camelot-current': 'current',
+    'camelot-compat': 'harmonic match',
   },
   de: {
     'bar-title': 'FUNKEMPFÄNGER',
@@ -1880,6 +2001,9 @@ const I18N = {
     'help-hint': 'Nochmal tippen, wenn <span translate="no">meta-data</span> falsch ist.',
     'meta-refreshed': 'METADATEN AKTUALISIERT',
     'meta-refreshing': 'METADATEN WERDEN AKTUALISIERT...',
+    'camelot-now': 'Läuft:',
+    'camelot-current': 'aktuell',
+    'camelot-compat': 'harmonisch passend',
   },
   es: {
     'bar-title': 'RECEPTOR DE RADIO',
@@ -2039,6 +2163,9 @@ const I18N = {
     'help-hint': '<span translate="no">meta-data</span>が誤っていればもう一度タップ',
     'meta-refreshed': 'メタデータ更新完了',
     'meta-refreshing': 'メタデータを更新中...',
+    'camelot-now': '再生中:',
+    'camelot-current': '現在',
+    'camelot-compat': '調性一致',
   }
 };
 
@@ -3033,7 +3160,147 @@ function paintKey(raw) {
   const disp = formatKeyDisplay(_lastKeyRaw, currentLang);
   if (keyLongEl)  keyLongEl.textContent  = disp.long  || '---';
   if (keyShortEl) keyShortEl.textContent = disp.short || '---';
+  if (typeof CamelotWheel !== 'undefined' && CamelotWheel.isOpen()) CamelotWheel.highlight(_lastKeyRaw);
 }
+
+// ══════════════════════════════════════════════════════════════════
+// CAMELOT WHEEL MODAL
+// ──────────────────────────────────────────────────────────────────
+// Inline SVG wheel — 12 slices × 2 rings (inner=A minor, outer=B major).
+// Colored entirely from theme CSS vars so Dark-Orange / Mono / Golden-Hour /
+// any future theme relights it for free.
+//
+// Harmonic-mix rule (mirrors get_compatible_camelot in wsi_musickey.py):
+//   • same number ± 1 wrapped 1↔12, same letter  (energy shift)
+//   • same number, opposite letter                (relative major/minor)
+// Tap the KEY readout to open; Esc / overlay-click / [ CLOSE ] to dismiss.
+// ══════════════════════════════════════════════════════════════════
+const CamelotWheel = (() => {
+  const overlay = $('camelotOverlay');
+  const host    = $('camelotWheelHost');
+  const nowEl   = $('camelotNow');
+  const closeBtn= $('camelotClose');
+
+  // Wheel geometry — viewBox is 400×400, centered. Numbers start at 8 at the 12 o'clock
+  // position and spiral clockwise (a common layout in DJ software).
+  const CX = 200, CY = 200;
+  const R_HOLE  = 50;    // empty center circle (where CAMELOT text sits)
+  const R_INNER = 118;   // boundary between A-ring (minor) and B-ring (major)
+  const R_OUTER = 188;
+  const SLICE   = Math.PI / 6;                    // 30°
+  const TOP_ANG = -Math.PI / 2;                   // 12 o'clock in SVG space
+
+  function arcWedge(r0, r1, aStart, aEnd) {
+    const x0s = CX + r0 * Math.cos(aStart), y0s = CY + r0 * Math.sin(aStart);
+    const x0e = CX + r0 * Math.cos(aEnd),   y0e = CY + r0 * Math.sin(aEnd);
+    const x1s = CX + r1 * Math.cos(aStart), y1s = CY + r1 * Math.sin(aStart);
+    const x1e = CX + r1 * Math.cos(aEnd),   y1e = CY + r1 * Math.sin(aEnd);
+    // 30° slices are always the small arc (large-arc flag = 0).
+    return 'M ' + x1s + ' ' + y1s
+         + ' A ' + r1 + ' ' + r1 + ' 0 0 1 ' + x1e + ' ' + y1e
+         + ' L ' + x0e + ' ' + y0e
+         + ' A ' + r0 + ' ' + r0 + ' 0 0 0 ' + x0s + ' ' + y0s
+         + ' Z';
+  }
+
+  function buildSvg() {
+    const parts = [];
+    // Outer frame ring for visual polish.
+    parts.push('<circle class="camelot-frame" cx="' + CX + '" cy="' + CY + '" r="' + R_OUTER + '" />');
+    for (let i = 0; i < 12; i++) {
+      const num = ((7 + i) % 12) + 1;               // top=8, clockwise
+      const aMid   = TOP_ANG + i * SLICE;
+      const aStart = aMid - SLICE / 2;
+      const aEnd   = aMid + SLICE / 2;
+      // A (minor) — inner ring
+      parts.push('<path class="camelot-wedge" data-code="' + num + 'A" d="' + arcWedge(R_HOLE,  R_INNER, aStart, aEnd) + '" />');
+      // B (major) — outer ring
+      parts.push('<path class="camelot-wedge" data-code="' + num + 'B" d="' + arcWedge(R_INNER, R_OUTER, aStart, aEnd) + '" />');
+      // Text positions: midpoint of each ring along aMid
+      const rA = (R_HOLE  + R_INNER) / 2;
+      const rB = (R_INNER + R_OUTER) / 2;
+      const axA = CX + rA * Math.cos(aMid), ayA = CY + rA * Math.sin(aMid);
+      const axB = CX + rB * Math.cos(aMid), ayB = CY + rB * Math.sin(aMid);
+      const aName = _KEY_CAMELOT_TO_EN[num + 'A'] || '';
+      const bName = _KEY_CAMELOT_TO_EN[num + 'B'] || '';
+      // Code label + short key name, stacked vertically inside each wedge.
+      parts.push('<text class="camelot-code" data-code="' + num + 'A" x="' + axA + '" y="' + (ayA - 5) + '">' + num + 'A</text>');
+      parts.push('<text class="camelot-subkey" data-code="' + num + 'A" x="' + axA + '" y="' + (ayA + 8) + '">' + _shortenKeyName(aName, 'en') + '</text>');
+      parts.push('<text class="camelot-code" data-code="' + num + 'B" x="' + axB + '" y="' + (ayB - 5) + '">' + num + 'B</text>');
+      parts.push('<text class="camelot-subkey" data-code="' + num + 'B" x="' + axB + '" y="' + (ayB + 8) + '">' + _shortenKeyName(bName, 'en') + '</text>');
+    }
+    parts.push('<circle class="camelot-hub" cx="' + CX + '" cy="' + CY + '" r="' + R_HOLE + '" />');
+    parts.push('<text class="camelot-center" x="' + CX + '" y="' + CY + '">CAMELOT</text>');
+    return '<svg class="camelot-wheel-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">' + parts.join('') + '</svg>';
+  }
+
+  function compatibleSet(code) {
+    // Same rule as get_compatible_camelot() in Python.
+    if (!code) return new Set();
+    const num = parseInt(code.slice(0, -1), 10);
+    const letter = code.slice(-1);
+    if (!isFinite(num) || (letter !== 'A' && letter !== 'B')) return new Set();
+    const prevN = num === 1  ? 12 : num - 1;
+    const nextN = num === 12 ? 1  : num + 1;
+    const other = letter === 'A' ? 'B' : 'A';
+    return new Set([code, prevN + letter, nextN + letter, num + other]);
+  }
+
+  // Map the detector's raw key ("Bm" / "F#" / "Gm" …) to its Camelot code.
+  function codeForRawKey(raw) {
+    if (!raw) return '';
+    const full = _expandRawKey(raw);
+    const canonical = _KEY_ENHARMONIC[full] || full;
+    return _KEY_EN_TO_CAMELOT[canonical] || '';
+  }
+
+  function highlight(rawKey) {
+    const svg = host.querySelector('.camelot-wheel-svg');
+    if (!svg) return;
+    const code = codeForRawKey(rawKey);
+    const compat = compatibleSet(code);
+    svg.querySelectorAll('.camelot-wedge').forEach(el => {
+      const c = el.getAttribute('data-code');
+      el.classList.toggle('current', c === code);
+      el.classList.toggle('compatible', c !== code && compat.has(c));
+    });
+    svg.querySelectorAll('.camelot-code, .camelot-subkey').forEach(el => {
+      el.classList.toggle('on-current', el.getAttribute('data-code') === code);
+    });
+    // Caption echoes the current display name so the modal is self-describing.
+    if (nowEl) {
+      const disp = formatKeyDisplay(rawKey, currentLang);
+      nowEl.textContent = disp.long || '—';
+    }
+  }
+
+  function ensureBuilt() {
+    if (!host.querySelector('.camelot-wheel-svg')) host.innerHTML = buildSvg();
+  }
+
+  function open() {
+    ensureBuilt();
+    highlight(_lastKeyRaw || (typeof keyDetector !== 'undefined' && keyDetector ? keyDetector.key : ''));
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+  function close() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  function isOpen() { return overlay.classList.contains('open'); }
+
+  // Wire-up: tap KEY readout to open. Overlay bg / Esc / [CLOSE] all dismiss.
+  keyVal.addEventListener('click', open);
+  keyVal.setAttribute('role', 'button');
+  keyVal.setAttribute('tabindex', '0');
+  keyVal.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  closeBtn.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) close(); });
+
+  return { open, close, isOpen, highlight };
+})();
 const signalBars = $('signalBars');
 const vibeBlock = $('vibeBlock'), vibeValue = $('vibeValue');
 const loadingEl = $('loading'), loadStatus = $('loadStatus');
