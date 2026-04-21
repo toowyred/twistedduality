@@ -2476,7 +2476,12 @@ const Registry = {
     printDefault: 5,
     crossfadeMs: 400,         // inter-track crossfade duration (0–2000 sane)
     interNoiseLevel: 0.06,    // low-volume radio-noise bed during the crossfade gap
-    teaserSec: 4,             // glitch-teaser length (s) when current track declares a silent outro
+    // teaserSec: optional signal.dat author cap (seconds) for the glitch-teaser
+    // length. When unset or 0, the device + outro + next-track print constraints
+    // decide on their own — a powerful machine with a long outro and no early
+    // prints will unfold a long teaser; a potato will skip it entirely. Authors
+    // who want a hard ceiling can add `teaserSec=N` to the globals block.
+    teaserSec: 0,
   },
   currentIdx: -1,
   quality: localStorage.getItem('td-radio-quality') || 'normal',  // 'normal' | 'highfi'
@@ -2589,6 +2594,21 @@ const Registry = {
     const raw = (t && t.meta && t.meta.silentRanges) || [];
     if (duration == null || !isFinite(duration) || duration <= 0) return raw;
     return raw.map(r => isFinite(r.end) ? r : { start: r.start, end: duration });
+  },
+
+  // Earliest print() event timestamp in the track's timeline (seconds). -1 when
+  // the track has no prints, or its timeline is empty. Used by the adaptive
+  // teaser sizing: we don't want the teaser to swallow a print-event's "reveal
+  // moment" on the incoming track — so we shrink the teaser to leave breathing
+  // room before the first print fires. Timeline is pre-sorted by time in
+  // parseSignalDat(), so the first 'print' entry is the earliest.
+  firstPrintSecOf(idx) {
+    const t = this.tracks[idx];
+    if (!t || !t.timeline || !t.timeline.length) return -1;
+    for (const evt of t.timeline) {
+      if (evt.type === 'print' && isFinite(evt.time) && evt.time >= 0) return evt.time;
+    }
+    return -1;
   },
 
   // Return the LAST silent range ONLY IF it qualifies as an outro — i.e. its
@@ -3764,13 +3784,36 @@ function _rebuildTerrainBuffer() {
 
 function applyPerfTier(tier) {
   const html = document.documentElement;
-  html.classList.remove('perf-low', 'perf-lowest');
+  html.classList.remove('perf-low', 'perf-lowest', 'perf-high');
   if (tier === 'low' || tier === 'lowest') {
     html.classList.add(tier === 'lowest' ? 'perf-lowest' : 'perf-low');
     Object.assign(CFG, PerfTiers[tier === 'lowest' ? 'LOWEST' : 'LOW']);
     _rebuildTerrainBuffer();
+  } else if (tier === 'high') {
+    // Marker class only — tells the teaser sizer the device opted into long
+    // transitions. Doesn't touch CFG; the rest of the renderer stays default.
+    html.classList.add('perf-high');
   }
-  // 'high' / 'auto' / anything else → no CSS class; CFG keeps whatever the device preset seeded.
+}
+
+// Maximum teaser length (seconds) this device should attempt. Consumed by the
+// silent-outro glitch-teaser path in loop(). 0 = "potato, skip teaser entirely"
+// — the loop's potato branch falls through to a plain early-advance so the
+// standard crossfade + noise bed handles the transition, no distortion chain.
+//   perf-lowest → 0  (POTATO: skip teaser, skip pre-fetch decode, just crossfade)
+//   perf-low    → 3 s
+//   perf-high   → 30 s  (explicit ?perf=high override, or detected high-end)
+//   detected    → 30 s when cores ≥ 6 AND ram ≥ 6; 12 s when ≥4/4; else 6 s
+function devicePerfTeaserCap() {
+  const html = document.documentElement;
+  if (html.classList.contains('perf-lowest')) return 0;
+  if (html.classList.contains('perf-low'))    return 3;
+  if (html.classList.contains('perf-high'))   return 30;
+  const cores = navigator.hardwareConcurrency || 0;
+  const ram   = navigator.deviceMemory        || 0;
+  if (cores >= 6 && ram >= 6) return 30;
+  if (cores >= 4 && ram >= 4) return 12;
+  return 6;
 }
 
 (function initPerfTier() {
@@ -3826,6 +3869,12 @@ function perfWatchTick() {
     } else if (fps < 48 && !html.classList.contains('perf-low') && !html.classList.contains('perf-lowest')) {
       console.warn('[radio] FPS ' + fps.toFixed(1) + ' — demoting to perf-low');
       applyPerfTier('low');
+    } else if (fps < 55 && html.classList.contains('perf-high')) {
+      // perf-high was claimed (static detection or URL override) but the device
+      // can't actually hold 55+ FPS under load — strip the high marker so the
+      // teaser sizer doesn't over-commit.
+      console.warn('[radio] FPS ' + fps.toFixed(1) + ' — dropping perf-high marker');
+      html.classList.remove('perf-high');
     }
     _perfWatch.frames = 0;
     _perfWatch.t0 = performance.now();
@@ -5656,43 +5705,73 @@ function loop() {
     onTrackFullyPlayed();
   }
 
-  // ── silent-outro choreography ──────────────────────────────────────
-  // Stages:
-  //   (a) ≥15 s before outro → arm NextBuffer (full fetch of the next sequential
-  //       playable track + decode a ~2 MB slice for the teaser source).
-  //   (b) At (track.duration − teaserSec): play the glitch teaser. Teaser ends
-  //       exactly when track 1 ends. The teaser's last ~1 s crossfades wet→dry
-  //       so the final moment sounds like clean next-track audio at volume.
-  //       If decode isn't ready in time, fall back to plain early-advance.
-  //   (c) mediaEl 'ended' → onTrackFullyPlayed() uses NextBuffer.blob directly
-  //       via engine.loadFromBlob (no re-fetch) + offsetSec = teaserSec so the
-  //       real next track continues from where the teaser's dry path left off.
+  // ── silent-outro choreography (adaptive) ─────────────────────────
+  // Decision order:
+  //   (0) No silent outro → nothing to do; natural `ended` handles hand-off.
+  //   (1) Compute perfCap from devicePerfTeaserCap(). If perfCap < 1.2 the
+  //       device is a "potato" — skip the distortion chain + pre-fetch
+  //       entirely and just do a plain early-advance at outro.start (still a
+  //       UX win: user isn't stuck in dead air).
+  //   (2) Otherwise pick teaseDur = min of all active caps:
+  //         • authorCap  — signal.dat `teaserSec` (if explicitly set, else ∞)
+  //         • perfCap    — device ceiling (2 / 3 / 6 / 12 / 30 s)
+  //         • outroCap   — physical: (outroEnd − outroStart) − 0.2
+  //         • printCap   — (next track's first print() time) − 4 s
+  //                        so a print reveal gets ≥4 s of clean playback first
+  //       The author cap + teaserSec global is optional now; by default the
+  //       device's cap drives it so powerful machines can unfurl long teasers.
+  //   (3) At t = duration − teaseDur → play the glitch teaser. Teaser ends
+  //       exactly when track 1 ends. Its last ~1 s crossfades wet→dry.
+  //   (4) mediaEl 'ended' → onTrackFullyPlayed() swaps in NextBuffer.blob via
+  //       engine.loadFromBlob (no re-fetch) + offsetSec = teaseDur so the real
+  //       next track continues from where the teaser's dry path left off.
   if (engine.playing && engine.duration > 0) {
     const outro = Registry.silentOutroFor(Registry.currentIdx, engine.duration, 2);
     if (outro) {
-      // (a) arm next-track pre-fetch 15 s before the outro, once per track
-      if (!_nextBufferArmed && engine.currentTime >= outro.start - 15) {
+      const perfCap = devicePerfTeaserCap();
+      const potato  = perfCap < 1.2;
+      // (a) Pre-fetch arming: only on non-potato devices. Saves bandwidth +
+      //     decode work where it would matter most.
+      if (!potato && !_nextBufferArmed && engine.currentTime >= outro.start - 15) {
         _nextBufferArmed = true;
         NextBuffer.prepareFor(Registry.currentIdx).catch(() => {/* silent */});
       }
-      // (b) start the teaser so it ENDS at the track's natural end. Length is
-      //     capped by the outro duration so we never crash into live audio.
       if (!_teaserFired && !_silentOutroFired) {
-        const outroEnd = isFinite(outro.end) ? outro.end : engine.duration;
-        const outroLen = Math.max(0, outroEnd - outro.start);
-        const configured = (Registry.globals && Registry.globals.teaserSec) || 4;
-        const teaseDur = Math.max(1.2, Math.min(configured, outroLen - 0.2));
-        const teaserStart = engine.duration - teaseDur;
-        if (teaseDur >= 1.2 && engine.currentTime >= teaserStart) {
-          if (NextBuffer.isReadyFor(Registry.currentIdx)) {
-            _teaserFired       = true;
-            _teaserConsumedSec = teaseDur;
-            playTeaser(NextBuffer.audio, teaseDur);
-          } else {
-            // No decoded teaser audio — preserve old early-advance behaviour so
-            // the user isn't stuck in dead air through the rest of the outro.
+        if (potato) {
+          // (b-potato) No teaser, no distortion chain — just early-advance at
+          //   outro.start, letting the standard crossfade + noise bed transition
+          //   to the next track as soon as we cross into silence.
+          if (engine.currentTime >= outro.start) {
             _silentOutroFired = true;
             onTrackFullyPlayed();
+          }
+        } else {
+          // (b-adaptive) Compute the longest teaser that fits every cap.
+          const outroEnd = isFinite(outro.end) ? outro.end : engine.duration;
+          const outroLen = Math.max(0, outroEnd - outro.start);
+          const outroCap = outroLen - 0.2;
+          // Author cap: signal.dat teaserSec only if explicitly set (>0).
+          // Otherwise no author ceiling — device decides.
+          const tgs = Registry.globals && Registry.globals.teaserSec;
+          const authorCap = (typeof tgs === 'number' && tgs > 0) ? tgs : Infinity;
+          // Breathing room before the next track's first print() event.
+          const nextIdx   = (typeof NextBuffer !== 'undefined' && NextBuffer._nextIdxFor)
+            ? NextBuffer._nextIdxFor(Registry.currentIdx) : -1;
+          const firstPrint = nextIdx >= 0 ? Registry.firstPrintSecOf(nextIdx) : -1;
+          const printCap = firstPrint > 0 ? (firstPrint - 4) : Infinity;
+          const teaseDur = Math.max(1.2, Math.min(authorCap, perfCap, outroCap, printCap));
+          const teaserStart = engine.duration - teaseDur;
+          if (teaseDur >= 1.2 && engine.currentTime >= teaserStart) {
+            if (NextBuffer.isReadyFor(Registry.currentIdx)) {
+              _teaserFired       = true;
+              _teaserConsumedSec = teaseDur;
+              playTeaser(NextBuffer.audio, teaseDur);
+            } else {
+              // Decode didn't land in time — fall back to plain early-advance so
+              // the user isn't stuck in dead air through the rest of the outro.
+              _silentOutroFired = true;
+              onTrackFullyPlayed();
+            }
           }
         }
       }
