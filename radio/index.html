@@ -4762,13 +4762,20 @@ const TimelineRunner = {
   catchUpTo(currentTime) {
     // like tick(), but SKIPS print events (they're one-shot UI; don't flash old ones on seek)
     const t = Registry.tracks[this.idx];
-    if (!t || !t.timeline) { this.nextEventIdx = 0; return; }
-    this.nextEventIdx = 0;
-    while (this.nextEventIdx < t.timeline.length && t.timeline[this.nextEventIdx].time <= currentTime) {
-      const ev = t.timeline[this.nextEventIdx];
-      if (ev.type !== 'print') applyTimelineEvent(ev);
-      this.nextEventIdx++;
+    if (t && t.timeline) {
+      this.nextEventIdx = 0;
+      while (this.nextEventIdx < t.timeline.length && t.timeline[this.nextEventIdx].time <= currentTime) {
+        const ev = t.timeline[this.nextEventIdx];
+        if (ev.type !== 'print') applyTimelineEvent(ev);
+        this.nextEventIdx++;
+      }
+    } else {
+      this.nextEventIdx = 0;
     }
+    // Keep the srt.print cursor aligned too — same "don't flash old prints" rule.
+    // Single hook here covers every catchUpTo call site (seek, SCAN offset,
+    // start= honour, godmode skip, etc.).
+    if (typeof SrtPrintRunner !== 'undefined') SrtPrintRunner.catchUpTo(currentTime);
   }
 };
 
@@ -4954,15 +4961,20 @@ const SubtitleRunner = {
     this.cues = [];
   },
 
-  // Read srt= from meta. Formats:
-  //   srt=0                → off
-  //   srt=0; filename      → off (filename ignored)
-  //   srt=1                → on, use default name (track id + .srt)
-  //   srt=1; filename      → on, custom filename (with or without .srt extension)
+  // Read srt.sub from meta (legacy `srt` still accepted). Formats:
+  //   srt.sub=0                → off
+  //   srt.sub=0; filename      → off (filename ignored)
+  //   srt.sub=1                → on, default name (track id + .srt)
+  //   srt.sub=1; filename      → on, custom filename (with or without .srt)
+  // Companion field `srt.print` behaves the same way but loads a SECOND file
+  // whose cues fire as print-overlay events (see SrtPrintRunner).
   async loadForTrack(idx) {
     this.clearAll();
     if (idx < 0 || !Registry.source) return;
-    const raw = String(Registry.metaFor(idx, 'srt') || '').trim();
+    // New key wins when both are set; old bare `srt=` kept for pre-existing dat files.
+    const raw = String(
+      Registry.metaFor(idx, 'srt.sub') || Registry.metaFor(idx, 'srt') || ''
+    ).trim();
     if (!raw) return;
     const parts = raw.split(/\s*;\s*/);
     const onOff = (parts[0] || '').trim();
@@ -5032,6 +5044,97 @@ const SubtitleRunner = {
   }
 };
 
+// ══════════════════════════════════════════════════════════════════
+// SRT.PRINT RUNNER — second SRT file whose cues fire as print-overlay
+// events (centered-upper "reveal moment" text), NOT stacked subtitles.
+// Intent: offload long lists of print(secN)= entries from signal.dat into
+// a proper SRT file. Same cue format as subtitles; each cue's start→end
+// becomes a showPrintOverlay(text, duration) call.
+//
+// Conflict resolution: if signal.dat has a print(secN) within 0.5 s of an
+// SRT cue's start, signal.dat wins and the SRT cue is dropped at load.
+// Ruby reading {漢字|かんじ} and multi-line text both work (renderPrintText
+// handles them uniformly for inline prints and SRT prints alike).
+//
+// Key: `srt.print` (mirror of srt.sub). Default filename = track id + -print.srt.
+// ══════════════════════════════════════════════════════════════════
+const SrtPrintRunner = {
+  idx: -1,
+  cues: [],           // [{ start, end, text }] after conflict filtering
+  cursor: 0,          // next cue to fire
+
+  reset(idx) {
+    this.idx = idx;
+    this.cursor = 0;
+  },
+
+  clearAll() {
+    this.cues = [];
+    this.cursor = 0;
+  },
+
+  async loadForTrack(idx) {
+    this.clearAll();
+    if (idx < 0 || !Registry.source) return;
+    const raw = String(Registry.metaFor(idx, 'srt.print') || '').trim();
+    if (!raw) return;
+    const parts = raw.split(/\s*;\s*/);
+    if ((parts[0] || '').trim() !== '1') return;
+    let fileName = (parts[1] || '').trim();
+    if (!fileName) {
+      // default filename: track id + "-print.srt" (mirrors the subtitle
+      // default of track-id + ".srt" but reserved for the print channel).
+      const base = (typeof LinksRegistry !== 'undefined' && LinksRegistry.idForTrack)
+        ? (LinksRegistry.idForTrack(idx) || '') : '';
+      if (!base) return;
+      fileName = base + '-print.srt';
+    }
+    if (!/\.srt$/i.test(fileName)) fileName += '.srt';
+    const srtBase = Registry.source.signal.replace(/[^/]+$/, 'srt/');
+    const url = srtBase + fileName;
+    let cues;
+    try {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) return;                   // file absent → silent
+      const text = await res.text();
+      cues = parseSRT(text);
+    } catch (_) {
+      return;
+    }
+    // Conflict filter: drop any SRT cue within 0.5 s of a signal.dat print().
+    const track = Registry.tracks[idx];
+    const signalPrints = (track && track.timeline)
+      ? track.timeline.filter(e => e.type === 'print').map(e => e.time)
+      : [];
+    const tooClose = (t) => signalPrints.some(st => Math.abs(st - t) < 0.5);
+    this.cues = cues.filter(c => !tooClose(c.start));
+    this.cursor = 0;
+    // If the runner was already past some cues (e.g. load finished after
+    // the track started), fast-forward the cursor silently.
+    const now = (typeof engine !== 'undefined' && engine.currentTime) || 0;
+    while (this.cursor < this.cues.length && this.cues[this.cursor].start <= now) this.cursor++;
+  },
+
+  // Called from loop() alongside TimelineRunner.tick. Fires showPrintOverlay
+  // for every cue whose start time has been crossed this frame.
+  tick(currentTime) {
+    if (!this.cues.length || this.cursor >= this.cues.length) return;
+    while (this.cursor < this.cues.length && this.cues[this.cursor].start <= currentTime) {
+      const c = this.cues[this.cursor];
+      const dur = Math.max(0.5, c.end - c.start);
+      showPrintOverlay(c.text, dur);
+      this.cursor++;
+    }
+  },
+
+  // Seek catch-up: advance cursor past any cue whose start is ≤ currentTime
+  // WITHOUT firing the overlay (don't flash old prints on seek).
+  catchUpTo(currentTime) {
+    this.cursor = 0;
+    while (this.cursor < this.cues.length && this.cues[this.cursor].start <= currentTime) this.cursor++;
+  }
+};
+
 // Keep --subtitle-bottom-offset in sync with the live tuner height so cues always
 // sit just above the tuner, whether expanded, collapsed, desktop, or mobile.
 function syncTunerOffsetVar() {
@@ -5083,7 +5186,13 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Turn "Hello <img>meme</img>, right?" into safe HTML with real img tags where possible.
+// Turn print-overlay source text into safe HTML.
+// Supported tokens (all work in both inline print(secN)= values and srt.print cues):
+//   <img>name</img>  — resolves to a print-manifest image
+//   {base|ruby}      — Japanese ruby reading → <ruby>base<rt>ruby</rt></ruby>
+//   \n  or  literal newline  — line break → <br>
+// All other text is HTML-escaped so there's no injection vector from signal.dat
+// authors or SRT contributors.
 function renderPrintText(raw) {
   const parts = String(raw || '').split(/(<img>[^<]*<\/img>)/g);
   let html = '';
@@ -5098,7 +5207,16 @@ function renderPrintText(raw) {
         html += '<em class="print-img-missing">[img: ' + escapeHtml(name) + ']</em>';
       }
     } else {
-      html += escapeHtml(p);
+      // Escape first — safe baseline, no injection vector.
+      let s = escapeHtml(p);
+      // Ruby: {漢字|かんじ} → <ruby>漢字<rt>かんじ</rt></ruby>
+      //   The { / | / } are kept literal after escapeHtml (not HTML-special), so
+      //   we can pattern-match directly and emit our own trusted tags.
+      s = s.replace(/\{([^|{}]+)\|([^{}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>');
+      // Two-line support: literal "\n" (backslash + n, as typed in signal.dat)
+      // AND real newline chars (common in SRT multi-line cues) both become <br>.
+      s = s.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+      html += s;
     }
   }
   return html;
@@ -5126,11 +5244,9 @@ let _printTimer = null;
 function showPrintOverlay(text, durationSec) {
   const ov = $('printOverlay'); const box = $('printBox');
   if (!ov || !box) return;
-  if (/<img>[^<]*<\/img>/.test(String(text || ''))) {
-    box.innerHTML = renderPrintText(text);
-  } else {
-    box.textContent = text;
-  }
+  // Always route through renderPrintText — ruby tokens, newlines, and <img>
+  // tokens all need it. HTML escaping inside keeps untrusted text safe.
+  box.innerHTML = renderPrintText(text);
   ov.classList.add('show');
   if (_printTimer) clearTimeout(_printTimer);
   const dur = (durationSec != null && durationSec > 0)
@@ -5246,6 +5362,13 @@ function applyMeta(idx) {
 
   // subtitles — fetch (async) and let it populate; missing file is silent
   SubtitleRunner.loadForTrack(idx);
+  // Second SRT channel — cues fire as print-overlay events (authored in an SRT
+  // file instead of inline print(secN)= lines). Reset cursor synchronously so
+  // seeks/catch-up work even before the file finishes loading.
+  if (typeof SrtPrintRunner !== 'undefined') {
+    SrtPrintRunner.reset(idx);
+    SrtPrintRunner.loadForTrack(idx);
+  }
 
   // quality buttons reflect file availability for THIS track
   updateQualityAvailability();
@@ -5694,6 +5817,9 @@ function loop() {
 
   // fire any timeline events whose time has been crossed this frame
   if (engine.playing) TimelineRunner.tick(engine.currentTime);
+  // SRT.print cues — parallel channel, also gated on playing so seeks/pauses
+  // don't spam the overlay while the cursor is catching up.
+  if (engine.playing && typeof SrtPrintRunner !== 'undefined') SrtPrintRunner.tick(engine.currentTime);
   // render active subtitles (independent of timeline)
   SubtitleRunner.tick(engine.currentTime || 0);
   // watch FPS while playing — auto-demote perf tier if the device can't keep up
