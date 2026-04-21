@@ -5338,9 +5338,16 @@ function updateQualityAvailability() {
   qbtnNormal.title = hasNormal ? 'Recalibrate signal to NORMAL' : 'No NORMAL file available';
   qbtnHighfi.disabled = !hasHighfi;
   qbtnHighfi.title = hasHighfi ? 'Recalibrate signal to HI-FI' : 'No HI-FI file for this track';
+  // Truth in UI: if HI-FI isn't available for this track but Registry.quality
+  // is still 'highfi' from a prior track, urlFor() has already fallen back to
+  // the normal file (no choke / no pause) — but the button would still look
+  // "active + disabled" without this fix. Force-demote to 'normal' so the
+  // active pill lives on NORMAL where the actual playback path is pointed.
+  if (!hasHighfi && Registry.quality === 'highfi') {
+    setQuality('normal');
+  }
   // Rainbow glow must only appear when HI-FI is BOTH the active tier AND usable for
-  // this track. Force it off on any track that ships neither WAV nor -high.mp3,
-  // even if Registry.quality is still 'highfi' from a previous track's state.
+  // this track. Force it off on any track that ships neither WAV nor -high.mp3.
   if (!hasHighfi) qbtnHighfi.classList.remove('hifi-glow');
   else if (Registry.quality === 'highfi') qbtnHighfi.classList.add('hifi-glow');
   // Close any lingering popup when the button becomes unusable
