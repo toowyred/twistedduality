@@ -2610,21 +2610,25 @@ const Registry = {
     //   HI-FI + kind='wav'     → *.wav          → any mp3 (prefer -high) → first file
     //   HI-FI + kind='mp3-320' → *-high.mp3     → *.wav                  → first mp3 → first file
     //   NORMAL                 → *-normal.mp3   → any mp3 that isn't -high.mp3 → first file
+    // Any file whose basename is in MissingFiles (session-cached 404) is
+    // invisible to selection — signal.dat may be out of date, don't strand here.
     const isHigh = f => /-high\.mp3$/i.test(f);
     const isWav  = f => /\.wav$/i.test(f);
     const isMp3  = f => /\.mp3$/i.test(f);
+    const alive  = f => !MissingFiles.missing(f);
+    const files  = t.files.filter(alive);
     if (this.quality === 'highfi') {
       const kind = this.hifiKind === 'mp3-320' ? 'mp3-320' : 'wav';
       let match;
-      if (kind === 'wav') match = t.files.find(isWav) || t.files.find(isHigh);
-      else                match = t.files.find(isHigh) || t.files.find(isWav);
+      if (kind === 'wav') match = files.find(isWav) || files.find(isHigh);
+      else                match = files.find(isHigh) || files.find(isWav);
       if (match) return base + match;
     } else {
-      const match = t.files.find(f => /-normal\.mp3$/i.test(f))
-                 || t.files.find(f => isMp3(f) && !isHigh(f));
+      const match = files.find(f => /-normal\.mp3$/i.test(f))
+                 || files.find(f => isMp3(f) && !isHigh(f));
       if (match) return base + match;
     }
-    return t.files[0] ? base + t.files[0] : null;
+    return files[0] ? base + files[0] : (t.files[0] ? base + t.files[0] : null);
   },
 
   // Per-track start offset (seconds). 0 if no start= was set.
@@ -2758,6 +2762,35 @@ const Registry = {
 };
 
 // ══════════════════════════════════════════════════════════════════
+// MISSING-FILES REGISTRY (session-scoped)
+// ──────────────────────────────────────────────────────────────────
+// When a track file listed in signal.dat actually returns 404 from R2 (the
+// signal.dat is out-of-date — File: <name> remains even though the bytes were
+// deleted), we add the basename here. Two effects:
+//   • Registry.urlFor() skips any candidate file whose basename is in the set.
+//   • updateQualityAvailability() treats it as absent when computing the
+//     hasHifiWav / hasHifiMp3 booleans, so the HI-FI button greys out and
+//     Registry.quality auto-demotes to 'normal' via the existing reconciler.
+// Session-scoped on purpose: clears on page reload so a later R2 re-upload
+// rehydrates without the user having to do anything.
+// ══════════════════════════════════════════════════════════════════
+const MissingFiles = {
+  _set: new Set(),
+  _base(url) {
+    if (!url) return '';
+    const m = String(url).match(/\/([^\/?#]+)(?:[?#]|$)/);
+    return m ? m[1] : String(url);
+  },
+  mark(url) {
+    const b = this._base(url);
+    if (b) this._set.add(b);
+  },
+  missing(nameOrUrl) {
+    return this._set.has(this._base(nameOrUrl));
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
 // AUDIO ENGINE (fetch → decode → BufferSource — no <audio> tag)
 // ══════════════════════════════════════════════════════════════════
 class AudioEngine {
@@ -2834,7 +2867,13 @@ class AudioEngine {
     // Still fetch → buffer ourselves so we can (a) report progress, (b) keep
     // the actual R2 URL out of <audio>'s src attribute (replaced with a blob:)
     const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'default' });
-    if (!res.ok) throw new Error('fetch failed: ' + res.status);
+    if (!res.ok) {
+      // Attach the HTTP status to the thrown error so callers can branch on
+      // specific codes (e.g. 404 → MissingFiles.mark + auto-demote to NORMAL).
+      const e = new Error('fetch failed: ' + res.status);
+      e.status = res.status;
+      throw e;
+    }
     const total = parseInt(res.headers.get('content-length') || '0', 10);
     const contentType = res.headers.get('content-type') || 'audio/mpeg';
     const reader = res.body && res.body.getReader ? res.body.getReader() : null;
@@ -5329,10 +5368,13 @@ function updateQualityAvailability() {
     return;
   }
   const files = (t && t.files) || [];
+  // Any file basename confirmed 404 this session (signal.dat out of date vs R2)
+  // is treated as if it weren't listed — keeps the UI truthful.
+  const alive  = f => !MissingFiles.missing(f);
   // "normal" = any mp3 that ISN'T our 320-kbps hi-fi mp3 variant
-  const hasNormal  = files.some(f => /\.mp3$/i.test(f) && !/-high\.mp3$/i.test(f));
-  const hasHifiWav = files.some(f => /\.wav$/i.test(f));
-  const hasHifiMp3 = files.some(f => /-high\.mp3$/i.test(f));
+  const hasNormal  = files.some(f => alive(f) && /\.mp3$/i.test(f) && !/-high\.mp3$/i.test(f));
+  const hasHifiWav = files.some(f => alive(f) && /\.wav$/i.test(f));
+  const hasHifiMp3 = files.some(f => alive(f) && /-high\.mp3$/i.test(f));
   const hasHighfi  = hasHifiWav || hasHifiMp3;
   qbtnNormal.disabled = !hasNormal;
   qbtnNormal.title = hasNormal ? 'Recalibrate signal to NORMAL' : 'No NORMAL file available';
@@ -5571,6 +5613,15 @@ async function reloadCurrent() {
     TimelineRunner.reset(Registry.currentIdx);
   } catch (e) {
     if (isSignError(e)) { handleSignFailure(e.message); return; }
+    // Same 404 auto-demote as loadTrack — this path fires when the user flips
+    // the quality tier mid-playback on a stale signal.dat.
+    if (e && e.status === 404 && rawUrl && /-high\.(wav|mp3)$/i.test(rawUrl)) {
+      console.warn('[radio] HI-FI file 404 on reload — marking missing + demoting:', rawUrl);
+      MissingFiles.mark(rawUrl);
+      if (Registry.quality === 'highfi') setQuality('normal');
+      if (typeof updateQualityAvailability === 'function') updateQualityAvailability();
+      return reloadCurrent();
+    }
     toast(t('failed')); StreamRate.bad();
   }
 }
@@ -5640,6 +5691,19 @@ async function loadTrack(idx, options) {
     return true;
   } catch (e) {
     if (isSignError(e)) { handleSignFailure(e.message); return false; }
+    // Hi-fi 404 auto-demote: signal.dat advertised a file R2 doesn't actually
+    // serve (stale `File:` line). Mark the basename as session-missing so the
+    // UI can grey HI-FI, flip quality → NORMAL so the retry picks the normal
+    // file, then re-run loadTrack with the same options. The retry can't
+    // recurse into this branch because rawUrl now resolves to the normal file
+    // (the hi-fi names are gone from urlFor's candidates via MissingFiles).
+    if (e && e.status === 404 && rawUrl && /-high\.(wav|mp3)$/i.test(rawUrl)) {
+      console.warn('[radio] HI-FI file 404 — marking missing + demoting:', rawUrl);
+      MissingFiles.mark(rawUrl);
+      if (Registry.quality === 'highfi') setQuality('normal');
+      if (typeof updateQualityAvailability === 'function') updateQualityAvailability();
+      return loadTrack(idx, options);
+    }
     toast(t('failed'));
     StreamRate.bad();
     return false;
