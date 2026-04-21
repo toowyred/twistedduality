@@ -3152,6 +3152,14 @@ let keyDetector = null;
 // track. Reset by applyMeta() on every track change so the next track can
 // trigger its own early advance exactly once.
 let _silentOutroFired = false;
+// Guards for the glitch-teaser pipeline:
+//   _nextBufferArmed — prepareFor() has been kicked for the current track's
+//                      outro; don't re-arm while it's in flight.
+//   _teaserFired     — the teaser has played for the current track; don't
+//                      replay on every subsequent frame.
+// Both reset per track in applyMeta().
+let _nextBufferArmed = false;
+let _teaserFired = false;
 
 const $ = id => document.getElementById(id);
 const btnPlay = $('btnPlay'), btnScan = $('btnScan');
@@ -4373,6 +4381,190 @@ const PreBuffer = {
 };
 
 // ══════════════════════════════════════════════════════════════════
+// NEXT-TRACK PRE-FETCH + GLITCH TEASER
+// ──────────────────────────────────────────────────────────────────
+// When the current track has a silent outro (last silent= range ends at the
+// track's tail, typically written as "(min5:04)-(end)"), we:
+//   1. fetch the first ~2 MB of the next sequential playable track 15 s before
+//      the outro starts (enough to decode a few seconds of audio);
+//   2. decode those bytes into an AudioBuffer on the engine's AudioContext;
+//   3. the moment playback crosses outro.start, play a ~3 s distorted slice
+//      of that buffer through a wave-shaper + bandpass + tremolo chain — the
+//      "glitch teaser" — mixed into the live analyser so the waveform reacts;
+//   4. when the current track ends naturally, onTrackFullyPlayed() loads the
+//      real next track through its normal path.
+// While a teaser is armed, the existing silent-outro early-advance is
+// suppressed (otherwise the next track would crossfade in under the teaser).
+// ══════════════════════════════════════════════════════════════════
+const NextBuffer = {
+  idx: -1,          // idx of the pre-picked next track
+  abort: null,      // AbortController for the partial fetch
+  blob: null,       // partial audio blob
+  audio: null,      // decoded AudioBuffer (teaser source)
+  decoded: false,
+
+  // Find the next playable track in the same sequential walk onTrackFullyPlayed
+  // uses, so the teaser and the real next-load reach the same track.
+  _nextIdxFor(currentIdx) {
+    let n = currentIdx + 1;
+    while (n < Registry.tracks.length && !Registry._playable(n)) n++;
+    return n < Registry.tracks.length ? n : -1;
+  },
+
+  async prepareFor(currentIdx) {
+    // Reset anything from a prior prepareFor that's still hanging around.
+    this.cancel();
+    const next = this._nextIdxFor(currentIdx);
+    if (next < 0) return;
+    this.idx = next;
+    const rawUrl = Registry.urlFor(next);
+    if (!rawUrl) return;
+    let signedUrl;
+    try { signedUrl = await Registry.signUrl(rawUrl); } catch (_) { return; }
+    if (this.idx !== next) return;                              // cancelled mid-sign
+    const BUDGET = 2 * 1024 * 1024;                             // ~5 s WAV / ~50 s 320-kbps MP3
+    const ctrl = new AbortController();
+    this.abort = ctrl;
+    let blob = null;
+    try {
+      const res = await fetch(signedUrl, {
+        signal: ctrl.signal,
+        cache: 'default',
+        headers: { 'Range': 'bytes=0-' + (BUDGET - 1) },
+      });
+      if (!res.ok && res.status !== 206) return;
+      const reader = res.body && res.body.getReader ? res.body.getReader() : null;
+      if (!reader) return;
+      const chunks = []; let got = 0;
+      while (true) {
+        if (this.idx !== next) break;                           // cancelled
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value); got += value.length;
+        if (got >= BUDGET) break;
+      }
+      try { reader.cancel(); } catch (_) {}
+      blob = new Blob(chunks, { type: res.headers.get('content-type') || 'audio/mpeg' });
+    } catch (_) {
+      return;
+    } finally {
+      this.abort = null;
+    }
+    if (!blob || this.idx !== next) return;
+    this.blob = blob;
+    // Decode via the live engine context (required — decodeAudioData binds the
+    // resulting buffer to its context's sample rate).
+    if (!engine || !engine.ctx) return;
+    try {
+      const ab = await blob.arrayBuffer();
+      const audio = await engine.ctx.decodeAudioData(ab);
+      if (this.idx !== next) return;
+      this.audio = audio;
+      this.decoded = true;
+    } catch (_) {
+      // Partial decode failed (mid-frame cut, WAV header length drama, etc.).
+      // Silent fail — the track still plays normally at natural end.
+    }
+  },
+
+  cancel() {
+    if (this.abort) { try { this.abort.abort(); } catch (_) {} this.abort = null; }
+    this.idx = -1;
+    this.blob = null;
+    this.audio = null;
+    this.decoded = false;
+  },
+
+  isReadyFor(currentIdx) {
+    return this.decoded && this.audio != null && this.idx === this._nextIdxFor(currentIdx);
+  }
+};
+
+// Standard Web Audio distortion curve. Higher `amount` = harsher saturation.
+function _makeDistortionCurve(amount) {
+  const k = amount || 120;
+  const n = 44100;
+  const curve = new Float32Array(n);
+  const deg = Math.PI / 180;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
+}
+
+// Track the currently-playing teaser so new track-loads can stop it clean.
+let _teaserNodes = null;
+function _stopTeaser(immediate) {
+  if (!_teaserNodes) return;
+  const ctx = engine && engine.ctx;
+  try {
+    if (immediate || !ctx) {
+      _teaserNodes.src.stop();
+    } else {
+      const t = ctx.currentTime;
+      _teaserNodes.outGain.gain.cancelScheduledValues(t);
+      _teaserNodes.outGain.gain.setValueAtTime(_teaserNodes.outGain.gain.value, t);
+      _teaserNodes.outGain.gain.linearRampToValueAtTime(0, t + 0.15);
+      _teaserNodes.src.stop(t + 0.17);
+    }
+  } catch (_) {}
+  _teaserNodes = null;
+}
+
+function playTeaser(audioBuffer, teaserDur) {
+  if (!audioBuffer || !engine.ctx || !engine.analyser) return;
+  _stopTeaser(true);
+  const ctx = engine.ctx;
+  const src = ctx.createBufferSource();
+  src.buffer = audioBuffer;
+  // Wave-shaper — harmonic saturation / clipping, the "broken" flavor.
+  const shaper = ctx.createWaveShaper();
+  shaper.curve = _makeDistortionCurve(140);
+  shaper.oversample = '4x';
+  // Bandpass — squeeze mids, tinny-radio vibe.
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 1200;
+  bp.Q.value = 6;
+  // Tremolo — amplitude LFO for the "glitching in and out" feel.
+  const trem = ctx.createGain();
+  trem.gain.value = 0.6;
+  const lfo    = ctx.createOscillator();
+  const lfoAmt = ctx.createGain();
+  lfo.frequency.value = 9;
+  lfoAmt.gain.value   = 0.4;
+  lfo.connect(lfoAmt);
+  lfoAmt.connect(trem.gain);
+  // Output gain — fade in / out so nothing clicks.
+  const outGain = ctx.createGain();
+  outGain.gain.value = 0;
+  // Graph: src → shaper → bandpass → tremolo → outGain → analyser (so the
+  // visualizer reacts) → masterGain → destination (wired by AudioEngine.init).
+  src.connect(shaper);
+  shaper.connect(bp);
+  bp.connect(trem);
+  trem.connect(outGain);
+  outGain.connect(engine.analyser);
+
+  const now = ctx.currentTime;
+  const dur = Math.max(1.2, Math.min(teaserDur || 3.2, audioBuffer.duration - 0.1));
+  // Fade-in 120 ms, sustain, fade-out 220 ms before stop.
+  outGain.gain.setValueAtTime(0, now);
+  outGain.gain.linearRampToValueAtTime(0.38, now + 0.12);
+  outGain.gain.setValueAtTime(0.38, now + dur - 0.22);
+  outGain.gain.linearRampToValueAtTime(0, now + dur);
+  lfo.start(now);
+  src.start(now, 0, dur);
+
+  _teaserNodes = { src, shaper, bp, trem, lfo, lfoAmt, outGain };
+  src.onended = () => {
+    try { src.disconnect(); shaper.disconnect(); bp.disconnect(); trem.disconnect(); lfoAmt.disconnect(); outGain.disconnect(); lfo.stop(); lfo.disconnect(); } catch (_) {}
+    if (_teaserNodes && _teaserNodes.src === src) _teaserNodes = null;
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
 // LIVE STATE + TIMELINE RUNNER
 // ──────────────────────────────────────────────────────────────────
 // A track's metadata can mutate over playback via timeline events from
@@ -4896,8 +5088,13 @@ function applyMeta(idx) {
   if (typeof updateCollapseLabel === 'function') updateCollapseLabel();
   // PLAY becomes usable once a track has been loaded
   btnPlay.disabled = false;
-  // fresh track → reset the silent-outro early-advance guard
+  // fresh track → reset the silent-outro early-advance + teaser guards,
+  // cancel any stale next-track pre-fetch + in-flight teaser from the prior track
   _silentOutroFired = false;
+  _nextBufferArmed = false;
+  _teaserFired = false;
+  if (typeof NextBuffer !== 'undefined') NextBuffer.cancel();
+  if (typeof _stopTeaser === 'function') _stopTeaser(true);
   // wipe any wsi-line1/wsi-line2 overrides left over from the previous track
   if (typeof BrandLock !== 'undefined') BrandLock.restore();
 
@@ -5103,8 +5300,12 @@ btnScan.addEventListener('click', async () => {
   _scanInFlight = true;
   btnScan.classList.add('active');
 
-  // Real fetch owns the bandwidth from here on — cancel any in-flight pre-buffer.
+  // Real fetch owns the bandwidth from here on — cancel any in-flight pre-buffer,
+  // next-track pre-fetch, or running teaser. SCAN is a deliberate break from the
+  // sequential-auto-advance assumption, so whatever we warmed for "next" is stale.
   if (typeof PreBuffer !== 'undefined') PreBuffer.cancel();
+  if (typeof NextBuffer !== 'undefined') NextBuffer.cancel();
+  if (typeof _stopTeaser === 'function') _stopTeaser(false);
 
   // First SCAN ever: play the track the Player already pre-picked at boot (the one
   // we may have pre-buffered + pre-analysed). Subsequent SCANs pick a fresh random.
@@ -5332,16 +5533,41 @@ function loop() {
     onTrackFullyPlayed();
   }
 
-  // Early auto-advance over a declared silent outro. When the current track has
-  // silent=(secA)-(secB) covering its tail (range.end within 2 s of duration),
-  // fire onTrackFullyPlayed() the moment currentTime crosses range.start — so
-  // the next track's intro audibly overlaps the silent outro instead of playing
-  // through dead air. One-shot per track load (guarded by _silentOutroFired).
-  if (engine.playing && !_silentOutroFired) {
+  // ── silent-outro choreography ──────────────────────────────────────
+  // Three stages, all gated on the current track declaring silent=…-(end)
+  // (or any range whose end lies within 2 s of the known duration):
+  //   (a)  ≥15 s before outro → arm NextBuffer (partial fetch + decode of the
+  //        next sequential playable track) so we have a teaser source ready.
+  //   (b)  currentTime ≥ outro.start → either play a glitch teaser (if the
+  //        next-track decode landed in time) OR fall back to the plain
+  //        early-advance behaviour.
+  //   (c)  Natural track end fires onTrackFullyPlayed() as before — either
+  //        directly after a teaser, or via the mediaEl 'ended' event.
+  if (engine.playing && engine.duration > 0) {
     const outro = Registry.silentOutroFor(Registry.currentIdx, engine.duration, 2);
-    if (outro && engine.currentTime >= outro.start) {
-      _silentOutroFired = true;
-      onTrackFullyPlayed();
+    if (outro) {
+      // (a) arm next-track pre-fetch 15 s before the outro, once per track
+      if (!_nextBufferArmed && engine.currentTime >= outro.start - 15) {
+        _nextBufferArmed = true;
+        NextBuffer.prepareFor(Registry.currentIdx).catch(() => {/* silent */});
+      }
+      // (b) at outro.start: teaser preferred, else early-advance
+      if (!_teaserFired && !_silentOutroFired && engine.currentTime >= outro.start) {
+        if (NextBuffer.isReadyFor(Registry.currentIdx)) {
+          _teaserFired = true;
+          // Teaser duration fits inside the silent outro (cap at 3.2 s; leave
+          // a small margin so the tail doesn't bleed into the real next track).
+          // If the outro ends with (end), the stored end is Infinity — substitute
+          // the live duration to get a realistic outro length.
+          const outroEnd = isFinite(outro.end) ? outro.end : engine.duration;
+          const outroLen = Math.max(0, outroEnd - outro.start);
+          const teaseDur = Math.min(3.2, Math.max(1.2, outroLen - 0.3));
+          playTeaser(NextBuffer.audio, teaseDur);
+        } else {
+          _silentOutroFired = true;
+          onTrackFullyPlayed();
+        }
+      }
     }
   }
 
