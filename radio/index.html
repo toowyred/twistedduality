@@ -968,10 +968,64 @@
   .camelot-legend .dot-current { background: var(--accent); border-color: var(--accent); }
   .camelot-legend .dot-compat  { background: var(--accent-dim); }
 
-  /* Make the KEY readout feel tappable — subtle underline on hover, finger cursor. */
-  .tuner .keyval { cursor: pointer; }
-  .tuner .keyval:hover { text-decoration: underline; text-decoration-color: var(--accent-dim); text-underline-offset: 3px; }
-  @media (max-width: 860px) { .tuner .keyval:hover { text-decoration: none; } }
+  /* ── readout-button ───────────────────────────────────────────────
+     Whole "KEY | value" row behaves as a button. At rest it blends into
+     the tuner — no border, no fill. Border + soft fill appear on hover,
+     focus, or press. Padding bleeds into negative margins so the normal
+     layout of the readout row is untouched. */
+  .tuner .strip-bot .readout-btn {
+    cursor: pointer;
+    padding: 2px 8px; margin: -2px -4px;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    position: relative; overflow: hidden;   /* clip the glare sweep */
+    user-select: none;
+  }
+  .tuner .strip-bot .readout-btn:hover,
+  .tuner .strip-bot .readout-btn:focus-visible {
+    background: rgba(255,255,255,0.04);
+    border-color: var(--accent-dim);
+    outline: none;
+  }
+  .tuner .strip-bot .readout-btn:active {
+    background: rgba(255,255,255,0.08);
+    border-color: var(--accent);
+  }
+  @media (max-width: 860px) {
+    .tuner .strip-bot .readout-btn:hover { background: transparent; border-color: transparent; }
+    .tuner .strip-bot .readout-btn:active { background: rgba(255,255,255,0.08); border-color: var(--accent); }
+  }
+
+  /* ── glare sweep — "there's a button here" attention nudge ──────────
+     Shared by the KEY readout (periodic) and the [?] help button (first 10 s
+     of a track). A diagonal shine sweeps left→right via an ::after overlay;
+     self-removes on animationend so it doesn't linger. */
+  .glare-sweep { position: relative; overflow: hidden; }
+  .glare-sweep::after {
+    content: '';
+    position: absolute;
+    top: -20%; bottom: -20%;
+    left: 0; width: 55%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0.10) 35%,
+      rgba(255,255,255,0.30) 50%,
+      rgba(255,255,255,0.10) 65%,
+      transparent 100%
+    );
+    transform: translateX(-220%) skewX(-18deg);
+    pointer-events: none;
+    animation: glare-sweep-anim 1.3s ease-out forwards;
+  }
+  @keyframes glare-sweep-anim {
+    from { transform: translateX(-220%) skewX(-18deg); }
+    to   { transform: translateX(360%)  skewX(-18deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .glare-sweep::after { display: none; }
+  }
 
   /* ── code-unlock panel (bottom-left above tuner; collapsed key → expanded input) ── */
   .code-panel {
@@ -1807,7 +1861,7 @@
     </div>
     <div class="strip-bot">
       <div class="readout"><span data-i18n="bpm">BPM</span><span class="v val-accent" id="bpmVal">---</span></div>
-      <div class="readout"><span data-i18n="key">KEY</span><span class="v val-accent keyval" id="keyVal"><span class="k-long">---</span><span class="k-short">---</span></span></div>
+      <div class="readout readout-btn" id="keyReadoutBtn" role="button" tabindex="0" aria-label="Camelot wheel"><span data-i18n="key">KEY</span><span class="v val-accent keyval" id="keyVal"><span class="k-long">---</span><span class="k-short">---</span></span></div>
       <div class="readout"><span>dB</span><span class="v" id="dbReadout">---</span></div>
     </div>
   </div>
@@ -3290,17 +3344,90 @@ const CamelotWheel = (() => {
   }
   function isOpen() { return overlay.classList.contains('open'); }
 
-  // Wire-up: tap KEY readout to open. Overlay bg / Esc / [CLOSE] all dismiss.
-  keyVal.addEventListener('click', open);
-  keyVal.setAttribute('role', 'button');
-  keyVal.setAttribute('tabindex', '0');
-  keyVal.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  // Wire-up: the whole "KEY | value" row is the button now (not just the value span).
+  // Overlay bg / Esc / [CLOSE] all dismiss.
+  const keyReadoutBtn = $('keyReadoutBtn');
+  const openAndMarkFound = () => {
+    open();
+    if (typeof KeyGlare !== 'undefined') KeyGlare.markFound();
+  };
+  keyReadoutBtn.addEventListener('click', openAndMarkFound);
+  keyReadoutBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAndMarkFound(); }
+  });
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   closeBtn.addEventListener('click', close);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) close(); });
 
   return { open, close, isOpen, highlight };
 })();
+
+// ══════════════════════════════════════════════════════════════════
+// GLARE ATTENTION NUDGES
+// ──────────────────────────────────────────────────────────────────
+// triggerGlare(el)    — one-shot shine sweep on any element.
+// KeyGlare            — periodic nudge on the KEY readout so visitors discover
+//                       it's a button. Stops permanently once the user clicks.
+// startHelpGlareWindow() — glare the [?] refresh button a few times within
+//                       the first 10 s of a track (covers the meta-data-may-
+//                       be-stale risk window before the watchdog typically
+//                       reveals the issue). Called from loadTrack autoplay
+//                       path + SCAN success path.
+// ══════════════════════════════════════════════════════════════════
+function triggerGlare(el) {
+  if (!el || el.classList.contains('glare-sweep')) return;
+  el.classList.add('glare-sweep');
+  const clear = () => { el.classList.remove('glare-sweep'); el.removeEventListener('animationend', clear); };
+  el.addEventListener('animationend', clear);
+  // safety net: hard-timeout in case animationend never fires (e.g. prefers-reduced-motion)
+  setTimeout(clear, 1800);
+}
+
+const KeyGlare = {
+  timer: null,
+  foundOut: false,
+  INTERVAL_MS: 28000,     // ~28 s between nudges — present but not naggy
+
+  start() {
+    if (this.timer || this.foundOut) return;
+    this.timer = setInterval(() => {
+      if (this.foundOut) { this.stop(); return; }
+      if (document.hidden) return;
+      if (typeof CamelotWheel !== 'undefined' && CamelotWheel.isOpen && CamelotWheel.isOpen()) return;
+      // Skip if any modal-ish thing is up — users are already looking somewhere specific.
+      if (document.querySelector('.info-overlay.open, .playback-info-overlay.open, .camelot-overlay.open')) return;
+      const el = document.getElementById('keyReadoutBtn');
+      if (el) triggerGlare(el);
+    }, this.INTERVAL_MS);
+  },
+  stop() {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+  },
+  markFound() {
+    this.foundOut = true;
+    this.stop();
+  }
+};
+
+// Guard so multiple track loads in quick succession (auto-advance during a debug
+// spree, etc.) don't stack overlapping glare loops on [?].
+let _helpGlareUntil = 0;
+function startHelpGlareWindow() {
+  const el = document.getElementById('cardHelp');
+  if (!el) return;
+  const windowMs = 10000;
+  const fireEveryMs = 4000;
+  _helpGlareUntil = Date.now() + windowMs;
+  const fire = () => {
+    if (Date.now() > _helpGlareUntil) return;
+    if (document.hidden) { setTimeout(fire, 500); return; }
+    triggerGlare(el);
+    setTimeout(fire, fireEveryMs);
+  };
+  // Slight initial delay so the glare lands after the track card has actually
+  // finished animating in (feels less "shouty" at track boundaries).
+  setTimeout(fire, 600);
+}
 const signalBars = $('signalBars');
 const vibeBlock = $('vibeBlock'), vibeValue = $('vibeValue');
 const loadingEl = $('loading'), loadStatus = $('loadStatus');
@@ -4845,6 +4972,9 @@ async function loadTrack(idx, options) {
         if (startSec > 0) { try { engine.mediaEl.currentTime = startSec; } catch (_) {} }
         await engine.play();
       }
+      // 10 s meta-data-risk glare window on [?]. Covers auto-advance, PLAY
+      // first-run, godmode load — any path that actually starts audio via loadTrack.
+      if (typeof startHelpGlareWindow === 'function') startHelpGlareWindow();
     } else if (startSec > 0) {
       // even without autoplay, seed currentTime so the UI needle lands inside the playable region
       try { engine.mediaEl.currentTime = startSec; } catch (_) {}
@@ -4962,6 +5092,10 @@ btnScan.addEventListener('click', async () => {
     if (startSec > 0 && scanOffset < startSec) scanOffset = startSec;
     engine.crossfadeToTrack(scanOffset, 0.4);
     if (scanOffset > 0) TimelineRunner.catchUpTo(scanOffset);
+    // Same 10 s meta-data-risk glare on [?] whether we entered at sec0 or at
+    // a scan-skip timestamp — the user's visual reference window is the first
+    // 10 s of audio they hear either way.
+    if (typeof startHelpGlareWindow === 'function') startHelpGlareWindow();
     updatePlayBtn();
     const kbps = (dur > 0 && loadedBytes > 0) ? Math.round((loadedBytes * 8) / (dur * 1000)) : 0;
     StreamRate.loaded(kbps);
@@ -5408,6 +5542,10 @@ function updateDbReadout(freq) {
 
   clearInterval(dotsTimer);
   hideLoading();
+
+  // Periodic "there's a button here" glare on the KEY readout. Stops forever
+  // once the user clicks the readout (they've discovered it).
+  if (typeof KeyGlare !== 'undefined') KeyGlare.start();
 })();
 
 // ══════════════════════════════════════════════════════════════════
