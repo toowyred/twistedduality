@@ -4007,6 +4007,10 @@ function updateQualityAvailability() {
 function applyEmptyCard() {
   trackCard.classList.add('card-empty');
   btnScan.classList.add('attn');   // first-run glow inviting the tap
+  // No track yet → neither quality tier has context. Disable both and kill any stale glow.
+  qbtnNormal.disabled = true;
+  qbtnHighfi.disabled = true;
+  qbtnHighfi.classList.remove('hifi-glow');
   $('m-signal').textContent = t('press-scan');
   $('m-decoder').textContent = '';
   $('m-status').textContent = '';
