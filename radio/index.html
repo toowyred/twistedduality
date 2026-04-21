@@ -2476,6 +2476,7 @@ const Registry = {
     printDefault: 5,
     crossfadeMs: 400,         // inter-track crossfade duration (0–2000 sane)
     interNoiseLevel: 0.06,    // low-volume radio-noise bed during the crossfade gap
+    teaserSec: 4,             // glitch-teaser length (s) when current track declares a silent outro
   },
   currentIdx: -1,
   quality: localStorage.getItem('td-radio-quality') || 'normal',  // 'normal' | 'highfi'
@@ -2510,6 +2511,10 @@ const Registry = {
         if (parsed.globals && parsed.globals.interNoiseLevel != null) {
           const n = parseFloat(parsed.globals.interNoiseLevel);
           if (isFinite(n) && n >= 0 && n <= 1) this.globals.interNoiseLevel = n;
+        }
+        if (parsed.globals && parsed.globals.teaserSec != null) {
+          const ts = parseFloat(parsed.globals.teaserSec);
+          if (isFinite(ts) && ts >= 0.5 && ts <= 30) this.globals.teaserSec = ts;
         }
         this.source = src;
         this.mode = src.offline ? 'offline' : 'online';
@@ -2809,6 +2814,37 @@ class AudioEngine {
     if (onProgress) onProgress(1, loaded);
     // return shape matches the old AudioBuffer result so callers still compute kbps
     return { buffer: { duration: this.mediaEl.duration }, bytes: loaded };
+  }
+
+  // Same internal swap machinery as loadUrl, but starts from a pre-fetched Blob
+  // so there's no network round-trip. Used by the teaser → real-track hand-off:
+  // NextBuffer.prepareFor() has already downloaded the whole next track during
+  // the outro lead-in, so when track 1 ends we can swap instantly.
+  async loadFromBlob(blob) {
+    this.init();
+    if (!blob) throw new Error('loadFromBlob: no blob');
+    const id = ++this.loadCounter;
+    try { this.mediaEl.pause(); } catch (_) {}
+    try { this.mediaEl.removeAttribute('src'); this.mediaEl.load(); } catch (_) {}
+    if (this.blobUrl) { try { URL.revokeObjectURL(this.blobUrl); } catch (_) {} this.blobUrl = null; }
+    this.blobUrl = URL.createObjectURL(blob);
+    this.mediaEl.src = this.blobUrl;
+    await new Promise((resolve, reject) => {
+      let kicked = false;
+      const kick = setTimeout(() => { if (kicked) return; kicked = true; try { this.mediaEl.load(); } catch (_) {} }, 4000);
+      const onMeta = () => { cleanup(); resolve(); };
+      const onErr  = () => { cleanup(); reject(new Error('audio load error')); };
+      const cleanup = () => {
+        clearTimeout(kick);
+        this.mediaEl.removeEventListener('loadedmetadata', onMeta);
+        this.mediaEl.removeEventListener('error', onErr);
+      };
+      this.mediaEl.addEventListener('loadedmetadata', onMeta, { once: true });
+      this.mediaEl.addEventListener('error', onErr, { once: true });
+      try { this.mediaEl.load(); } catch (_) {}
+    });
+    if (id !== this.loadCounter) return null;
+    return { buffer: { duration: this.mediaEl.duration }, bytes: blob.size };
   }
 
   // kept for API compatibility — equivalent to a pause()
@@ -3153,13 +3189,18 @@ let keyDetector = null;
 // trigger its own early advance exactly once.
 let _silentOutroFired = false;
 // Guards for the glitch-teaser pipeline:
-//   _nextBufferArmed — prepareFor() has been kicked for the current track's
-//                      outro; don't re-arm while it's in flight.
-//   _teaserFired     — the teaser has played for the current track; don't
-//                      replay on every subsequent frame.
-// Both reset per track in applyMeta().
-let _nextBufferArmed = false;
-let _teaserFired = false;
+//   _nextBufferArmed      — prepareFor() has been kicked for the current track's
+//                           outro; don't re-arm while it's in flight.
+//   _teaserFired          — the teaser has played for the current track; don't
+//                           replay on every subsequent frame.
+//   _teaserConsumedSec    — how many seconds of the NEXT track the teaser has
+//                           already played through its clean dry path. Feeds
+//                           into loadTrack's offsetSec so the real next track
+//                           skips those seconds and picks up seamlessly.
+// All reset per track in applyMeta().
+let _nextBufferArmed   = false;
+let _teaserFired       = false;
+let _teaserConsumedSec = 0;
 
 const $ = id => document.getElementById(id);
 const btnPlay = $('btnPlay'), btnScan = $('btnScan');
@@ -4398,10 +4439,11 @@ const PreBuffer = {
 // ══════════════════════════════════════════════════════════════════
 const NextBuffer = {
   idx: -1,          // idx of the pre-picked next track
-  abort: null,      // AbortController for the partial fetch
-  blob: null,       // partial audio blob
-  audio: null,      // decoded AudioBuffer (teaser source)
+  abort: null,      // AbortController for the full-file fetch
+  blob: null,       // full audio blob — reused verbatim for playback (no re-fetch)
+  audio: null,      // decoded AudioBuffer slice (teaser source)
   decoded: false,
+  fullLoaded: false,
 
   // Find the next playable track in the same sequential walk onTrackFullyPlayed
   // uses, so the teaser and the real next-load reach the same track.
@@ -4412,7 +4454,6 @@ const NextBuffer = {
   },
 
   async prepareFor(currentIdx) {
-    // Reset anything from a prior prepareFor that's still hanging around.
     this.cancel();
     const next = this._nextIdxFor(currentIdx);
     if (next < 0) return;
@@ -4422,33 +4463,16 @@ const NextBuffer = {
     let signedUrl;
     try { signedUrl = await Registry.signUrl(rawUrl); } catch (_) { return; }
     if (this.idx !== next) return;                              // cancelled mid-sign
-    // Byte budget — enough partial audio to cover most declared silent outros.
-    // 3 MB gives ~17 s of lossless WAV (1411 kbps) or ~76 s of 320-kbps MP3.
-    // If a real outro exceeds the decoded length, the teaser simply ends early
-    // and the remainder of the outro plays as originally written (silent).
-    const BUDGET = 3 * 1024 * 1024;
     const ctrl = new AbortController();
     this.abort = ctrl;
     let blob = null;
     try {
-      const res = await fetch(signedUrl, {
-        signal: ctrl.signal,
-        cache: 'default',
-        headers: { 'Range': 'bytes=0-' + (BUDGET - 1) },
-      });
-      if (!res.ok && res.status !== 206) return;
-      const reader = res.body && res.body.getReader ? res.body.getReader() : null;
-      if (!reader) return;
-      const chunks = []; let got = 0;
-      while (true) {
-        if (this.idx !== next) break;                           // cancelled
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value); got += value.length;
-        if (got >= BUDGET) break;
-      }
-      try { reader.cancel(); } catch (_) {}
-      blob = new Blob(chunks, { type: res.headers.get('content-type') || 'audio/mpeg' });
+      // Full fetch — one download serves both the teaser decode AND the real
+      // next-track playback (via engine.loadFromBlob), so there's no re-fetch
+      // when track 1 ends. Uses cache: 'default' so the browser may dedupe.
+      const res = await fetch(signedUrl, { signal: ctrl.signal, cache: 'default' });
+      if (!res.ok) return;
+      blob = await res.blob();
     } catch (_) {
       return;
     } finally {
@@ -4456,18 +4480,25 @@ const NextBuffer = {
     }
     if (!blob || this.idx !== next) return;
     this.blob = blob;
-    // Decode via the live engine context (required — decodeAudioData binds the
-    // resulting buffer to its context's sample rate).
+    this.fullLoaded = true;
+
+    // Decode a sliced prefix for the teaser — memory-friendly (decoding a 4-min
+    // track in full would peak at ~85 MB of AudioBuffer on mobile). 2 MB is
+    // enough for ~12 s of lossless WAV or ~50 s of 320-kbps MP3, more than
+    // covers any realistic teaser length.
     if (!engine || !engine.ctx) return;
     try {
-      const ab = await blob.arrayBuffer();
+      const teaserBytes = Math.min(2 * 1024 * 1024, blob.size);
+      const slice = blob.slice(0, teaserBytes, blob.type);
+      const ab = await slice.arrayBuffer();
       const audio = await engine.ctx.decodeAudioData(ab);
       if (this.idx !== next) return;
       this.audio = audio;
       this.decoded = true;
     } catch (_) {
-      // Partial decode failed (mid-frame cut, WAV header length drama, etc.).
-      // Silent fail — the track still plays normally at natural end.
+      // Decode failed (mid-frame truncation, WAV header drama, etc.) —
+      // teaser is silently skipped but the real next-track load can still
+      // reuse this.blob via engine.loadFromBlob.
     }
   },
 
@@ -4477,6 +4508,7 @@ const NextBuffer = {
     this.blob = null;
     this.audio = null;
     this.decoded = false;
+    this.fullLoaded = false;
   },
 
   isReadyFor(currentIdx) {
@@ -4516,22 +4548,28 @@ function _stopTeaser(immediate) {
   _teaserNodes = null;
 }
 
+// Plays `teaserDur` seconds of audioBuffer through a distortion chain that
+// crossfades to a clean parallel path over the last ~1 s. Net effect: user
+// hears wet (glitchy) for most of the teaser, then the same content fully
+// clean for the final second — which is exactly where the real next track
+// picks up (via loadFromBlob + offsetSec=teaserDur). Seamless content.
 function playTeaser(audioBuffer, teaserDur) {
   if (!audioBuffer || !engine.ctx || !engine.analyser) return;
   _stopTeaser(true);
   const ctx = engine.ctx;
   const src = ctx.createBufferSource();
   src.buffer = audioBuffer;
-  // Wave-shaper — harmonic saturation / clipping, the "broken" flavor.
+
+  // ── WET path: shaper → bandpass → tremolo → wetGain ────────────────
   const shaper = ctx.createWaveShaper();
   shaper.curve = _makeDistortionCurve(140);
   shaper.oversample = '4x';
-  // Bandpass — squeeze mids, tinny-radio vibe.
   const bp = ctx.createBiquadFilter();
   bp.type = 'bandpass';
   bp.frequency.value = 1200;
   bp.Q.value = 6;
-  // Tremolo — amplitude LFO for the "glitching in and out" feel.
+  // Sweep the filter upward as the teaser proceeds — "tuning in from fuzz to
+  // clarity" feel, pairs naturally with the wet→dry fade.
   const trem = ctx.createGain();
   trem.gain.value = 0.6;
   const lfo    = ctx.createOscillator();
@@ -4540,30 +4578,62 @@ function playTeaser(audioBuffer, teaserDur) {
   lfoAmt.gain.value   = 0.4;
   lfo.connect(lfoAmt);
   lfoAmt.connect(trem.gain);
-  // Output gain — fade in / out so nothing clicks.
+  const wetGain = ctx.createGain();
+
+  // ── DRY path: src → dryGain ───────────────────────────────────────
+  const dryGain = ctx.createGain();
+
+  // ── Master output gain: overall envelope (prevent clicks) ──────────
   const outGain = ctx.createGain();
   outGain.gain.value = 0;
-  // Graph: src → shaper → bandpass → tremolo → outGain → analyser (so the
-  // visualizer reacts) → masterGain → destination (wired by AudioEngine.init).
+
+  // Wire graph. Both wet and dry terminate at outGain → analyser.
   src.connect(shaper);
   shaper.connect(bp);
   bp.connect(trem);
-  trem.connect(outGain);
+  trem.connect(wetGain);
+  wetGain.connect(outGain);
+  src.connect(dryGain);
+  dryGain.connect(outGain);
   outGain.connect(engine.analyser);
 
   const now = ctx.currentTime;
-  const dur = Math.max(1.2, Math.min(teaserDur || 3.2, audioBuffer.duration - 0.1));
-  // Fade-in 120 ms, sustain, fade-out 220 ms before stop.
+  const dur = Math.max(1.2, Math.min(teaserDur || 4, audioBuffer.duration - 0.1));
+  // The blend window is the last min(1s, 25% of dur) — distortion fades
+  // out, clean fades in, filter sweeps open.
+  const blend = Math.min(1.0, Math.max(0.4, dur * 0.25));
+  const blendStart = now + dur - blend;
+
+  // outGain envelope: fade in 120 ms, sustain, fade out 80 ms at the very end
+  // (the dry path is already at peak by then so the final trail is clean).
   outGain.gain.setValueAtTime(0, now);
-  outGain.gain.linearRampToValueAtTime(0.38, now + 0.12);
-  outGain.gain.setValueAtTime(0.38, now + dur - 0.22);
+  outGain.gain.linearRampToValueAtTime(0.55, now + 0.12);
+  outGain.gain.setValueAtTime(0.55, now + dur - 0.08);
   outGain.gain.linearRampToValueAtTime(0, now + dur);
+
+  // wetGain: full for the distortion phase → 0 by end of blend.
+  wetGain.gain.setValueAtTime(0.9, now);
+  wetGain.gain.setValueAtTime(0.9, blendStart);
+  wetGain.gain.linearRampToValueAtTime(0, now + dur);
+  // dryGain: 0 until blend starts → ramps to 1 by end.
+  dryGain.gain.setValueAtTime(0, now);
+  dryGain.gain.setValueAtTime(0, blendStart);
+  dryGain.gain.linearRampToValueAtTime(1, now + dur);
+  // Filter sweep: 1200 Hz → 6 kHz over the blend → "opening up" feel.
+  bp.frequency.setValueAtTime(1200, blendStart);
+  bp.frequency.exponentialRampToValueAtTime(6000, now + dur);
+
   lfo.start(now);
   src.start(now, 0, dur);
 
-  _teaserNodes = { src, shaper, bp, trem, lfo, lfoAmt, outGain };
+  _teaserNodes = { src, shaper, bp, trem, lfo, lfoAmt, wetGain, dryGain, outGain };
   src.onended = () => {
-    try { src.disconnect(); shaper.disconnect(); bp.disconnect(); trem.disconnect(); lfoAmt.disconnect(); outGain.disconnect(); lfo.stop(); lfo.disconnect(); } catch (_) {}
+    try {
+      src.disconnect(); shaper.disconnect(); bp.disconnect();
+      trem.disconnect(); lfoAmt.disconnect();
+      wetGain.disconnect(); dryGain.disconnect();
+      outGain.disconnect(); lfo.stop(); lfo.disconnect();
+    } catch (_) {}
     if (_teaserNodes && _teaserNodes.src === src) _teaserNodes = null;
   };
 }
@@ -5094,9 +5164,10 @@ function applyMeta(idx) {
   btnPlay.disabled = false;
   // fresh track → reset the silent-outro early-advance + teaser guards,
   // cancel any stale next-track pre-fetch + in-flight teaser from the prior track
-  _silentOutroFired = false;
-  _nextBufferArmed = false;
-  _teaserFired = false;
+  _silentOutroFired  = false;
+  _nextBufferArmed   = false;
+  _teaserFired       = false;
+  _teaserConsumedSec = 0;
   if (typeof NextBuffer !== 'undefined') NextBuffer.cancel();
   if (typeof _stopTeaser === 'function') _stopTeaser(true);
   // wipe any wsi-line1/wsi-line2 overrides left over from the previous track
@@ -5146,9 +5217,35 @@ function onTrackFullyPlayed() {
   // player from choking when the next track has no .wav / -high.mp3, and saves
   // bandwidth even when it does — the user can re-pick HI-FI any time they want.
   if (Registry.quality !== 'normal') setQuality('normal');
-  try { engine.startNoise(Registry.globals.interNoiseLevel); } catch (_) {}
-  loadTrack(next, { autoplay: true, crossfade: true })
-    .then(ok => { if (!ok) try { engine.stopNoise(); } catch (_) {} });
+
+  // Teaser hand-off vs. standard crossfade:
+  //   • If the just-ended track had a silent outro AND we pre-fetched the next
+  //     track's blob AND the teaser fired, we hand the bytes in directly via
+  //     preBlob (no re-fetch) and start at offsetSec = teaserDur so the real
+  //     track continues exactly where the teaser's dry path left off.
+  //     The low-noise bed is SKIPPED — the teaser already blended.
+  //   • Otherwise (no silent=, or teaser decode unavailable), the standard path
+  //     runs: start the low-volume noise bed, cross-fade into the next track.
+  const teaserHandoff = (_teaserFired && _teaserConsumedSec > 0 &&
+                        typeof NextBuffer !== 'undefined' &&
+                        NextBuffer.blob && NextBuffer.idx === next);
+  // Latch + clear teaser state immediately so nothing double-fires.
+  const offsetSec = teaserHandoff ? _teaserConsumedSec : 0;
+  const preBlob   = teaserHandoff ? NextBuffer.blob    : null;
+  _teaserConsumedSec = 0;
+  _teaserFired       = false;
+
+  if (teaserHandoff) {
+    // crossfade=true with no noise start gives a clean ~400 ms fade-in on
+    // trackGain — the teaser's dry path was already at full volume so the
+    // only remaining seam is the mediaEl-swap latency, softened by this ramp.
+    loadTrack(next, { autoplay: true, crossfade: true, preBlob, offsetSec })
+      .then(() => { /* teaser blended cleanly; nothing to tear down */ });
+  } else {
+    try { engine.startNoise(Registry.globals.interNoiseLevel); } catch (_) {}
+    loadTrack(next, { autoplay: true, crossfade: true })
+      .then(ok => { if (!ok) try { engine.stopNoise(); } catch (_) {} });
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -5241,7 +5338,7 @@ async function reloadCurrent() {
 async function loadTrack(idx, options) {
   options = options || {};
   const rawUrl = Registry.urlFor(idx);
-  if (!rawUrl) { toast(t('no-signal')); StreamRate.bad(); return false; }
+  if (!rawUrl && !options.preBlob) { toast(t('no-signal')); StreamRate.bad(); return false; }
   // reveal metadata immediately on user gesture, before the fetch
   // (no need to wait — the user clicked, so they want to see what's loading)
   Registry.currentIdx = idx;
@@ -5249,8 +5346,16 @@ async function loadTrack(idx, options) {
   applyMeta(idx);
   StreamRate.fetching(0);
   try {
-    const url = await Registry.signUrl(rawUrl);
-    const res = await engine.loadUrl(url, p => StreamRate.fetching(p));
+    let res;
+    if (options.preBlob) {
+      // Teaser hand-off path: bytes are already in memory (NextBuffer.blob),
+      // so we skip the fetch + sign entirely. Near-zero latency swap.
+      StreamRate.fetching(1);
+      res = await engine.loadFromBlob(options.preBlob);
+    } else {
+      const url = await Registry.signUrl(rawUrl);
+      res = await engine.loadUrl(url, p => StreamRate.fetching(p));
+    }
     // re-pin rate in case it drifted during the prior session
     if (engine.mediaEl) engine.mediaEl.playbackRate = 1;
     // fresh analyzers for new track
@@ -5259,8 +5364,13 @@ async function loadTrack(idx, options) {
     // If this idx is the one we pre-analysed at boot, warm-start the detectors
     // with cached BPM/KEY so the tuner shows real values immediately.
     if (typeof PreBuffer !== 'undefined') PreBuffer.seedLive(idx);
-    // start= honoured on every load — track begins at the protected offset, never 0.
-    const startSec = Registry.startFor(idx);
+    // Effective start offset:
+    //   • options.offsetSec wins (teaser hand-off uses this to skip the
+    //     teaser-consumed seconds so no intro doubling)
+    //   • else Registry.startFor(idx) honours the track's own start= rule
+    const startSec = (options.offsetSec != null && options.offsetSec > 0)
+      ? options.offsetSec
+      : Registry.startFor(idx);
     if (options.autoplay) {
       if (options.crossfade) {
         // Caller already started a low-volume noise bed before the fetch.
@@ -5538,15 +5648,16 @@ function loop() {
   }
 
   // ── silent-outro choreography ──────────────────────────────────────
-  // Three stages, all gated on the current track declaring silent=…-(end)
-  // (or any range whose end lies within 2 s of the known duration):
-  //   (a)  ≥15 s before outro → arm NextBuffer (partial fetch + decode of the
-  //        next sequential playable track) so we have a teaser source ready.
-  //   (b)  currentTime ≥ outro.start → either play a glitch teaser (if the
-  //        next-track decode landed in time) OR fall back to the plain
-  //        early-advance behaviour.
-  //   (c)  Natural track end fires onTrackFullyPlayed() as before — either
-  //        directly after a teaser, or via the mediaEl 'ended' event.
+  // Stages:
+  //   (a) ≥15 s before outro → arm NextBuffer (full fetch of the next sequential
+  //       playable track + decode a ~2 MB slice for the teaser source).
+  //   (b) At (track.duration − teaserSec): play the glitch teaser. Teaser ends
+  //       exactly when track 1 ends. The teaser's last ~1 s crossfades wet→dry
+  //       so the final moment sounds like clean next-track audio at volume.
+  //       If decode isn't ready in time, fall back to plain early-advance.
+  //   (c) mediaEl 'ended' → onTrackFullyPlayed() uses NextBuffer.blob directly
+  //       via engine.loadFromBlob (no re-fetch) + offsetSec = teaserSec so the
+  //       real next track continues from where the teaser's dry path left off.
   if (engine.playing && engine.duration > 0) {
     const outro = Registry.silentOutroFor(Registry.currentIdx, engine.duration, 2);
     if (outro) {
@@ -5555,24 +5666,25 @@ function loop() {
         _nextBufferArmed = true;
         NextBuffer.prepareFor(Registry.currentIdx).catch(() => {/* silent */});
       }
-      // (b) at outro.start: teaser preferred, else early-advance
-      if (!_teaserFired && !_silentOutroFired && engine.currentTime >= outro.start) {
-        if (NextBuffer.isReadyFor(Registry.currentIdx)) {
-          _teaserFired = true;
-          // Teaser fills the whole silent outro, minus a 0.3 s tail margin so
-          // it can't bleed into the real next-track intro at natural end. If
-          // the outro ends with (end), the stored end is Infinity — substitute
-          // the live duration to get a realistic outro length. The actual
-          // playback duration is further clamped by the decoded buffer length
-          // inside playTeaser() — if the partial decode was shorter than the
-          // outro, the remainder is just silence (the outro is silent anyway).
-          const outroEnd = isFinite(outro.end) ? outro.end : engine.duration;
-          const outroLen = Math.max(0, outroEnd - outro.start);
-          const teaseDur = Math.max(1.2, outroLen - 0.3);
-          playTeaser(NextBuffer.audio, teaseDur);
-        } else {
-          _silentOutroFired = true;
-          onTrackFullyPlayed();
+      // (b) start the teaser so it ENDS at the track's natural end. Length is
+      //     capped by the outro duration so we never crash into live audio.
+      if (!_teaserFired && !_silentOutroFired) {
+        const outroEnd = isFinite(outro.end) ? outro.end : engine.duration;
+        const outroLen = Math.max(0, outroEnd - outro.start);
+        const configured = (Registry.globals && Registry.globals.teaserSec) || 4;
+        const teaseDur = Math.max(1.2, Math.min(configured, outroLen - 0.2));
+        const teaserStart = engine.duration - teaseDur;
+        if (teaseDur >= 1.2 && engine.currentTime >= teaserStart) {
+          if (NextBuffer.isReadyFor(Registry.currentIdx)) {
+            _teaserFired       = true;
+            _teaserConsumedSec = teaseDur;
+            playTeaser(NextBuffer.audio, teaseDur);
+          } else {
+            // No decoded teaser audio — preserve old early-advance behaviour so
+            // the user isn't stuck in dead air through the rest of the outro.
+            _silentOutroFired = true;
+            onTrackFullyPlayed();
+          }
         }
       }
     }
