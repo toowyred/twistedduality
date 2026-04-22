@@ -164,28 +164,38 @@
   .bar-menu .menu-sep {
     height: 1px; background: rgba(255,255,255,0.08); margin: 6px 10px;
   }
-  /* ── Accordion sections — each is a <details>/<summary> pair so native
-     keyboard + aria semantics work for free. JS closes siblings on open. */
+  /* ── Accordion sections — <div>-based so we can animate max-height +
+     opacity reliably. JS handles click-to-toggle + single-open behavior. */
   .bar-menu .menu-section {
     border-top: 1px solid rgba(255,255,255,0.06);
   }
   .bar-menu .menu-section:first-of-type { border-top: none; }
-  .bar-menu .menu-section summary.menu-label {
-    list-style: none;
+  /* Label button looks like a plain section header; matches the .menu-label
+     baseline style + picks up a chevron on the right. */
+  .bar-menu button.menu-label {
+    font-family: inherit;
+    width: 100%;
+    background: none; border: none;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--dim);
+    padding: 6px 22px 4px 14px;
+    text-align: left;
     cursor: pointer;
     position: relative;
-    padding-right: 22px;
     user-select: none;
   }
-  .bar-menu .menu-section summary.menu-label::-webkit-details-marker { display: none; }
-  .bar-menu .menu-section summary.menu-label::after {
+  .bar-menu button.menu-label:hover { color: var(--muted); background: transparent; }
+  .bar-menu button.menu-label::after {
     content: '\25BC';        /* ▼ closed */
     position: absolute;
     right: 14px; top: 6px;
     font-size: 8px; color: var(--dim);
-    transition: transform 0.15s;
+    transition: transform 0.15s, color 0.15s;
   }
-  .bar-menu .menu-section[open] summary.menu-label::after {
+  .bar-menu .menu-section.open > button.menu-label {
+    color: var(--accent);
+  }
+  .bar-menu .menu-section.open > button.menu-label::after {
     transform: rotate(-180deg);
     color: var(--accent);
   }
@@ -206,7 +216,7 @@
     padding: 0 0 0 0;
     transition: max-height 0.3s ease, opacity 0.22s ease, padding 0.3s ease;
   }
-  .bar-menu .menu-section[open] > .menu-section-body {
+  .bar-menu .menu-section.open > .menu-section-body {
     /* 480px is enough for any section's full content (Languages has 5 rows,
        Waves section has the most items with Pulse + Reflection sub-rows).
        max-height animates cleanly; actual rendered height = content size. */
@@ -594,32 +604,18 @@
   }
   .tuner.collapsed .tuner-chev { transform: rotate(180deg); }
 
-  /* Collapsed state — hide frequency panel, BPM/KEY/dB row, recalibrate/
+  /* Mini state — hide frequency panel, BPM/KEY/dB row, recalibrate/
      quality, and transport spacer. Keep visible: cycler + time + tuning-bar
-     + SCAN + PLAY.
-     Animation reuses the card-collapse pattern: transition opacity +
-     max-height + margin on the hidden children so they slide out (and
-     slide back in on expand). `display: none` is avoided — it would kill
-     the transition — in favour of collapsing to zero height + opacity. */
-  .tuner              { transition: height 0.32s ease; }
-  .tuner .frequency-panel,
-  .tuner .strip-bot,
-  .tuner .quality,
-  .tuner .t-spacer {
-    transition: opacity 0.25s ease, max-height 0.32s ease, margin 0.3s ease;
-    max-height: 200px;     /* covers the tallest (quality row with label) */
-    overflow: hidden;
-  }
+     + SCAN + PLAY. Uses `display: none` (instant) because animating grid-
+     template-columns layout changes is unreliable across browsers — the
+     children would temporarily occupy the wrong cells during the transition.
+     The menu-accordion animation is the reusable pattern; the tuner gets
+     instant snap for correctness. */
   .tuner.collapsed              { height: auto; grid-template-columns: 1fr auto; }
   .tuner.collapsed .frequency-panel,
   .tuner.collapsed .strip-bot,
   .tuner.collapsed .quality,
-  .tuner.collapsed .t-spacer {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    pointer-events: none;   /* prevent accidental taps on invisible content */
-  }
+  .tuner.collapsed .t-spacer    { display: none; }
 
   /* SCAN first-run attention pulse — removed after first successful track load.
      Orange theme: glow in accent color.
@@ -2211,9 +2207,12 @@
     <span class="hamburger-lines"><span></span><span></span><span></span></span>
   </button>
   <div class="bar-menu" id="bar-menu">
-    <!-- Languages — always visible by default (accordion leaves this open) -->
-    <details class="menu-section" open>
-      <summary class="menu-label" data-i18n="lang-label">Languages</summary>
+    <!-- Accordion: <div>-based (not <details>) because the browser's native
+         <details> hides closed-content via internal rendering that CSS
+         transitions can't animate. Manual .open class toggled via JS; the
+         max-height + opacity transition in CSS handles the slide motion. -->
+    <div class="menu-section open">
+      <button class="menu-label" type="button" data-i18n="lang-label">Languages</button>
       <div class="menu-section-body">
         <button data-lang-btn="de">Deutsch</button>
         <button data-lang-btn="en" class="active">English</button>
@@ -2221,29 +2220,29 @@
         <button data-lang-btn="fr">Fran&ccedil;ais</button>
         <button data-lang-btn="ja">日本語</button>
       </div>
-    </details>
+    </div>
 
-    <details class="menu-section">
-      <summary class="menu-label" data-i18n="themes">Themes</summary>
+    <div class="menu-section">
+      <button class="menu-label" type="button" data-i18n="themes">Themes</button>
       <div class="menu-section-body">
         <button data-theme-btn="auto" class="active" data-i18n="theme-auto">Auto</button>
         <button data-theme-btn="orange" data-i18n="theme-orange">Industrial Orange</button>
         <button data-theme-btn="mono" data-i18n="theme-mono">Monochromatic</button>
       </div>
-    </details>
+    </div>
 
-    <details class="menu-section">
-      <summary class="menu-label" data-i18n="transparency">Transparency</summary>
+    <div class="menu-section">
+      <button class="menu-label" type="button" data-i18n="transparency">Transparency</button>
       <div class="menu-section-body">
         <div class="menu-row">
           <button data-transparency="on"  class="mrbtn active">ON</button>
           <button data-transparency="off" class="mrbtn">OFF</button>
         </div>
       </div>
-    </details>
+    </div>
 
-    <details class="menu-section">
-      <summary class="menu-label" data-i18n="waves">Waves</summary>
+    <div class="menu-section">
+      <button class="menu-label" type="button" data-i18n="waves">Waves</button>
       <div class="menu-section-body">
         <div class="menu-row">
           <button data-waves="full" class="mrbtn active">FULL</button>
@@ -2263,7 +2262,7 @@
           <button data-reflection="on"  class="mrbtn"        data-i18n="refl-on">ON</button>
         </div>
       </div>
-    </details>
+    </div>
 
     <!-- footer: subtle TWDU mark + copyright (sys font so © renders cleanly) -->
     <div class="menu-footer">
@@ -6004,16 +6003,21 @@ document.addEventListener('click', e => {
 });
 
 // ── Settings-menu accordion ─────────────────────────────────────
-// Each .menu-section is a <details>. When one opens, close siblings so
-// only one section is expanded at a time (plus Languages which is open
-// by default). Uses the native `toggle` event; stopImmediatePropagation
-// not needed because we only react when `open` flips to true.
-barMenu.querySelectorAll('.menu-section').forEach(d => {
-  d.addEventListener('toggle', () => {
-    if (!d.open) return;
-    barMenu.querySelectorAll('.menu-section').forEach(o => {
-      if (o !== d && o.open) o.open = false;
+// Click a section header (<button.menu-label>) → toggle its section's
+// `.open` class + close siblings. The <div>-based markup (not <details>)
+// lets CSS transitions animate max-height/opacity without the browser's
+// native details-element overriding display.
+barMenu.querySelectorAll('.menu-section > button.menu-label').forEach(label => {
+  label.addEventListener('click', e => {
+    e.stopPropagation();
+    const section = label.parentElement;
+    const wasOpen = section.classList.contains('open');
+    // Close all siblings first (accordion — one open at a time).
+    barMenu.querySelectorAll('.menu-section.open').forEach(o => {
+      if (o !== section) o.classList.remove('open');
     });
+    // Toggle this one (collapse if it was already open).
+    section.classList.toggle('open', !wasOpen);
   });
 });
 
