@@ -969,10 +969,10 @@
     box-shadow: 0 10px 40px rgba(0,0,0,0.6), 6px 6px 0 var(--accent-dim);
     color: var(--fg);
   }
-  /* Desktop / landscape: wider + slightly taller — more characters per line
-     (~75 comfortable with the bumped body text) reduces vertical overflow. */
+  /* Desktop / landscape: take advantage of the wider landscape real estate —
+     big comfortable reading width, full viewport height. */
   @media (min-width: 900px) and (orientation: landscape) {
-    .playback-info-box { max-width: 760px; max-height: 86vh; padding: 28px 34px 34px; }
+    .playback-info-box { max-width: 1100px; max-height: 100vh; padding: 25px 35px 35px; }
   }
   /* Inner scroll region — takes the overflow so the outer box stays static. */
   .playback-info-scroll {
@@ -1035,18 +1035,38 @@
     width: auto;
     object-fit: contain;
     object-position: left center;
-    opacity: 0.92;
-    /* white PNG on dark background — slight drop shadow reads as ink on glass */
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55));
+    opacity: 0.6;
+    /* Background is already solid dark — no drop shadow needed. */
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
   }
+  /* Text fallback when the signature PNG can't load (e.g. print/ folder not
+     synced to GitHub on the cfded tier). Presents 海流 in a system serif
+     kanji face so the sign-off still reads as a personal mark, not a broken
+     image. JS swaps the <img> for a <span.pw-sig-fallback> on error. */
+  .pw-regards .pw-sig-fallback {
+    display: block;
+    margin-top: 6px;
+    font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Hiragino Mincho Pro",
+                 "Source Han Serif SC", "Source Han Serif TC", "Source Han Serif",
+                 "Noto Serif CJK JP", "Noto Serif CJK SC", "Noto Serif CJK TC",
+                 "SimSun", "MS Mincho", serif;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: 4px;
+    color: var(--fg);
+    opacity: 0.6;
+    font-style: normal;
+    user-select: none;
+  }
   @media (max-width: 860px) {
     .pw-regards .pw-sig { height: 52px; max-width: 220px; }
+    .pw-regards .pw-sig-fallback { font-size: 42px; letter-spacing: 3px; }
   }
   @media (min-width: 900px) and (orientation: landscape) {
     .pw-regards .pw-sig { height: 64px; max-width: 280px; }
+    .pw-regards .pw-sig-fallback { font-size: 54px; letter-spacing: 5px; }
   }
   /* ── "send it my way" tooltip trigger + bubble ───────────────────
      Inline trigger gets a dashed underline to signal interactivity.
@@ -2068,7 +2088,9 @@
 
       <p class="pw-regards">
         Catch you in the mix,<br>
-        <img class="pw-sig" src="./print/dirkanjisigwhite.png" alt="dirkanji signature" draggable="false">
+        <img class="pw-sig" src="./print/dirkanjisigwhite.png" alt="海流"
+             draggable="false"
+             onerror="(function(el){var s=document.createElement('span');s.className='pw-sig-fallback';s.textContent='海流';s.setAttribute('aria-label','dirkanji signature');el.replaceWith(s);})(this)">
       </p>
     </div>
     </div><!-- /.playback-info-scroll -->
