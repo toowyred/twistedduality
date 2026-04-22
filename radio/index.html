@@ -193,6 +193,10 @@
   }
   .bar-menu .menu-section-body {
     padding-bottom: 4px;
+    /* Stack buttons vertically. Without this, inline-block (browser default
+       for <button>) lets items flow horizontally when the menu has room —
+       which inflates the measured "natural width" of Languages to ~400px. */
+    display: flex; flex-direction: column; gap: 2px;
   }
   /* inline row of choice buttons (transparency/waves) */
   .bar-menu .menu-row {
