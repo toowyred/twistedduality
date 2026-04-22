@@ -2194,6 +2194,45 @@
     }
     /* hide the tuner expand handle so landscape mobile can't re-open it */
     .tuner-handle { pointer-events: none; opacity: 0.25; }
+
+    /* ── Landscape-mobile safeguards ───────────────────────────────
+       Extreme-short vertical space. Belt-and-suspenders rules in case
+       any element leaks past the normal collapsed-state hides. */
+    /* WSI logo forced to half scale */
+    :root { --brand-scale: 0.5; }
+    body.tuner-is-collapsed { --brand-scale: 0.5; }
+
+    /* Subtitle stack pinned to the right side — cycler + card live on
+       the left, so subtitles on the right avoids the collision. */
+    .subtitle-stack { text-align: right; align-items: flex-end; }
+    .subtitle-line  { text-align: right; margin-left: auto; }
+
+    /* NORMAL / HI-FI fallback labels — if the quality buttons somehow
+       peek through the display:none from .tuner.collapsed .quality,
+       compact their text so they don't eat horizontal room.
+       font-size: 0 nukes the authored textContent; pseudo ::before
+       supplies a mini label at the intended size. */
+    #qbtnNormal, #qbtnHighfi {
+      font-size: 0; min-width: 0; padding: 6px 8px;
+    }
+    #qbtnNormal::before { content: '192';  font-size: 10px; letter-spacing: 1px; }
+    #qbtnHighfi::before { content: 'HIFI'; font-size: 10px; letter-spacing: 1px; }
+    /* ...but only when quality would be visible (belt-and-suspenders). */
+    .tuner.collapsed #qbtnNormal::before,
+    .tuner.collapsed #qbtnHighfi::before { content: none; }
+
+    /* Slim top-bar + Settings typography matched to the tuning-strip
+       cycler — keeps the whole chrome visually uniform on tiny heights. */
+    .top-bar { padding: 4px 12px; }
+    .top-bar .bar-title {
+      font-size: 9px; letter-spacing: 1.5px;
+    }
+    .top-bar a, .bar-hamburger .hamburger-label {
+      font-size: 9px; letter-spacing: 1.5px;
+    }
+    .bar-menu, .bar-menu button, .bar-menu button.menu-label {
+      font-size: 9px; letter-spacing: 1.5px;
+    }
   }
   /* mobile: quality row regains its old slim full-width look + RECALIBRATE SIGNAL label */
   @media (max-width: 860px) {
@@ -2248,11 +2287,14 @@
     .info-body { font-size: 13px; }
   }
 
-  /* ── Icon-only tuner buttons — fires for narrow (≤520w) OR short (≤500h)
-     viewports when the tuner is in its mini state. Captures both standard
-     mobile portrait AND the landscape-short / "WSI can't fit above card"
-     edge case, since in either shape the horizontal runway is precious. */
-  @media (max-width: 520px), (max-height: 500px) {
+  /* ── Icon-only tuner buttons — fires whenever the tuner is in mini
+     state AND the viewport is mobile-class (≤860w) OR short (≤500h).
+     Rule order per author intent:
+       1. Mobile + mini turner  → always symbols (no text)
+       2. Bigger screen + mini  → symbols + text (not mobile, larger tablet)
+       3. Small screen + mini   → symbols only
+     The 860w / 500h combined media query is the "mobile-or-short" test. */
+  @media (max-width: 860px), (max-height: 500px) {
     body.tuner-is-collapsed .tuner .tbtn.scan .tbtn-label,
     body.tuner-is-collapsed .tuner .tbtn.play .tbtn-label {
       display: none;
@@ -5594,6 +5636,14 @@ const DeviceProfiles = {
   // overrides for the values that change when the tuner collapses.
   iPhone17Pro: {
     name: 'iPhone 17 Pro',
+    // First-boot recommended defaults — applied ONLY if the visitor has
+    // no prior explicit preference (localStorage key absent). After the
+    // first session, the user's own choice wins. Reflection looks worse
+    // than it should on 17 Pro's display (doesn't pop the way it does on
+    // desktop/Android), so it ships off by default.
+    recommendDefaults: {
+      reflection: 'off',
+    },
     base: {
       css: {
         '--card-scale':        '0.75',
@@ -5723,6 +5773,24 @@ function applyActiveDeviceProfile() {
   // Sub-block follows current tuner state.
   const collapsed = document.body && document.body.classList.contains('tuner-is-collapsed');
   _applyProfileSubBlock(collapsed ? scaled.mini : scaled.full);
+
+  // Apply recommendDefaults — first-boot-only defaults, applied per
+  // Settings key IF no prior localStorage preference exists. User's
+  // subsequent explicit choice wins on later boots. Runs once per
+  // applyActiveDeviceProfile call; idempotent since it short-circuits
+  // on any prior value.
+  if (prof.recommendDefaults && typeof Settings !== 'undefined') {
+    for (const [k, v] of Object.entries(prof.recommendDefaults)) {
+      const lsKey = 'td-radio-' + k;
+      if (localStorage.getItem(lsKey) == null) {
+        // No prior preference → apply recommended default + route through
+        // the normal apply* path so CSS/TerrainDebug/button states update.
+        Settings[k] = v;
+        const applyFn = 'apply' + k.charAt(0).toUpperCase() + k.slice(1);
+        if (typeof Settings[applyFn] === 'function') Settings[applyFn]();
+      }
+    }
+  }
 
   console.log('[device-profile] applied:', prof.name,
               pick.scale !== 1 ? '(scaled ×' + pick.scale.toFixed(3) + ')' : '',
@@ -7733,10 +7801,13 @@ function showPrintOverlay(text, durationSec) {
   const renderedH = box.getBoundingClientRect().height;
   ov.classList.remove('show');
   box.style.visibility = prevVis || '';
-  // Tiers:  ≤ 1 line  → normal (default)
-  //         ≤ 2 lines → allow (natural)
-  //         > 2 lines → paragraph mode: 9px font, 100% width, clip overflow
-  if (renderedH > oneLineH * 2.4) {
+  // Tiers:  ≤ 1 line     → normal (default)
+  //         ≤ 2 lines    → allow (.print-2line: tighter line-height)
+  //         3–4 lines    → still at default size (natural overflow)
+  //         5+ lines     → paragraph mode: 9px / 100% width / clip
+  // Threshold intentionally high so a 3-line print doesn't trigger the
+  // "paragraph" shrink — that's reserved for genuinely long pasted prose.
+  if (renderedH > oneLineH * 5) {
     box.classList.add('print-paragraph');
   } else if (renderedH > oneLineH * 1.4) {
     box.classList.add('print-2line');
