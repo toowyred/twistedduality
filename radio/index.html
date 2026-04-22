@@ -1711,7 +1711,14 @@
      pointer-events, no interaction. */
   .debug-guides {
     display: none;
-    position: fixed; inset: 0;
+    position: fixed;
+    left: 0; top: 0;
+    /* SVG elements ignore `inset: 0` the way <div> does — they fall back
+       to their intrinsic 300×150 size unless width/height are explicitly
+       set. `100vw`/`100vh` + `display: block` gives us a proper full-
+       viewport coordinate space so the `100%` inside the <line> elements
+       resolves to real screen width/height. */
+    width: 100vw; height: 100vh;
     z-index: 499;                   /* one below the debug panel */
     pointer-events: none;
   }
