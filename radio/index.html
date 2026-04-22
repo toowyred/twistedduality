@@ -1128,20 +1128,23 @@
     color: var(--muted); font-style: italic; opacity: 0.7; letter-spacing: 1px;
   }
 
-  /* ── [i] info button (stacked above the code-key on the left edge) ── */
+  /* ── [i] info button (stacked above the code-key on the left edge) ──
+     Sized to match the visual weight of the refresh-meta / card-help
+     button — smaller square tile so the left rail reads as a set of
+     compact accent glyphs rather than chunky transparent plates. */
   .info-btn {
     position: fixed;
     left: 8px;
-    bottom: calc(var(--subtitle-bottom-offset, 128px) + 40px);
+    bottom: calc(var(--subtitle-bottom-offset, 128px) + 32px);
     z-index: 160;
-    width: 28px; height: 28px;
+    width: 22px; height: 22px;
     padding: 0; border: 1px solid var(--accent-dim);
     background: rgba(0,0,0,0.55);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     color: var(--accent);
     font-family: 'Georgia', 'Times New Roman', serif;
     font-style: italic; font-weight: bold;
-    font-size: 16px; line-height: 1;
+    font-size: 13px; line-height: 1;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
   }
@@ -1157,10 +1160,12 @@
   .info-btn .info-dot {
     position: absolute;
     top: -3px; right: -3px;
-    width: 10px; height: 10px;
+    /* Proportional to the 22px button — 8px keeps the dot readable without
+       dominating the tile. */
+    width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent-dim);
+    box-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent-dim);
     display: none;
     pointer-events: none;
   }
@@ -1603,7 +1608,9 @@
     pointer-events: auto;
   }
   .code-key-btn {
-    width: 28px; height: 28px;
+    /* Matches info-btn / card-help visual weight — compact accent tile
+       on the left rail instead of a chunky transparent plate. */
+    width: 22px; height: 22px;
     padding: 0; border: 1px solid var(--accent-dim);
     background: rgba(0,0,0,0.55);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -1613,7 +1620,7 @@
     transition: background 0.2s, color 0.2s;
   }
   .code-key-btn:hover, .code-key-btn:focus-visible { background: rgba(0,0,0,0.8); color: var(--fg); outline: none; }
-  .code-key-btn svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+  .code-key-btn svg { width: 12px; height: 12px; fill: currentColor; display: block; }
   html.no-transparency .code-key-btn { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
 
   .code-expand {
@@ -2230,10 +2237,22 @@
     .tuner .tbtn { font-size: 10px; padding: 8px 14px; min-width: 62px; }
     .tuner .freq-num { font-size: 24px; }
 
-    /* ── Mobile COLLAPSED: SCAN + PLAY become icon-only ───────────
-       Hides labels, shrinks buttons to square-ish tiles, and fills the
-       SCAN button with the accent color so the black SVG glyph reads.
-       Gives the strip-top cycler + tuning-bar more horizontal runway. */
+    /* Icon-only button rules moved out of this @media block — they now
+       live in a broader query (narrow width OR short height) right after
+       this block so landscape-short viewports also get the symbol mode. */
+    .card-body { font-size: 10px; padding: 8px 10px; max-width: 68vw; }
+    .card-body .v { max-width: 50vw; }
+    .card-collapse { width: 26px; padding: 10px 3px; font-size: 9px; }
+    .info-panel { padding: 18px 18px 14px; }
+    .info-title { font-size: 11px; letter-spacing: 2px; }
+    .info-body { font-size: 13px; }
+  }
+
+  /* ── Icon-only tuner buttons — fires for narrow (≤520w) OR short (≤500h)
+     viewports when the tuner is in its mini state. Captures both standard
+     mobile portrait AND the landscape-short / "WSI can't fit above card"
+     edge case, since in either shape the horizontal runway is precious. */
+  @media (max-width: 520px), (max-height: 500px) {
     body.tuner-is-collapsed .tuner .tbtn.scan .tbtn-label,
     body.tuner-is-collapsed .tuner .tbtn.play .tbtn-label {
       display: none;
@@ -2242,36 +2261,40 @@
     body.tuner-is-collapsed .tuner .tbtn.play .tbtn-icon--play {
       display: inline-block;
     }
-    /* Square tiles — same width + height for both so they read as a matched
-       pair of icon buttons. Padding removed in favour of fixed dimensions
-       so the icon occupies a predictable inner space across devices. */
     body.tuner-is-collapsed .tuner .tbtn.scan,
     body.tuner-is-collapsed .tuner .tbtn.play {
       width: 44px; height: 44px; min-width: 44px; padding: 0;
     }
     body.tuner-is-collapsed .tuner .tbtn.scan {
-      background: var(--accent);        /* orange tile so the black icon reads */
+      background: var(--accent);
       border-color: var(--accent);
-      color: #000;                       /* inline SVG paths use currentColor */
+      color: #000;
     }
     body.tuner-is-collapsed .tuner .tbtn.scan .tbtn-icon--scan {
-      width: 22px; height: 22px;         /* scan SVG — 22px reads solidly */
-    }
-    body.tuner-is-collapsed .tuner .tbtn.scan.active {
-      background: var(--accent-dim);    /* SCAN-loading visual cue */
-    }
-    body.tuner-is-collapsed .tuner .tbtn.play .tbtn-icon--play {
-      /* Match the scan icon's exact bounding box so the two buttons read
-         as a true pair. SVGs share visual weight with scan-icon by design
-         (solid filled paths, 24×24 viewBox, thick strokes). */
       width: 22px; height: 22px;
     }
-    .card-body { font-size: 10px; padding: 8px 10px; max-width: 68vw; }
-    .card-body .v { max-width: 50vw; }
-    .card-collapse { width: 26px; padding: 10px 3px; font-size: 9px; }
-    .info-panel { padding: 18px 18px 14px; }
-    .info-title { font-size: 11px; letter-spacing: 2px; }
-    .info-body { font-size: 13px; }
+    body.tuner-is-collapsed .tuner .tbtn.scan.active {
+      background: var(--accent-dim);
+    }
+    body.tuner-is-collapsed .tuner .tbtn.play .tbtn-icon--play {
+      width: 22px; height: 22px;
+    }
+  }
+
+  /* ── Short-viewport subtitle: right-align the stack ──────────────
+     On landscape-short / extreme-short viewports there's so little
+     vertical room that subtitles end up overlapping the track card's
+     left-edge strip. Shoving them to the right side keeps them clear
+     of the card while staying visible above the tuner. */
+  @media (max-height: 500px) {
+    .subtitle-stack {
+      text-align: right;
+      align-items: flex-end;
+    }
+    .subtitle-line {
+      text-align: right;
+      margin-left: auto;
+    }
   }
 </style>
 </head>
@@ -5806,14 +5829,20 @@ function applyDefaultLayoutRules() {
   // track-card is positioned with  top: calc(50% + var(--card-offset-y))
   // + transform: translateY(-50%) scale(...). Measure current bottom,
   // compute the delta needed, and nudge --card-offset-y by that delta.
+  //
+  // CSS custom properties are set on <body> (not <html>) because the
+  // existing media queries use rules like `body.tuner-is-collapsed {
+  // --brand-bottom: 126px }` that would beat an inline style on <html>
+  // for body's descendants. Setting on body means inline-specificity
+  // (1000) cleanly wins over class-selector (10).
+  const target = document.body;
   {
-    const root = document.documentElement;
-    const currentOffset = parseFloat(getComputedStyle(root).getPropertyValue('--card-offset-y')) || 0;
+    const currentOffset = parseFloat(getComputedStyle(target).getPropertyValue('--card-offset-y')) || 0;
     const currBottom    = card.getBoundingClientRect().bottom;
     const deltaY        = centerY - currBottom;
     // Avoid thrashing on sub-pixel differences.
     if (Math.abs(deltaY) > 1) {
-      root.style.setProperty('--card-offset-y', Math.round(currentOffset + deltaY) + 'px');
+      target.style.setProperty('--card-offset-y', Math.round(currentOffset + deltaY) + 'px');
     }
   }
 
@@ -5841,7 +5870,7 @@ function applyDefaultLayoutRules() {
       // That's the declared tiebreaker.
       brandBottom = vh - (safeTop + brandH);
     }
-    document.documentElement.style.setProperty('--brand-bottom', Math.round(brandBottom) + 'px');
+    target.style.setProperty('--brand-bottom', Math.round(brandBottom) + 'px');
   }
 
   // ── Rule 3: info + code buttons stay below card bottom ──────
