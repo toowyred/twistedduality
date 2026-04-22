@@ -807,16 +807,19 @@
     /* flex-child: no vertical-align needed — parent button is inline-flex
        with align-items: center, which handles centering for icons AND glyphs. */
   }
+  /* Play-glyph container holds BOTH svgs; CSS picks which one to render
+     via the button's .is-playing state so no JS needs to swap innerHTML. */
   .tuner .tbtn-icon--play {
-    font-size: 14px; color: currentColor;
-    /* Use a font that renders ▶/⏸ consistently across platforms — system
-       emoji face is unpredictable (some render coloured, some outline).
-       'Arial Unicode MS' / 'Segoe UI Symbol' force a monochrome text glyph. */
-    font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Helvetica Neue', sans-serif;
+    display: none;                 /* base; visible modes below turn it on */
+    width: 18px; height: 18px;
+    position: relative;
   }
-  /* Play ▶ vs Pause ⏸ — swapped by the .is-playing class on the button. */
-  .tuner .tbtn.play:not(.is-playing) .tbtn-icon--play::before { content: '\25B6'; }
-  .tuner .tbtn.play.is-playing .tbtn-icon--play::before       { content: '\23F8'; }
+  .tuner .tbtn-icon--play svg {
+    width: 100%; height: 100%;
+    display: none;
+  }
+  .tuner .tbtn.play:not(.is-playing) .tbtn-icon--play .sym-play  { display: block; }
+  .tuner .tbtn.play.is-playing      .tbtn-icon--play .sym-pause { display: block; }
   .tuner .tbtn-icon--scan {
     width: 18px; height: 18px;
   }
@@ -2031,10 +2034,10 @@
       background: var(--accent-dim);    /* SCAN-loading visual cue */
     }
     body.tuner-is-collapsed .tuner .tbtn.play .tbtn-icon--play {
-      /* Bumped so the ▶/⏸ glyph fills roughly the same bounding area as the
-       scan SVG (22px). Unicode play/pause glyphs have thinner visual weight
-       than the solid scan frame, so we scale ~1.2× for perceived parity. */
-      font-size: 22px;
+      /* Match the scan icon's exact bounding box so the two buttons read
+         as a true pair. SVGs share visual weight with scan-icon by design
+         (solid filled paths, 24×24 viewBox, thick strokes). */
+      width: 22px; height: 22px;
     }
     .card-body { font-size: 10px; padding: 8px 10px; max-width: 68vw; }
     .card-body .v { max-width: 50vw; }
@@ -2407,7 +2410,13 @@
       <span class="tbtn-label" data-i18n="scan">SCAN</span>
     </button>
     <button class="tbtn play" id="btnPlay" aria-label="Play">
-      <span class="tbtn-icon tbtn-icon--play" aria-hidden="true"></span>
+      <span class="tbtn-icon tbtn-icon--play" aria-hidden="true">
+        <!-- Inline SVG pair — matches the scan-icon's bold geometric weight
+             so the two buttons read as a set. The .sym-play / .sym-pause
+             swap is driven by the .is-playing class on the button. -->
+        <svg class="sym-play"  viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 3 L21 12 L6 21 Z"/></svg>
+        <svg class="sym-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M5 3h6v18H5zm8 0h6v18h-6z"/></svg>
+      </span>
       <span class="tbtn-label" data-i18n="play">PLAY</span>
     </button>
   </div>
