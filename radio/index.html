@@ -5882,6 +5882,39 @@ tuningBar.addEventListener('click', e => {
   }
 });
 
+// ── Debug accuracy-overlay sync — module-level so any caller can trigger it.
+// Drives body.debug-panel-open (CSS show-hide hook) + writes y-coords on the
+// guide <line>s to match the live positions of .card-body and .brand.
+// Runs on: resize, body.class changes (tuner collapse, device profile
+// swaps), AND a direct MutationObserver on the debug-panel element so
+// .open class flips from any code path trigger the sync.
+function syncDebugGuides() {
+  const panel = document.getElementById('debugPanel');
+  const open  = panel && panel.classList.contains('open');
+  document.body.classList.toggle('debug-panel-open', !!open);
+  if (!open) return;
+  const card  = document.querySelector('.card-body');
+  const brand = document.getElementById('brand');
+  const setY  = (id, y) => { const el = document.getElementById(id); if (el) { el.setAttribute('y1', y); el.setAttribute('y2', y); } };
+  if (card) {
+    const r = card.getBoundingClientRect();
+    setY('dgCardTop', Math.round(r.top));
+    setY('dgCardBot', Math.round(r.bottom));
+  }
+  if (brand) {
+    const r = brand.getBoundingClientRect();
+    setY('dgBrandTop', Math.round(r.top));
+    setY('dgBrandBot', Math.round(r.bottom));
+  }
+}
+window.addEventListener('resize', syncDebugGuides);
+(function watchDebugPanel() {
+  const panel = document.getElementById('debugPanel');
+  if (!panel) return;
+  new MutationObserver(syncDebugGuides).observe(panel, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(syncDebugGuides).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+
 // ── hamburger menu ──
 const hamBtn = $('bar-hamburger'), barMenu = $('bar-menu');
 
@@ -8176,7 +8209,7 @@ function updateDbReadout(freq) {
       if (taps >= TAPS_NEEDED) {
         taps = 0;
         const p = document.getElementById('debugPanel');
-        if (p) { p.classList.toggle('open'); _syncDebugGuides(); }
+        if (p) { p.classList.toggle('open'); syncDebugGuides(); }
       }
     });
   }
@@ -8190,39 +8223,11 @@ function updateDbReadout(freq) {
   if (autoOpen) panel.classList.add('open');
 
   const closeBtn = $('debugClose');
-  if (closeBtn) closeBtn.onclick = () => { panel.classList.remove('open'); _syncDebugGuides(); };
+  if (closeBtn) closeBtn.onclick = () => { panel.classList.remove('open'); syncDebugGuides(); };
 
-  // ── Debug accuracy-overlay sync ────────────────────────────────
-  // The SVG guides element is full-viewport, positioned: fixed. We just
-  // move its <line> y-coordinates to match the live getBoundingClientRect
-  // of .card-body and .brand. Fires on: open/close, resize, tuner toggle
-  // (class mutation observer below). Vertical crosshair is a pure CSS
-  // 50%/50% — doesn't need JS.
-  function _syncDebugGuides() {
-    const panel = document.getElementById('debugPanel');
-    const open = panel && panel.classList.contains('open');
-    document.body.classList.toggle('debug-panel-open', !!open);
-    if (!open) return;
-    const card  = document.querySelector('.card-body');
-    const brand = document.getElementById('brand');
-    const set = (id, y) => { const el = document.getElementById(id); if (el) { el.setAttribute('y1', y); el.setAttribute('y2', y); } };
-    if (card) {
-      const r = card.getBoundingClientRect();
-      set('dgCardTop', Math.round(r.top));
-      set('dgCardBot', Math.round(r.bottom));
-    }
-    if (brand) {
-      const r = brand.getBoundingClientRect();
-      set('dgBrandTop', Math.round(r.top));
-      set('dgBrandBot', Math.round(r.bottom));
-    }
-  }
-  window.addEventListener('resize', _syncDebugGuides);
-  // React to tuner-collapse toggles + any other body.class change that shifts
-  // card/brand layout (device-profile sub-block swap, etc.).
-  new MutationObserver(_syncDebugGuides).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  // Initial sync if panel was auto-opened.
-  if (autoOpen) setTimeout(_syncDebugGuides, 120);
+  // Initial sync if panel was auto-opened — the module-level hook below
+  // handles everything else (resize, class changes, tuner toggle).
+  if (autoOpen) setTimeout(() => syncDebugGuides(), 120);
 
   // Each range may drive:
   //   data-css   → a CSS variable on :root (suffix data-unit)
