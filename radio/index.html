@@ -2381,22 +2381,26 @@ const CFG = {
 
 // Signal/audio source tiers (tried in order until one works).
 //   1. ONLINE — Cloudflare R2 via assets.afest.io/twysted/radio/
-//               signal:   cf-signal.dat   (at root)
-//               audios:   tracks/         (MP3 + WAV — full quality)
+//               signal:   cf-signal.dat  OR  blocks/index.dat (block-sharded)
+//               audios:   tracks/        (MP3 + WAV — full quality)
 //   2. LOCAL  — repo-local mirror of the R2 layout (same filenames, full quality)
-//               signal:   ./cf-signal.dat
-//               audios:   ./tracks/       (populated for local dev; NOT pushed to GH)
-//   3. CFDED  — repo-local "Cloud Flare Dead" emergency fallback (obfuscated, low-quality)
-//               signal:   ./cfded/gh-signal.dat
-//               audios:   ./cfded/        (offline.file + *-off.mp3's sit here)
+//               signal:   ./cf-signal.dat  OR  ./blocks/index.dat
+//               audios:   ./tracks/      (populated for local dev; NOT pushed to GH)
+//   3. CFDED  — "Cloud Flare Dead" emergency fallback, committed to GitHub.
+//               Fires only when the CF edge + R2 + any intermediate tier fail
+//               at once (a CF-wide outage, DNS catastrophe, etc.). Small,
+//               curated selection — this is the life-jacket, not the library.
+//               signal:   ./cfded/cfded-signal.dat   (self-contained)
+//               audios:   ./cfded/*-off.mp3          (committed to GH Pages)
 //
-// Only the CFDED tier is marked `offline:true` — it triggers metadata obfuscation,
-// hi-fi disable, and the `offline.file` audio lookup. The ONLINE and LOCAL tiers
-// share the R2 layout and behave identically to each other.
+// CFDED is the only tier flagged `offline: true` — which triggers hi-fi disable
+// + single-file audio lookup. CFDED-signal.dat uses PLAIN field names (no
+// `offline.*` duplicates): the file IS the offline flavour, so one set of
+// values. Online/local shards never carry `offline.*` lines in v1+.
 const SOURCES = [
   { id: 'online', audioBase: 'https://assets.afest.io/twysted/radio/tracks/', signal: 'https://assets.afest.io/twysted/radio/cf-signal.dat', offline: false },
   { id: 'local',  audioBase: './tracks/',                                     signal: './cf-signal.dat',                                     offline: false },
-  { id: 'cfded',  audioBase: './cfded/',                                      signal: './cfded/gh-signal.dat',                               offline: true  },
+  { id: 'cfded',  audioBase: './cfded/',                                      signal: './cfded/cfded-signal.dat',                            offline: true  },
 ];
 
 // ══════════════════════════════════════════════════════════════════
@@ -3189,7 +3193,12 @@ const Registry = {
     if (!t || !this.source) return null;
     const base = this.source.audioBase;
     if (this.mode === 'offline') {
-      const f = t.meta['offline.file'];
+      // v1 cfded-signal.dat uses plain `File:` lines (single-file per track),
+      // so the first entry of t.files IS the offline audio. Legacy files that
+      // still declare `offline.file=` (older gh-signal.dat snapshots) fall back
+      // through the second branch — keeps zero-break for anyone on an older
+      // tier file that hasn't been migrated yet.
+      const f = (t.files && t.files[0]) || t.meta['offline.file'];
       return f ? base + f : null;
     }
     // online: pick by quality, with graceful fallback so one missing file never 404s.
