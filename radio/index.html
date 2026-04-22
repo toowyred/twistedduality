@@ -957,9 +957,23 @@
     border-left: 3px solid var(--accent);
     padding: 22px 26px 28px;   /* extra bottom padding so watermark doesn't kiss the close button */
     max-width: 560px; width: 100%;
-    max-height: 82vh; overflow: auto;
+    max-height: 82vh;
+    /* overflow owned by inner scroll wrapper — the box stays a stable
+       positioning context so the watermark, pinned to the frame, doesn't
+       travel with scrolled content on mobile. */
+    overflow: hidden;
+    display: flex; flex-direction: column;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6), 6px 6px 0 var(--accent-dim);
     color: var(--fg);
+  }
+  /* Inner scroll region — takes the overflow so the outer box stays static. */
+  .playback-info-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;              /* Safari flex intrinsic-size fix */
+    padding-right: 4px;
+    margin-right: -4px;
   }
   .playback-info-title {
     font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
@@ -979,6 +993,64 @@
   .playback-info-body p:last-child { margin-bottom: 0; }
   .playback-info-body strong {
     color: var(--accent); font-weight: bold; letter-spacing: 0.5px;
+  }
+  /* ── "send it my way" tooltip trigger + bubble ───────────────────
+     Inline trigger gets a dashed underline to signal interactivity.
+     Bubble is a child of the MODAL BOX (not the trigger) so it sits
+     above the scroll region and won't clip at the box edge. JS sets
+     left/top on show so it points at the trigger wherever it sits. */
+  .pw-tip-trigger {
+    display: inline-block;
+    cursor: pointer;
+    color: var(--accent);
+    text-decoration: underline dotted var(--accent-dim);
+    text-underline-offset: 3px;
+    transition: color 0.15s, text-decoration-color 0.15s;
+  }
+  .pw-tip-trigger:hover,
+  .pw-tip-trigger:focus-visible { color: var(--fg); text-decoration-color: var(--accent); outline: none; }
+  .pw-tip-bubble {
+    position: absolute;
+    /* placed by JS; fallback anchors the bubble off-screen to avoid a flash */
+    left: -9999px; top: -9999px;
+    background: rgba(20,20,20,0.98);
+    border: 1px solid var(--accent-dim);
+    border-left: 2px solid var(--accent);
+    padding: 8px 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.14s ease, transform 0.14s ease;
+    z-index: 10;              /* above the scroll wrapper */
+    font-size: 12px;
+  }
+  .pw-tip-bubble.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .pw-tip-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+  }
+  .pw-tip-link:hover { color: var(--fg); }
+  .pw-tip-icon { font-size: 14px; line-height: 1; }
+  /* arrow tip — small diamond, half hidden under bubble, pointing to trigger */
+  .pw-tip-arrow {
+    position: absolute;
+    left: 50%;                /* JS will override to aim precisely at the trigger */
+    bottom: -6px;
+    width: 10px; height: 10px;
+    background: rgba(20,20,20,0.98);
+    border-right: 1px solid var(--accent-dim);
+    border-bottom: 1px solid var(--accent-dim);
+    transform: translateX(-50%) rotate(45deg);
   }
   /* Faint watermark — bottom-right of the modal box. Not part of text flow:
      absolute-positioned, low opacity, tiny monospace. Per-language text set
@@ -1915,6 +1987,9 @@
 <!-- playback info modal — opened by the [i] button -->
 <div class="playback-info-overlay" id="playbackInfoOverlay" aria-hidden="true">
   <div class="playback-info-box" role="dialog" aria-modal="true" aria-labelledby="playbackInfoTitle">
+    <!-- scroll wrapper takes the overflow so the outer box frame stays a
+         stable positioning context for the watermark + tooltip anchors -->
+    <div class="playback-info-scroll">
     <div class="playback-info-title" id="playbackInfoTitle">PITCH WOBBLE ON MOBILE <span class="pw-sub">(Most common on iPhone Air)</span></div>
     <div class="playback-info-body">
       <p><strong>The Situation:</strong><br>
@@ -1929,9 +2004,20 @@
       <p><strong>Pro Tip for Pristine Gains:</strong><br>
       If you want that 1:1 studio-quality experience without the mobile jitters, <strong>Desktop</strong> is your best bet. Or better yet, if you're a producer/DJ, pull out a real DAW or <strong>a deck</strong> and start <strong>cooking</strong>.</p>
 
-      <p>If you create a blend or a transition that goes hard, send it my way! I'm more of a computer guy than a producer and always stoked to see people cooking up with sick beats.</p>
+      <p>If you create a blend or a transition that goes hard, <span class="pw-tip-trigger" id="pwTipTrigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-describedby="pwTipBubble">send it my way</span>! I'm more of a computer guy than a producer and always stoked to see people cooking up with sick beats.</p>
     </div>
+    </div><!-- /.playback-info-scroll -->
     <button class="playback-info-close" id="playbackInfoClose" type="button">[ CLOSE ]</button>
+    <!-- Tooltip bubble: absolute-positioned; JS repositions on show so it
+         tracks the trigger even when the scroll region is scrolled. Hidden
+         by default; shown on hover (desktop) or tap (mobile). -->
+    <div class="pw-tip-bubble" id="pwTipBubble" role="tooltip" aria-hidden="true">
+      <a class="pw-tip-link" href="https://www.instagram.com/wyred.on/" target="_blank" rel="noopener">
+        <span class="pw-tip-icon" aria-hidden="true">&#9432;</span>
+        <span class="pw-tip-text">Instagram &middot; @wyred.on</span>
+      </a>
+      <span class="pw-tip-arrow" aria-hidden="true"></span>
+    </div>
     <div class="playback-info-watermark" id="playbackInfoWatermark" data-i18n="pw-watermark" aria-hidden="true">WAVE-ISOLATE RADIO RECEIVER v1.0</div>
   </div>
 </div>
