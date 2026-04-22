@@ -956,6 +956,9 @@
     border: 1px solid var(--accent-dim);
     border-left: 3px solid var(--accent);
     padding: 22px 26px 28px;   /* extra bottom padding so watermark doesn't kiss the close button */
+    /* Desktop / landscape: widen so long-form text breathes and the scrollbar
+       is less often needed. Mobile + portrait stays at the tighter 560px to
+       avoid edge-hugging on small screens. */
     max-width: 560px; width: 100%;
     max-height: 82vh;
     /* overflow owned by inner scroll wrapper — the box stays a stable
@@ -965,6 +968,11 @@
     display: flex; flex-direction: column;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6), 6px 6px 0 var(--accent-dim);
     color: var(--fg);
+  }
+  /* Desktop / landscape: wider + slightly taller — more characters per line
+     (~75 comfortable with the bumped body text) reduces vertical overflow. */
+  @media (min-width: 900px) and (orientation: landscape) {
+    .playback-info-box { max-width: 760px; max-height: 86vh; padding: 28px 34px 34px; }
   }
   /* Inner scroll region — takes the overflow so the outer box stays static. */
   .playback-info-scroll {
@@ -976,23 +984,69 @@
     margin-right: -4px;
   }
   .playback-info-title {
-    font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+    font-size: 16px; letter-spacing: 3px; text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 14px;
-    padding-bottom: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--accent-dim);
   }
   .playback-info-title .pw-sub {
-    font-size: 11px; letter-spacing: 1.5px; color: var(--muted);
+    font-size: 12px; letter-spacing: 1.5px; color: var(--muted);
     text-transform: none; font-weight: normal; display: inline-block; margin-left: 6px;
   }
   .playback-info-body {
-    font-size: 13px; line-height: 1.55; color: var(--fg);
+    font-size: 14.5px; line-height: 1.6; color: var(--fg);
+  }
+  /* Mobile: bump a notch more — the scroll is already in play on portrait,
+     so comfort beats density. */
+  @media (max-width: 860px) {
+    .playback-info-title { font-size: 15px; letter-spacing: 2.5px; }
+    .playback-info-title .pw-sub { font-size: 11px; }
+    .playback-info-body { font-size: 15px; line-height: 1.6; }
+  }
+  /* Desktop / landscape: scale titles up proportionally with the wider box. */
+  @media (min-width: 900px) and (orientation: landscape) {
+    .playback-info-title { font-size: 17px; letter-spacing: 3.5px; }
+    .playback-info-title .pw-sub { font-size: 12.5px; }
+    .playback-info-body { font-size: 15px; line-height: 1.65; }
   }
   .playback-info-body p { margin-bottom: 12px; }
   .playback-info-body p:last-child { margin-bottom: 0; }
   .playback-info-body strong {
     color: var(--accent); font-weight: bold; letter-spacing: 0.5px;
+  }
+  /* ── Regards block — sign-off + signature image ─────────────────
+     Sits at the end of the body as a personal sign-off. The signature
+     (white PNG) hangs below "Catch you in the mix," with a subtle
+     hover lift so it reads as a written gesture, not ornament. */
+  .pw-regards {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--accent-dim);
+    color: var(--muted);
+    font-style: italic;
+    letter-spacing: 0.3px;
+  }
+  .pw-regards .pw-sig {
+    display: block;
+    margin-top: 6px;
+    height: 56px;
+    max-width: 240px;
+    width: auto;
+    object-fit: contain;
+    object-position: left center;
+    opacity: 0.92;
+    /* white PNG on dark background — slight drop shadow reads as ink on glass */
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55));
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  @media (max-width: 860px) {
+    .pw-regards .pw-sig { height: 52px; max-width: 220px; }
+  }
+  @media (min-width: 900px) and (orientation: landscape) {
+    .pw-regards .pw-sig { height: 64px; max-width: 280px; }
   }
   /* ── "send it my way" tooltip trigger + bubble ───────────────────
      Inline trigger gets a dashed underline to signal interactivity.
@@ -1062,9 +1116,10 @@
     bottom: 10px;
     font-family: 'Courier New', monospace;
     font-size: 9px;
+    font-weight: bold;       /* bolder read on desktop and especially mobile */
     letter-spacing: 1.2px;
     color: var(--fg);
-    opacity: 0.14;
+    opacity: 0.18;
     text-transform: uppercase;
     pointer-events: none;
     user-select: none;
@@ -1072,6 +1127,11 @@
     max-width: calc(100% - 28px);
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  /* Mobile: bump opacity a notch. OLED panels + lowered brightness make the
+     faint desktop value disappear entirely on some phones. */
+  @media (max-width: 860px) {
+    .playback-info-watermark { opacity: 0.32; font-size: 10px; }
   }
   /* Japanese watermark: don't uppercase kana/kanji (noop but defensive) */
   html[lang="ja"] .playback-info-watermark { text-transform: none; letter-spacing: 0.5px; }
@@ -2005,6 +2065,11 @@
       If you want that 1:1 studio-quality experience without the mobile jitters, <strong>Desktop</strong> is your best bet. Or better yet, if you're a producer/DJ, pull out a real DAW or <strong>a deck</strong> and start <strong>cooking</strong>.</p>
 
       <p>If you create a blend or a transition that goes hard, <span class="pw-tip-trigger" id="pwTipTrigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-describedby="pwTipBubble">send it my way</span>! I'm more of a computer guy than a producer and always stoked to see people cooking up with sick beats.</p>
+
+      <p class="pw-regards">
+        Catch you in the mix,<br>
+        <img class="pw-sig" src="./print/dirkanjisigwhite.png" alt="dirkanji signature" draggable="false">
+      </p>
     </div>
     </div><!-- /.playback-info-scroll -->
     <button class="playback-info-close" id="playbackInfoClose" type="button">[ CLOSE ]</button>
