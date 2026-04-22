@@ -5103,12 +5103,17 @@ function _devProfileOverride() {
 }
 
 // Apply a sub-block (css vars + CFG patch) to live state. CSS vars go on
-// <html> so they override any same-named declarations in :root. CFG patch
-// triggers a terrain buffer rebuild if the line count changed.
+// <body> because the radio has several media queries that set vars via
+//   body.tuner-is-collapsed { --brand-bottom: …; … }
+// Vars on body beat those class-based rules by inline-style specificity,
+// AND they cascade to every descendant — which is the whole player DOM.
+// Setting them on <html> instead loses to body's class-based rules for
+// body's descendants, so collapse/expand would stop switching correctly.
+// CFG patch triggers a terrain buffer rebuild if the line count changed.
 function _applyProfileSubBlock(sub) {
   if (!sub) return;
-  if (sub.css) {
-    for (const k in sub.css) document.documentElement.style.setProperty(k, sub.css[k]);
+  if (sub.css && document.body) {
+    for (const k in sub.css) document.body.style.setProperty(k, sub.css[k]);
   }
   if (sub.cfg) {
     Object.assign(CFG, sub.cfg);
@@ -9350,11 +9355,23 @@ const Settings = {
 
   applyWaves() {
     const mult = this.waves === '50' ? 0.5 : this.waves === '75' ? 0.75 : 1;
-    // Baseline respects the active perf tier: perf-lowest→35, perf-low→50, mobile→80, desktop→113.
+    // Baseline respects (in priority order):
+    //   · active device profile (e.g. iPhone 17 Pro → 100)
+    //   · perf tier (perf-lowest → 35, perf-low → 50)
+    //   · viewport class (mobile → 80, desktop → 113)
     const html = document.documentElement;
-    const base = html.classList.contains('perf-lowest') ? 35
-               : html.classList.contains('perf-low')    ? 50
-               : window.matchMedia('(max-width: 860px)').matches ? 80 : 113;
+    let base;
+    if (typeof _activeProfile !== 'undefined' && _activeProfile && typeof DeviceProfiles !== 'undefined') {
+      const prof = DeviceProfiles[_activeProfile.id];
+      if (prof && prof.base && prof.base.cfg && prof.base.cfg.terrainLines) {
+        base = prof.base.cfg.terrainLines;
+      }
+    }
+    if (base == null) {
+      base = html.classList.contains('perf-lowest') ? 35
+           : html.classList.contains('perf-low')    ? 50
+           : window.matchMedia('(max-width: 860px)').matches ? 80 : 113;
+    }
     const newLines = Math.max(20, Math.round(base * mult));
     if (CFG.terrainLines !== newLines) {
       CFG.terrainLines = newLines;
@@ -9414,6 +9431,12 @@ Settings.applyTransparency();
 Settings.applyWaves();
 Settings.applyTheme();
 Settings.applyPulse();
+
+// Device-profile re-application — must run AFTER Settings.applyWaves because
+// applyWaves resets terrainLines based on perf + mobile-base, overriding any
+// depth set during the first profile pass. Re-applying here wins the final
+// word for the terrain buffer + CFG values on profile-targeted devices.
+if (typeof applyActiveDeviceProfile === 'function') applyActiveDeviceProfile();
 
 </script>
 </body>
