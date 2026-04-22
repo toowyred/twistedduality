@@ -5981,44 +5981,55 @@ barMenu.querySelectorAll('.menu-section').forEach(d => {
 // reflects the final typography.
 (function lockBarMenuWidth() {
   const measure = () => {
-    // Only measure when the menu is visible — otherwise offsetWidth is 0.
-    // We temporarily flip it `display: flex` off-screen if closed, read
-    // width, then restore. `visibility: hidden + display: flex` gives
-    // layout while staying invisible.
-    const wasOpen = barMenu.classList.contains('open');
-    const savedStyle = {
+    // We want the width of the menu with ONLY the Languages section visible —
+    // it's the "baseline" width the menu should stay at forever. Wider
+    // sections (Themes' "Industrial Orange" etc.) wrap into this width via
+    // the .menu-section-body button { white-space: normal } rule.
+    const sections     = [...barMenu.querySelectorAll('.menu-section')];
+    const savedOpenSet = sections.map(s => s.open);
+    // Force Languages-only visible for the measurement pass.
+    sections.forEach((s, i) => {
+      const label = s.querySelector('summary')?.textContent.trim() || '';
+      s.open = (label === 'Languages');
+    });
+    // Make the menu visible off-screen at natural width.
+    const wasOpen  = barMenu.classList.contains('open');
+    const save = {
       left:       barMenu.style.left,
       right:      barMenu.style.right,
       visibility: barMenu.style.visibility,
       width:      barMenu.style.width,
     };
-    if (!wasOpen) {
-      barMenu.style.visibility = 'hidden';
-      barMenu.style.left = '-9999px';
-      barMenu.style.right = 'auto';
-      barMenu.style.width = 'auto';          // reset any prior lock for measurement
-      barMenu.classList.add('open');
-    } else {
-      barMenu.style.width = 'auto';
-    }
+    barMenu.style.visibility = 'hidden';
+    barMenu.style.left       = '-9999px';
+    barMenu.style.right      = 'auto';
+    barMenu.style.width      = 'auto';
+    barMenu.classList.add('open');
+    // Force reflow so offsetWidth reflects the new open+natural layout.
+    void barMenu.offsetWidth;
     const w = Math.ceil(barMenu.getBoundingClientRect().width);
-    // Restore the original inline styles + visibility.
-    barMenu.style.left       = savedStyle.left;
-    barMenu.style.right      = savedStyle.right;
-    barMenu.style.visibility = savedStyle.visibility;
+    // Restore EVERYTHING — classes, inline styles, section open states.
     if (!wasOpen) barMenu.classList.remove('open');
+    barMenu.style.left       = save.left;
+    barMenu.style.right      = save.right;
+    barMenu.style.visibility = save.visibility;
+    barMenu.style.width      = save.width;
+    sections.forEach((s, i) => { s.open = savedOpenSet[i]; });
     if (w > 0) {
       document.documentElement.style.setProperty('--bar-menu-w', w + 'px');
-    } else {
-      barMenu.style.width = savedStyle.width;
     }
   };
-  // Wait for fonts + a frame so the layout is final.
+  // Wait for fonts + a frame so the measurement reflects final typography.
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => requestAnimationFrame(measure)).catch(measure);
   } else {
     requestAnimationFrame(measure);
   }
+  // Re-measure on lang swap (button labels change — "Deutsch" may be wider
+  // than "English" etc.). applyLang doesn't know about this; MutationObserver
+  // on <html lang> is the simplest cross-hook.
+  new MutationObserver(() => requestAnimationFrame(measure))
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 })();
 document.querySelectorAll('.bar-menu [data-lang-btn]').forEach(b => {
   b.addEventListener('click', () => {
