@@ -2357,6 +2357,9 @@
     --ch-row-padx:    14px;
     --ch-row-padb:    16px;
     --ch-sticker-fs:   7px;
+    /* Teaser is visually distinct — bigger badge, no border. Its size is
+       driven by its own var so tuning doesn't move the real channel buttons. */
+    --ch-teaser-size: 80px;
   }
   .channel-row {
     position: fixed;
@@ -2364,7 +2367,9 @@
     left: 0; right: 0;
     z-index: 195;                     /* below top-bar(200) + bar-menu(250) */
     display: flex;
-    align-items: flex-start;
+    /* Center-align cross-axis so the taller teaser sits visually balanced
+       against the smaller bordered channel buttons. */
+    align-items: center;
     /* Gap sized so the widest long-form sticker ("IN-CONSTRUCTION", ~90px)
        doesn't overlap its neighbor button's sticker zone. Narrower gap
        via breakpoint below once short-form stickers kick in. */
@@ -2438,6 +2443,8 @@
      So the teaser keeps --ch-btn-size and its icon fills inset:0 — the
      icon's top/bottom align exactly with the neighbors' outer-ring edges. */
   .channel-btn.is-teaser {
+    width:  var(--ch-teaser-size);
+    height: var(--ch-teaser-size);
     border: none;
     background: none;
     backdrop-filter: none; -webkit-backdrop-filter: none;
@@ -6941,13 +6948,14 @@ try { window.Channels.init(); } catch (e) { console.warn('[channels] init failed
 //    User dials numbers, hits COPY VALUES, pastes back so we can bake per-bp.
 window.DebugV2 = (function () {
   const VARS = [
-    { key: '--ch-btn-size',   label: 'BTN SIZE',   min: 20, max: 90, step: 1,   unit: 'px' },
-    { key: '--ch-border-w',   label: 'BORDER',     min: 1,  max: 6,  step: 0.5, unit: 'px' },
-    { key: '--ch-row-gap',    label: 'ROW GAP',    min: 2,  max: 90, step: 1,   unit: 'px' },
-    { key: '--ch-row-padt',   label: 'PAD TOP',    min: 0,  max: 30, step: 1,   unit: 'px' },
-    { key: '--ch-row-padx',   label: 'PAD X',      min: 0,  max: 40, step: 1,   unit: 'px' },
-    { key: '--ch-row-padb',   label: 'PAD BOT',    min: 0,  max: 30, step: 1,   unit: 'px' },
-    { key: '--ch-sticker-fs', label: 'STICK. FS',  min: 5,  max: 14, step: 0.5, unit: 'px' },
+    { key: '--ch-btn-size',    label: 'BTN SIZE',   min: 20, max: 90,  step: 1,   unit: 'px' },
+    { key: '--ch-teaser-size', label: 'TEASER',     min: 30, max: 140, step: 1,   unit: 'px' },
+    { key: '--ch-border-w',    label: 'BORDER',     min: 1,  max: 6,   step: 0.5, unit: 'px' },
+    { key: '--ch-row-gap',     label: 'ROW GAP',    min: 2,  max: 90,  step: 1,   unit: 'px' },
+    { key: '--ch-row-padt',    label: 'PAD TOP',    min: 0,  max: 30,  step: 1,   unit: 'px' },
+    { key: '--ch-row-padx',    label: 'PAD X',      min: 0,  max: 40,  step: 1,   unit: 'px' },
+    { key: '--ch-row-padb',    label: 'PAD BOT',    min: 0,  max: 30,  step: 1,   unit: 'px' },
+    { key: '--ch-sticker-fs',  label: 'STICK. FS',  min: 5,  max: 14,  step: 0.5, unit: 'px' },
   ];
 
   function currentViewportBucket() {
