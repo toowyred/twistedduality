@@ -2349,17 +2349,24 @@
      and swap the src when present — fallback to the base icon when not.
      All visual knobs are CSS vars so the Debug v2 panel can live-tune.
   ─────────────────────────────────────────────────────────────── */
+  /* DEFAULT = desktop (≥861w, non-touch). Numbers tuned against 866×864. */
   :root {
-    --ch-btn-size:    44px;
-    --ch-border-w:     2px;
-    --ch-row-gap:     50px;
+    --ch-btn-size:    65px;
+    --ch-border-w:     1px;
+    --ch-row-gap:     90px;
     --ch-row-padt:    10px;
     --ch-row-padx:    14px;
     --ch-row-padb:    16px;
-    --ch-sticker-fs:   7px;
+    --ch-sticker-fs:  11px;
     /* Teaser is visually distinct — bigger badge, no border. Its size is
        driven by its own var so tuning doesn't move the real channel buttons. */
-    --ch-teaser-size: 80px;
+    --ch-teaser-size: 95px;
+  }
+  /* When the teaser slot is absent (defs has no { teaser: true } entry),
+     the row no longer needs top breathing room for the taller icon —
+     bump padt from 0 to 5 so the smaller buttons don't hug the top-bar. */
+  body.no-teaser {
+    --ch-row-padt: 5px;
   }
   .channel-row {
     position: fixed;
@@ -2543,29 +2550,61 @@
     .channel-btn .ch-sticker .st-short { display: inline; }
   }
 
-  /* ── Landscape-short: tighten sizing so the row doesn't eat vertical space. */
-  @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  /* ── Ultra-wide desktop (≥1800w). Tuned against 3840×1080. */
+  @media (min-width: 1800px) {
     :root {
-      --ch-btn-size: 32px;
-      --ch-border-w: 1.5px;
-      --ch-row-gap:  8px;
-      --ch-row-padt: 4px;
-      --ch-row-padx: 10px;
-      --ch-row-padb: 10px;
-      --ch-sticker-fs: 6px;
+      --ch-btn-size:    75px;
+      --ch-teaser-size: 140px;
+      --ch-border-w:     2px;
+      --ch-row-gap:     90px;
+      --ch-row-padt:     0px;
+      --ch-row-padx:    40px;
+      --ch-row-padb:     5px;
+      --ch-sticker-fs:  14px;
     }
-    .channel-btn .ch-sticker { padding: 1px 3px; top: calc(100% + 2px); }
   }
-  /* ── Narrow portrait: short-form stickers already kicked in at 520px,
-     so row gap can tighten back up and buttons shrink a notch. */
+  /* ── Tablet / narrow-desktop (≤860w). Tuned against 644×571. */
+  @media (max-width: 860px) {
+    :root {
+      --ch-btn-size:    45px;
+      --ch-teaser-size: 70px;
+      --ch-border-w:     1px;
+      --ch-row-gap:     80px;
+      --ch-row-padt:     0px;
+      --ch-row-padx:    40px;
+      --ch-row-padb:     5px;
+      --ch-sticker-fs:   8px;
+    }
+  }
+  /* ── Mobile narrow portrait (≤520w). Tuned across 420–513 width samples. */
   @media (max-width: 520px) {
     :root {
-      --ch-btn-size: 38px;
-      --ch-row-gap: 18px;
-      --ch-row-padt: 8px;
-      --ch-row-padx: 10px;
-      --ch-row-padb: 14px;
+      --ch-btn-size:    50px;
+      --ch-teaser-size: 78px;
+      --ch-border-w:     1px;
+      --ch-row-gap:     26px;
+      --ch-row-padt:     0px;
+      --ch-row-padx:    12px;
+      --ch-row-padb:     5px;
+      --ch-sticker-fs:   9px;
     }
+  }
+  /* ── Mobile landscape — tight short-height, touch devices only.
+     Explicit `pointer: coarse` keeps ultra-wide DESKTOP monitors (e.g.
+     3840×1080 panels that happen to be short) out of this tier. Tuned
+     against iPhone Air 1073×366. */
+  @media (max-height: 500px) and (pointer: coarse) {
+    :root {
+      --ch-btn-size:    34px;
+      --ch-teaser-size: 54px;
+      --ch-border-w:     1px;
+      --ch-row-gap:     81px;
+      --ch-row-padt:     0px;
+      --ch-row-padx:    40px;
+      --ch-row-padb:     5px;
+      --ch-sticker-fs:   9px;
+    }
+    .channel-btn .ch-sticker { padding: 1px 3px; top: calc(100% + 2px); }
   }
   /* Narrow viewports: collapse Settings button to just the hamburger icon.
      Frees up real estate for the bar-title (long-form DE/EN variants
@@ -3080,11 +3119,11 @@
            Each row updates TerrainDebug.refl* live. GPU cost row at bottom
            shows a heuristic multiplier so the author knows when a setting
            gets expensive. -->
-      <div class="debug-row" title="Reflection length: fraction of space below the horizon the mirror covers. 1.0 = full, 0.4 = ~40%."><span>Refl Len</span><input type="range" min="0" max="1" step="0.05" value="1" id="dbgReflLen"><span class="dv" id="dv-dbgReflLen">1.00</span></div>
-      <div class="debug-row" title="Base opacity of the mirrored terrain. Composed with the fade gradient — effective alpha near the horizon = reflAlpha."><span>Refl α</span><input type="range" min="0" max="1" step="0.05" value="0.35" id="dbgReflAlpha"><span class="dv" id="dv-dbgReflAlpha">0.35</span></div>
-      <div class="debug-row" title="Fade-end darkness: alpha of the gradient at the deepest point of the reflection. Higher = reflection dies off harder into the background."><span>Fade End</span><input type="range" min="0" max="1" step="0.05" value="0.85" id="dbgReflFadeEnd"><span class="dv" id="dv-dbgReflFadeEnd">0.85</span></div>
+      <div class="debug-row" title="Reflection length: fraction of space below the horizon the mirror covers. 1.0 = full panel-to-panel, >1 extends past the natural floor (debug-only range up to 5×)."><span>Refl Len</span><input type="range" min="0" max="5" step="0.05" value="1" id="dbgReflLen"><span class="dv" id="dv-dbgReflLen">1.00</span></div>
+      <div class="debug-row" title="Base opacity of the mirrored terrain. Composed with the fade gradient — effective alpha near the horizon = reflAlpha."><span>Refl α</span><input type="range" min="0" max="1" step="0.05" value="1" id="dbgReflAlpha"><span class="dv" id="dv-dbgReflAlpha">1.00</span></div>
+      <div class="debug-row" title="Fade-end darkness: alpha of the gradient at the deepest point of the reflection. Higher = reflection dies off harder into the background."><span>Fade End</span><input type="range" min="0" max="1" step="0.05" value="1" id="dbgReflFadeEnd"><span class="dv" id="dv-dbgReflFadeEnd">1.00</span></div>
       <div class="debug-row" title="Perspective skew in degrees. 0 = flat mirror. Positive tilts the mirrored plane away from the viewer (like a tilted reflective floor)."><span>Skew°</span><input type="range" min="-30" max="30" step="1" value="0" id="dbgReflSkew"><span class="dv" id="dv-dbgReflSkew">0</span></div>
-      <div class="debug-row" title="Render quality of the reflection pass. 1.0 = full resolution. Lower = render at reduced sampling density, cheaper GPU."><span>Quality</span><input type="range" min="0.25" max="1" step="0.05" value="1" id="dbgReflQuality"><span class="dv" id="dv-dbgReflQuality">1.00</span></div>
+      <div class="debug-row" title="Render quality of the reflection pass. 1.0 = full resolution. Lower = render at reduced sampling density, cheaper GPU."><span>Quality</span><input type="range" min="0.25" max="1" step="0.05" value="0.25" id="dbgReflQuality"><span class="dv" id="dv-dbgReflQuality">0.25</span></div>
       <div class="debug-row" title="Blur applied to the reflection pass (via ctx.filter). iOS partial support — silently no-ops where unavailable."><span>Blur</span><input type="range" min="0" max="10" step="0.5" value="0" id="dbgReflBlur"><span class="dv" id="dv-dbgReflBlur">0</span></div>
       <div class="debug-row" title="Estimated GPU cost multiplier vs baseline (main terrain pass only). Updates live as sliders change."><span>GPU Est</span><span style="flex:1"></span><span class="dv" id="dv-dbgReflGpu" style="font-weight:bold">1.00×</span></div>
     </div>
@@ -5057,10 +5096,10 @@ const TerrainDebug = {
   //                        ctx.filter = 'blur(Npx)'. iOS partial support
   //                        (falls back to no blur silently).
   reflLen:      1.0,
-  reflAlpha:    0.35,
-  reflFadeEnd:  0.85,
+  reflAlpha:    1.0,
+  reflFadeEnd:  1.0,
   reflSkew:     0,
-  reflQuality:  1.0,
+  reflQuality:  0.25,
   reflBlur:     0,
 };
 
@@ -5155,7 +5194,7 @@ class TerrainRenderer {
     // viewport-relative canvas scale (cheap render at low res) — the
     // compositor blurs during upscale which doubles as a softness boost.
     if (TerrainDebug.reflection) {
-      const reflLen    = Math.max(0, Math.min(1,  TerrainDebug.reflLen));
+      const reflLen    = Math.max(0, Math.min(5,  TerrainDebug.reflLen));
       const reflAlpha  = Math.max(0, Math.min(1,  TerrainDebug.reflAlpha));
       const reflFadeE  = Math.max(0, Math.min(1,  TerrainDebug.reflFadeEnd));
       const reflSkew   = TerrainDebug.reflSkew || 0;
@@ -6933,7 +6972,14 @@ window.Channels = (function () {
     }
   }
 
-  function init() { render(); }
+  function init() {
+    // Flip body.no-teaser when the defs table has no teaser entry — CSS
+    // uses the class to bump padt from 0 to 5 so buttons don't hug the
+    // top-bar once the big v2soon icon is gone.
+    const hasTeaser = defs.some(d => d.teaser);
+    document.body.classList.toggle('no-teaser', !hasTeaser);
+    render();
+  }
   return { init, setState, defs };
 })();
 
