@@ -6747,9 +6747,9 @@ hamBtn.addEventListener('click', e => {
 window.Channels = (function () {
   const defs = [
     { id: 'ch-main', label: 'MAIN',
-      icon: 'channels/ch-main.png', state: 'active'   },
+      icon: 'elements/channels/ch01.png', state: 'active'   },
     { id: 'ch-mo',   label: 'MOTION MEMORIES',
-      icon: 'channels/ch-mo.png',   state: 'inactive',
+      icon: 'elements/channels/ch02.png', state: 'inactive',
       disabled: true, sticker: 'COMING SOON', stickerShort: 'SOON' },
     { id: 'ch-03',   label: 'NULL',
       icon: null, hollow: true, sticker: 'IN-CONSTRUCTION', stickerShort: 'WIP' },
@@ -6758,7 +6758,7 @@ window.Channels = (function () {
     // 5th slot — NOT a channel. Promo/teaser for v2. No border wrapper.
     // Click: one-shot rainbow radiate + print overlay "WSI・V2 is coming soon!".
     { id: 'v2soon',  label: 'WSI V2 — COMING SOON',
-      icon: 'elements/v2soon-channel.png', teaser: true,
+      icon: 'elements/channels/v2soon-channel.png', teaser: true,
       printMsg: 'WSI\u30FBV2 is coming soon!' },
   ];
   const STATES = ['inactive','scanning','syncing','active'];
