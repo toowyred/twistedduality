@@ -1263,11 +1263,24 @@
   .playback-info-nav:hover, .playback-info-nav:focus-visible {
     filter: brightness(1.3); border-color: var(--accent); outline: none;
   }
-  /* Arrow glyph swaps via pseudo so JS only has to toggle the data-page. */
-  .playback-info-box[data-page="wobble"]  #playbackInfoNav::before { content: '>>>'; }
-  .playback-info-box[data-page="updates"] #playbackInfoNav::before { content: '<<<'; }
+  /* Arrow glyph swaps via pseudo so JS only has to toggle the data-page.
+     Updates is now page 1 (default) → arrow points forward to wobble (page 2).
+     Wobble is page 2 → arrow points back to updates. */
+  .playback-info-box[data-page="updates"] #playbackInfoNav::before { content: '>>>'; }
+  .playback-info-box[data-page="wobble"]  #playbackInfoNav::before { content: '<<<'; }
   .playback-info-nav { font-size: 0; }    /* hide the static label; pseudo supplies it */
   .playback-info-nav::before { font-size: 11px; letter-spacing: 2px; }
+  /* Stack the page-number indicator above the nav arrow button. */
+  .playback-info-nav-stack {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 0 0 auto;
+  }
+  .playback-info-pageno {
+    font: inherit; font-size: 9px; letter-spacing: 1.5px;
+    color: var(--muted);
+    line-height: 1;
+    user-select: none;
+  }
   .playback-info-body {
     font-size: 14.5px; line-height: 1.6; color: var(--fg);
   }
@@ -2887,7 +2900,7 @@
 <!-- brand: dimensions locked on boot so timeline text-swaps (wsi.line1/wsi.line2)
      don't reflow the logo position — users only see the text change, not layout shift. -->
 <div class="brand" id="brand">
-  <span class="ver-badge" id="brandVer" translate="no" aria-label="version 1.0">v1.5</span>
+  <span class="ver-badge" id="brandVer" translate="no" aria-label="version 1.0">v1.6</span>
   <div class="title" id="brandLine1">WSI Radio Receiver</div>
   <div class="sub" id="brandLine2"><span data-i18n="constructed-by">Constructed by</span> <a href="https://www.instagram.com/wyred.on/" target="_blank" rel="noopener">@wyred.on</a></div>
 </div>
@@ -2907,16 +2920,19 @@
 
 <!-- playback info modal — opened by the [i] button -->
 <div class="playback-info-overlay" id="playbackInfoOverlay" aria-hidden="true">
-  <div class="playback-info-box" role="dialog" aria-modal="true" aria-labelledby="playbackInfoTitle" data-page="wobble">
+  <div class="playback-info-box" role="dialog" aria-modal="true" aria-labelledby="playbackInfoTitle" data-page="updates">
     <!-- Header strip with title + page-nav arrow. Button is >>> on the wobble
          page (go to updates) and <<< on updates (back to wobble). Keeps the
          close button at the bottom, so navigation + close are unambiguous. -->
     <div class="playback-info-header">
       <div class="playback-info-title" id="playbackInfoTitle">
         <span class="pw-title pw-title--wobble">PITCH WOBBLE ON MOBILE <span class="pw-sub">(Most common on iPhone Air)</span></span>
-        <span class="pw-title pw-title--updates">UPDATES <span class="pw-sub">v1.5 &middot; since pitch-wobble notice</span></span>
+        <span class="pw-title pw-title--updates">UPDATES <span class="pw-sub">latest: v1.6</span></span>
       </div>
-      <button class="playback-info-nav" id="playbackInfoNav" type="button" aria-label="Next page">&gt;&gt;&gt;</button>
+      <div class="playback-info-nav-stack">
+        <span class="playback-info-pageno" id="playbackInfoPageNo">1 / 2</span>
+        <button class="playback-info-nav" id="playbackInfoNav" type="button" aria-label="Next page">&gt;&gt;&gt;</button>
+      </div>
     </div>
     <!-- scroll wrapper takes the overflow so the outer box frame stays a
          stable positioning context for the watermark + tooltip anchors -->
@@ -2944,9 +2960,38 @@
       </p>
     </div><!-- /.playback-info-body--wobble -->
 
-    <!-- ── UPDATES page — visible when data-page="updates" on the box ─── -->
+    <!-- ── UPDATES page — newest version first, scroll down for older notes.
+         Default landing page on modal open (data-page="updates" on the box). -->
     <div class="playback-info-body playback-info-body--updates">
-      <p>Since the last check-in, I've been putting in work to make WSI Radio faster, cleaner, and more immersive. Here's the short tour of your new gear.</p>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <!-- v1.6 — current release -->
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <p><strong>v1.6</strong> &middot; small but mighty. Mostly under-the-hood plumbing that should make the player feel more reliable than v1.5.</p>
+
+      <p><strong>The metadata-disappears bug is dead.</strong> If you ever opened the radio and watched the track name go blank for no reason, that was the listener pipeline missing a beat. Rewrote it as a pure derivation: every render reads from the timeline directly, no cached state to go stale. No more dead-air title cards.</p>
+
+      <p><strong>Tighter SCAN button.</strong> Rapid taps used to race against each other &mdash; sometimes a stale fetch would land last and overwrite the track you actually wanted. Added a generation token so any out-of-order resolve gets dropped silently. Spam SCAN; only the latest one wins.</p>
+
+      <p><strong>Auto-watchdog reconciliation.</strong> The player now self-checks the displayed text against expected text every half-second. If anything ever drifts (throttled tab catching up, weird race), it repairs itself in &lt;500&nbsp;ms instead of waiting for you to refresh.</p>
+
+      <p><strong>Capability detect under the hood.</strong> The player now classifies your device as lite / medium / full at boot &mdash; no behavior change yet, but it sets the stage for richer per-device defaults coming soon (e.g. heavier eye-candy auto-on for desktop, auto-off for data-saver mode).</p>
+
+      <p><strong>Paving a pathway for BIG v2.0 update.</strong> Everything above is groundwork. v2.0 is being built in parallel as a separate skyscraper &mdash; multi-artist Satellites, offline Auto-DJ engine, the works &mdash; and the v1.6 fixes are the foundation patterns the same code lineage will sit on. Stay tuned.</p>
+
+      <p class="pw-regards">
+        Catch you in the mix,<br>
+        <img class="pw-sig" src="./print/dirkanjisigwhite.png" alt="海流"
+             draggable="false"
+             onerror="(function(el){var s=document.createElement('span');s.className='pw-sig-fallback';s.textContent='海流';s.setAttribute('aria-label','dirkanji signature');el.replaceWith(s);})(this)">
+      </p>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <!-- v1.5 — previous release -->
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <hr style="border: none; border-top: 1px solid var(--accent-dim); margin: 28px 0 20px; opacity: 0.6;">
+
+      <p><strong>v1.5</strong> &middot; since the pitch-wobble notice. Faster, cleaner, and more immersive.</p>
 
       <p><strong>THE VISUAL UPGRADE</strong></p>
 
@@ -2963,13 +3008,6 @@
       <p><strong>Browser smart-detect.</strong> If you're reading this inside Instagram, Facebook, or TikTok's built-in browser, a little nudge pointed you toward Safari (iOS) or Chrome (Android). Those embedded browsers throttle audio and animation hard &mdash; switching unlocks the full, high-fidelity experience.</p>
 
       <p><strong>Harmonic Mixing (preview).</strong> Tap the <strong>KEY</strong> readout to open the Camelot Wheel. Your current key's wedge glows in the accent color while every harmonically-compatible key dims in sync &mdash; spot your next perfect mix candidate at a glance. This is a taste of what's coming in v2, so stay tuned.</p>
-
-      <p class="pw-regards">
-        Catch you in the mix,<br>
-        <img class="pw-sig" src="./print/dirkanjisigwhite.png" alt="海流"
-             draggable="false"
-             onerror="(function(el){var s=document.createElement('span');s.className='pw-sig-fallback';s.textContent='海流';s.setAttribute('aria-label','dirkanji signature');el.replaceWith(s);})(this)">
-      </p>
     </div><!-- /.playback-info-body--updates -->
     </div><!-- /.playback-info-scroll -->
     <button class="playback-info-close" id="playbackInfoClose" type="button">[ CLOSE ]</button>
@@ -2983,7 +3021,7 @@
       </a>
       <span class="pw-tip-arrow" aria-hidden="true"></span>
     </div>
-    <div class="playback-info-watermark" id="playbackInfoWatermark" data-i18n="pw-watermark" aria-hidden="true">WAVE-ISOLATE RADIO RECEIVER v1.5</div>
+    <div class="playback-info-watermark" id="playbackInfoWatermark" data-i18n="pw-watermark" aria-hidden="true">WAVE-ISOLATE RADIO RECEIVER v1.6</div>
   </div>
 </div>
 
@@ -3246,7 +3284,7 @@
 // ══════════════════════════════════════════════════════════════════
 // VERSION
 // ──────────────────────────────────────────────────────────────────
-// Single source of truth for the "v1.5" stamp. Surfaced in three places:
+// Single source of truth for the "v1.6" stamp. Surfaced in three places:
 //   · brand chip        — .ver-badge innerText (set on boot)
 //   · modal watermark   — not templated here; the i18n strings bake the version
 //                         into the localized WAVE・ISOLATE string so they stay
@@ -3256,8 +3294,8 @@
 // Bump this on every release; keep in sync with the i18n 'pw-watermark'
 // strings (see I18N dict) when the version changes.
 // ══════════════════════════════════════════════════════════════════
-const WSI_RADIO_VERSION   = '1.5';
-const WSI_RADIO_BUILD_DATE = '2026-04-23';
+const WSI_RADIO_VERSION   = '1.6';
+const WSI_RADIO_BUILD_DATE = '2026-04-26';
 window.__WSI_RADIO_VERSION__  = WSI_RADIO_VERSION;
 window.__WSI_RADIO_BUILD_DATE__ = WSI_RADIO_BUILD_DATE;
 
@@ -3469,7 +3507,7 @@ const I18N = {
     'm-access': 'ACCESS',
     'm-origin': 'ORIGIN',
     'constructed-by': 'Constructed by',
-    'pw-watermark': 'WAVE・ISOLATE RADIO RECEIVER v1.5',
+    'pw-watermark': 'WAVE・ISOLATE RADIO RECEIVER v1.6',
     'signal-label': 'SIGNAL',
     'bpm': 'BPM',
     'key': 'KEY',
@@ -3537,7 +3575,7 @@ const I18N = {
     'm-access': 'ZUGANG',
     'm-origin': 'URSPRUNG',
     'constructed-by': 'Konstruiert von',
-    'pw-watermark': 'WAVE\u30FBISOLATE-FUNKEMPF\u00C4NGER v1.5',
+    'pw-watermark': 'WAVE\u30FBISOLATE-FUNKEMPF\u00C4NGER v1.6',
     'signal-label': 'SIGNAL',
     'bpm': 'BPM',
     'key': 'TON',
@@ -3605,7 +3643,7 @@ const I18N = {
     'm-access': 'ACCESO',
     'm-origin': 'ORIGEN',
     'constructed-by': 'Construido por',
-    'pw-watermark': 'WAVE\u30FBISOLATE | RECEPTOR RADIO v1.5',
+    'pw-watermark': 'WAVE\u30FBISOLATE | RECEPTOR RADIO v1.6',
     'signal-label': 'SE\u00D1AL',
     'bpm': 'BPM',
     'key': 'TONO',
@@ -3667,7 +3705,7 @@ const I18N = {
     'm-access': 'ACC\u00C8S',
     'm-origin': 'ORIGINE',
     'constructed-by': 'Construit par',
-    'pw-watermark': 'WAVE\u30FBISOLATE | R\u00C9CEPTEUR RADIO v1.5',
+    'pw-watermark': 'WAVE\u30FBISOLATE | R\u00C9CEPTEUR RADIO v1.6',
     'signal-label': 'SIGNAL',
     'bpm': 'BPM',
     'key': 'TON',
@@ -3729,7 +3767,7 @@ const I18N = {
     'm-access': '接続',
     'm-origin': '原曲',
     'constructed-by': '構築',
-    'pw-watermark': '波\u30FBアイソレート ラジオ受信機 v1.5',
+    'pw-watermark': '波\u30FBアイソレート ラジオ受信機 v1.6',
     'signal-label': '信号',
     'bpm': 'BPM',
     'key': '調',
@@ -6484,6 +6522,32 @@ function devicePerfTeaserCap() {
   }
 })();
 
+// ──────────────────────────────────────────────────────────────────
+// v1.6 LOAD_LEVEL — capability-derived classification, exposed as a
+// CSS class on <html> + window flag for downstream consumers. Doesn't
+// change v1.5 behavior on its own — future CSS rules (or a Settings
+// auto-default) can opt-in via `html.load-lite ...`. Backports the
+// minimal slice of v2 plan §22.5 without splitting the JS bundle.
+// ──────────────────────────────────────────────────────────────────
+(function initLoadLevel() {
+  const conn = navigator.connection || {};
+  const isFastNetwork  = conn.effectiveType === '4g' || conn.effectiveType === '5g';
+  const hasGoodCPU     = (navigator.hardwareConcurrency ?? 2) >= 4;
+  const hasGoodMemory  = (navigator.deviceMemory ?? 1) >= 4;
+  const isDataSaver    = conn.saveData === true;
+  const isDesktop      = matchMedia('(hover:hover) and (pointer:fine)').matches;
+
+  const level =
+    isDataSaver                                              ? 'lite'    :
+    isDesktop                                                ? 'full'    :
+    (isFastNetwork && hasGoodCPU && hasGoodMemory)           ? 'full'    :
+    (isFastNetwork && (hasGoodCPU || hasGoodMemory))         ? 'medium'  :
+                                                                'lite';
+
+  document.documentElement.classList.add('load-' + level);
+  window.__LOAD_LEVEL = level;     // exposed for DevTools + DebugV2 readout
+})();
+
 // Runtime FPS watchdog — invoked from loop() while audio plays.
 const _perfWatch = { frames: 0, t0: 0 };
 function perfWatchTick() {
@@ -7947,17 +8011,55 @@ function playTeaser(audioBuffer, teaserDur) {
 // a timeline event fires its value wins over the base metaFor() lookup.
 // Reset on every track load / crossfade.
 // ══════════════════════════════════════════════════════════════════
+// ──────────────────────────────────────────────────────────────────
+// v1.6 metadata model — pure-function on-demand derivation.
+// REPLACES the v1.5 push-based listener-mutation model that had a
+// recurring "track-card disappears" bug class (single missed listener
+// left state stale indefinitely; reverse-seek didn't reset; rapid SCAN
+// races overwrote with stale block resolves).
+//
+// LiveState.set is still called by applyTimelineEvent so the legacy
+// API surface stays — but no read path consults it anymore. liveMeta
+// now walks the track's timeline events ≤ engine.currentTime on each
+// call. Idempotent, race-free, reverse-seek-safe by construction.
+// (Backported from v2 plan §22.1.)
+// ──────────────────────────────────────────────────────────────────
 const LiveState = {
-  overrides: Object.create(null),   // { signal: '...', origin: '...', ... }
+  overrides: Object.create(null),
   reset() { this.overrides = Object.create(null); },
-  set(field, value) { this.overrides[field] = value; },
-  get(field) { return this.overrides[field]; }
+  set(field, value) { this.overrides[field] = value; },     // vestigial — no reader
+  get(field) { return this.overrides[field]; }              // vestigial — no caller
 };
 
-// unified metadata reader — timeline override wins over base
+// Pure-function metadata derivation. Walks events ≤ t_ms and applies them
+// in order. Result reflects the EXACT state the timeline declares for that
+// instant — no caching, no listener fragility.
+function metadataAtTime(idx, t_ms) {
+  const t = Registry.tracks && Registry.tracks[idx];
+  if (!t) return null;
+  const result = Object.create(null);
+  const events = t.timeline || [];
+  // O(n) per call. n is small (<100 events even for the longest tracks).
+  // If profiling ever shows this hot, swap to bisect-cached cursor.
+  for (let i = 0; i < events.length; i++) {
+    const ev = events[i];
+    if (ev.time * 1000 > t_ms) break;          // events sorted ASC by parse time
+    if (ev.type === 'print') continue;          // print is a side-effect, not metadata
+    if (ev.type === 'wsi.line1' || ev.type === 'wsi.line2') continue;  // brand swap, not card meta
+    result[ev.type] = ev.value;
+  }
+  return result;
+}
+
+// Unified metadata reader — pure-function over derived state.
+// Falls back to Registry.metaFor base value when no timeline event
+// has set this field at the current playhead.
 function liveMeta(idx, key) {
-  const override = LiveState.get(key);
-  if (override != null) return override;
+  const t_ms = (typeof engine !== 'undefined' && engine.currentTime >= 0)
+    ? engine.currentTime * 1000
+    : 0;
+  const derived = metadataAtTime(idx, t_ms);
+  if (derived && derived[key] != null) return derived[key];
   return Registry.metaFor(idx, key) || '';
 }
 
@@ -9016,10 +9118,16 @@ async function loadTrack(idx, options) {
 // ── SCAN: noise → crossfade to next random track ──
 let _scanInFlight = false;
 let _scanCount = 0;   // session-scoped (resets on page reload); every 3rd SCAN is wildcard
+// v1.6: generation counter — any in-flight SCAN whose `myGen !== _scanGen` at
+// resolve time is stale (e.g. a later SCAN beat us, OR _scanInFlight got
+// bypassed by a future code path). Stale resolves drop their applyMeta /
+// metadata writes silently so they can't overwrite the displayed track.
+let _scanGen = 0;
 btnScan.addEventListener('click', async () => {
   if (_scanInFlight) return;
   if (!Registry.tracks.length) { toast(t('no-signal')); return; }
   _scanInFlight = true;
+  const myGen = ++_scanGen;
   btnScan.classList.add('active');
 
   // Real fetch owns the bandwidth from here on — cancel any in-flight pre-buffer,
@@ -9126,6 +9234,15 @@ btnScan.addEventListener('click', async () => {
     // renders real meta, not the "unknown" synthetic stub. Block-load was
     // kicked in parallel with the audio fetch — usually already resolved.
     if (_blockPrimeP) { try { await _blockPrimeP; } catch (_) {} }
+    // v1.6 stale-gen guard — bail before mutating shared state if a later SCAN
+    // already won. Bandwidth was already spent on the fetch (irreversible),
+    // but the stale resolve is dropped here instead of clobbering currentIdx +
+    // applyMeta with the wrong track.
+    if (myGen !== _scanGen) {
+      ErrTelemetry?.ping?.('scan-stale-resolve', 'dropped stale SCAN at apply',
+        { nextIdx, myGen, currentGen: _scanGen });
+      return;
+    }
     Registry.currentIdx = nextIdx;
     Registry.rememberPlayed(nextIdx);     // rolling "last 3" window for pickRandomIdx
     applyMeta(nextIdx);
@@ -9336,6 +9453,28 @@ function loop() {
   // SRT.print cues — parallel channel, also gated on playing so seeks/pauses
   // don't spam the overlay while the cursor is catching up.
   if (engine.playing && typeof SrtPrintRunner !== 'undefined') SrtPrintRunner.tick(engine.currentTime);
+  // v1.6 watchdog reconciliation — every ~30 frames (~0.5 s @ 60fps) compare
+  // displayed signal text against pure-function expected text. If a render
+  // ever drifts (legacy listener miss, race, throttled tab catching up), one
+  // FieldCycler.paintCard rewrite restores it. Telemetry pings let us trace
+  // residual drift causes; once silent for 7 days, the legacy LiveState +
+  // applyTimelineEvent push-mutation paths can be deleted.
+  if (engine.playing && (terrain.frameCount & 31) === 0 && typeof FieldCycler !== 'undefined') {
+    const idx = Registry.currentIdx;
+    if (idx >= 0) {
+      const expectedRaw = liveMeta(idx, 'signal');
+      const expectedText = FieldCycler.currentDisplay('signal', expectedRaw) || '---';
+      const sigEl = document.getElementById('m-signal');
+      if (sigEl && sigEl.textContent !== expectedText) {
+        FieldCycler.paintCard('signal');
+        FieldCycler.paintCard('decoder');
+        FieldCycler.paintCard('vibe');
+        ErrTelemetry?.ping?.('watchdog-reconciled', 'card-text drift', {
+          idx, displayed: sigEl.textContent, expected: expectedText
+        });
+      }
+    }
+  }
   // glitch sanity: if the currently-playing track is no longer playable (lock just
   // applied / time gate expired / etc.), jump forward. Rare but prevents leaks.
   if (engine.playing && typeof LockedRegistry !== 'undefined' && !LockedRegistry.isPlayable(Registry.currentIdx)) {
@@ -10727,9 +10866,12 @@ const CodesRegistry = {
     });
   }
 
-  // Page navigation — [>>>] flips to Updates, [<<<] flips back. Reaching
-  // the Updates page is what marks the current version as read (removes
-  // the glowing dot on the info button).
+  // Page navigation — Updates is page 1 (default landing). [>>>] flips to
+  // Wobble (page 2). [<<<] flips back. Reaching the Updates page marks the
+  // current version as read (removes the glowing dot on the info button).
+  // v1.6: page indicator above the nav button reflects current/total.
+  const PAGES = ['updates', 'wobble'];   // ordered: page 1, page 2
+  const pageNoEl = document.getElementById('playbackInfoPageNo');
   function setPage(name) {
     if (!box) return;
     box.dataset.page = name;
@@ -10738,12 +10880,16 @@ const CodesRegistry = {
     const scroll = box.querySelector('.playback-info-scroll');
     if (scroll) scroll.scrollTop = 0;
     if (name === 'updates') markRead();
-    if (navBtn) navBtn.setAttribute('aria-label', name === 'wobble' ? 'Next page: Updates' : 'Back to Pitch Wobble');
+    if (navBtn) navBtn.setAttribute('aria-label', name === 'updates' ? 'Next page: Pitch Wobble' : 'Back to Updates');
+    if (pageNoEl) {
+      const idx = PAGES.indexOf(name);
+      pageNoEl.textContent = (idx >= 0 ? idx + 1 : 1) + ' / ' + PAGES.length;
+    }
   }
   if (navBtn) {
     navBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      setPage(box.dataset.page === 'wobble' ? 'updates' : 'wobble');
+      setPage(box.dataset.page === 'updates' ? 'wobble' : 'updates');
     });
   }
 
@@ -10753,8 +10899,8 @@ const CodesRegistry = {
     // Tooltip lives inside the modal but its show-state should not persist
     // across open/close cycles — collapse it so the next open is clean.
     hideTip();
-    // Reset to the wobble page so the next open lands on the default view.
-    setPage('wobble');
+    // Reset to the updates page so the next open lands on the default view.
+    setPage('updates');
   };
   btn.addEventListener('click', (e) => { e.stopPropagation(); open(); });
   if (closeBtn) closeBtn.addEventListener('click', close);
